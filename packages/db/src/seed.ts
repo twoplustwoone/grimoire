@@ -14,7 +14,7 @@ async function main() {
   }
 
   // Create user and account directly — no running server needed
-  const passwordHash = await bcrypt.hash('grimoire123', 10)
+  const passwordHash = await bcrypt.hash('gm@grimoire.dev', 10)
 
   let user = await prisma.user.upsert({
     where: { email: 'gm@grimoire.dev' },
@@ -176,7 +176,7 @@ async function main() {
   console.log('')
   console.log('🎲 Seed complete!')
   console.log(`   Campaign: ${campaign.name}`)
-  console.log(`   Login: gm@grimoire.dev / grimoire123`)
+  console.log(`   Login: gm@grimoire.dev / gm@grimoire.dev`)
   console.log(`   6 NPCs, 5 locations, 3 factions, 3 threads, 3 clues`)
   console.log(`   1 completed session with notes and AI recap`)
   console.log(`   1 planned session`)
