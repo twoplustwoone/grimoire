@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import bcrypt from 'bcryptjs'
+import { hashPassword } from '@better-auth/utils/password'
 import { prisma } from './index'
 
 async function main() {
@@ -14,7 +14,7 @@ async function main() {
   }
 
   // Create user and account directly — no running server needed
-  const passwordHash = await bcrypt.hash('gm@grimoire.dev', 10)
+  const passwordHash = await hashPassword('gm@grimoire.dev')
 
   let user = await prisma.user.upsert({
     where: { email: 'gm@grimoire.dev' },

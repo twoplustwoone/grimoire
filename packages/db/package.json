@@ -12,13 +12,12 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
+    "@better-auth/utils": "^0.4.0",
     "@prisma/adapter-pg": "latest",
     "@prisma/client": "latest",
-    "bcryptjs": "^3.0.3",
     "pg": "latest"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^3.0.0",
     "@types/pg": "latest",
     "dotenv": "latest",
     "prisma": "latest",
