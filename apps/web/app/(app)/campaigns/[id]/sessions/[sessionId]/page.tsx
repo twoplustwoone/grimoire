@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, FileText } from 'lucide-react'
 import { SessionControls } from './session-controls'
+import { SessionEntityTagger } from '@/components/entities/session-entity-tagger'
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
@@ -37,6 +38,27 @@ export default async function SessionDetailPage({ params }: Props) {
     where: { entityType: 'SESSION', entityId: sessionId },
     orderBy: { createdAt: 'asc' },
   })
+
+  const [npcList, locationList, factionList, threadList, clueList] = await Promise.all([
+    prisma.nPC.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true } }),
+    prisma.location.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true } }),
+    prisma.faction.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true } }),
+    prisma.thread.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true } }),
+    prisma.clue.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true } }),
+  ])
+
+  const availableEntities = [
+    ...npcList.map((e) => ({ id: e.id, name: e.name, type: 'NPC' as const })),
+    ...locationList.map((e) => ({ id: e.id, name: e.name, type: 'LOCATION' as const })),
+    ...factionList.map((e) => ({ id: e.id, name: e.name, type: 'FACTION' as const })),
+    ...threadList.map((e) => ({ id: e.id, name: e.title, type: 'THREAD' as const })),
+    ...clueList.map((e) => ({ id: e.id, name: e.title, type: 'CLUE' as const })),
+  ]
+
+  const taggedWithNames = gameSession.entityTags.map((tag) => ({
+    ...tag,
+    entityName: availableEntities.find((e) => e.id === tag.entityId)?.name,
+  }))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -79,6 +101,13 @@ export default async function SessionDetailPage({ params }: Props) {
         initialAiSummary={gameSession.aiSummary}
       />
 
+      <SessionEntityTagger
+        campaignId={campaignId}
+        sessionId={sessionId}
+        initialTags={taggedWithNames}
+        availableEntities={availableEntities}
+      />
+
       {(gameSession.gmSummary || gameSession.aiSummary) && (
         <Card className="mb-4">
           <CardHeader>
@@ -100,23 +129,6 @@ export default async function SessionDetailPage({ params }: Props) {
                 <p className="text-sm whitespace-pre-wrap">{gameSession.gmSummary}</p>
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {gameSession.entityTags.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Entities in this session</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {gameSession.entityTags.map((tag) => (
-                <span key={tag.id} className="text-xs bg-muted px-2 py-1 rounded-full">
-                  {tag.entityType}: {tag.entityId.slice(0, 8)}
-                </span>
-              ))}
-            </div>
           </CardContent>
         </Card>
       )}
