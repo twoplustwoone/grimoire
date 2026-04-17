@@ -21,7 +21,7 @@ export default function NewSessionPage() {
     setError(null)
 
     const res = await fetch(
-      `/campaigns/${campaignId}/sessions`,
+      `/api/v1/campaigns/${campaignId}/sessions`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

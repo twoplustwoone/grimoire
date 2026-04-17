@@ -22,7 +22,7 @@ export default function NewNPCPage() {
     setError(null)
 
     const res = await fetch(
-      `/campaigns/${campaignId}/npcs`,
+      `/api/v1/campaigns/${campaignId}/npcs`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

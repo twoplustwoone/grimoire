@@ -5,16 +5,12 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/api/:path*`,
+        source: '/api/auth/:path*',
+        destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/api/auth/:path*`,
       },
       {
-        source: '/campaigns',
-        destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/campaigns`,
-      },
-      {
-        source: '/campaigns/:path*',
-        destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/campaigns/:path*`,
+        source: '/api/v1/:path*',
+        destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/:path*`,
       },
     ]
   },

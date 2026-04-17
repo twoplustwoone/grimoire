@@ -20,7 +20,7 @@ export default function NewCampaignPage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`/campaigns`, {
+    const res = await fetch(`/api/v1/campaigns`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

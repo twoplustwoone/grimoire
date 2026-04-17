@@ -24,7 +24,7 @@ export default function NewThreadPage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`/campaigns/${campaignId}/threads`, {
+    const res = await fetch(`/api/v1/campaigns/${campaignId}/threads`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ title, description, urgency }),
     })
