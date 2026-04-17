@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, StickyNote } from 'lucide-react'
+import { Plus, Sparkles, StickyNote } from 'lucide-react'
 
 interface Note {
   id: string
@@ -18,6 +18,7 @@ interface Props {
   initialStatus: string
   initialGmSummary: string
   initialNotes: Note[]
+  initialAiSummary?: string | null
 }
 
 export function SessionControls({
@@ -26,6 +27,7 @@ export function SessionControls({
   initialStatus,
   initialGmSummary,
   initialNotes,
+  initialAiSummary,
 }: Props) {
   const [status, setStatus] = useState(initialStatus)
   const [gmSummary, setGmSummary] = useState(initialGmSummary)
@@ -33,6 +35,8 @@ export function SessionControls({
   const [newNote, setNewNote] = useState('')
   const [savingNote, setSavingNote] = useState(false)
   const [savingSummary, setSavingSummary] = useState(false)
+  const [generatingRecap, setGeneratingRecap] = useState(false)
+  const [aiSummary, setAiSummary] = useState<string | null>(initialAiSummary ?? null)
 
   async function addNote() {
     if (!newNote.trim()) return
@@ -81,6 +85,22 @@ export function SessionControls({
       }
     )
     if (res.ok) setStatus('COMPLETED')
+  }
+
+  async function generateRecap() {
+    setGeneratingRecap(true)
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/sessions/${sessionId}/recap`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      setAiSummary(data.aiSummary)
+    }
+    setGeneratingRecap(false)
   }
 
   return (
@@ -147,6 +167,34 @@ export function SessionControls({
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Sparkles className="h-4 w-4" />
+            AI Recap
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {aiSummary ? (
+            <div className="space-y-3">
+              <p className="text-sm whitespace-pre-wrap text-muted-foreground">{aiSummary}</p>
+              <Button onClick={generateRecap} disabled={generatingRecap} variant="outline" size="sm">
+                {generatingRecap ? 'Regenerating...' : 'Regenerate'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Generate an AI recap from your session notes and tagged entities.
+              </p>
+              <Button onClick={generateRecap} disabled={generatingRecap} size="sm">
+                {generatingRecap ? 'Generating...' : 'Generate Recap'}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

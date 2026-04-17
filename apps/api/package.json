@@ -7,8 +7,10 @@
     "start": "node --env-file=.env dist/index.js"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.71",
     "@grimoire/db": "workspace:*",
     "@hono/node-server": "^1.19.14",
+    "ai": "^6.0.168",
     "better-auth": "latest",
     "hono": "^4.12.14"
   },

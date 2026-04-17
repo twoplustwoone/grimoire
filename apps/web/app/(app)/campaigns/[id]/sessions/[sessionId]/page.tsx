@@ -76,6 +76,7 @@ export default async function SessionDetailPage({ params }: Props) {
         initialStatus={gameSession.status}
         initialGmSummary={gameSession.gmSummary ?? ''}
         initialNotes={notes}
+        initialAiSummary={gameSession.aiSummary}
       />
 
       {(gameSession.gmSummary || gameSession.aiSummary) && (
