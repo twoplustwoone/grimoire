@@ -8,7 +8,8 @@
   },
   "scripts": {
     "generate": "prisma generate --schema=./prisma/schema.prisma",
-    "migrate": "prisma migrate dev --schema=./prisma/schema.prisma"
+    "migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
+    "seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "latest",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@types/pg": "latest",
     "dotenv": "latest",
-    "prisma": "latest"
+    "prisma": "latest",
+    "tsx": "^4.21.0"
   }
 }
