@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
         destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/api/:path*`,
       },
       {
+        source: '/campaigns',
+        destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/campaigns`,
+      },
+      {
         source: '/campaigns/:path*',
         destination: `${process.env.API_INTERNAL_URL ?? 'http://localhost:3005'}/campaigns/:path*`,
       },
