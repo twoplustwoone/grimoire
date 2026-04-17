@@ -9,7 +9,7 @@
   "scripts": {
     "generate": "prisma generate --schema=./prisma/schema.prisma",
     "migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
-    "seed": "tsx src/seed.ts"
+    "seed": "node --env-file=.env --import tsx/esm src/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "latest",
