@@ -9,6 +9,7 @@ import locations from './routes/locations.js'
 import factions from './routes/factions.js'
 import threads from './routes/threads.js'
 import clues from './routes/clues.js'
+import sessions from './routes/sessions.js'
 
 const app = new Hono()
 
@@ -32,6 +33,7 @@ app.route('/campaigns/:campaignId/locations', locations)
 app.route('/campaigns/:campaignId/factions', factions)
 app.route('/campaigns/:campaignId/threads', threads)
 app.route('/campaigns/:campaignId/clues', clues)
+app.route('/campaigns/:campaignId/sessions', sessions)
 
 const port = Number(process.env.PORT ?? 3001)
 
