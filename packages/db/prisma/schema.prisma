@@ -1,0 +1,497 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== AUTH ====================
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String?
+  image            String?
+  emailVerified    Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  memberships      CampaignMembership[]
+  notes            Note[]
+  changelogEntries ChangelogEntry[]
+  sessions         Session[] @relation("UserSessions")
+  accounts         Account[]           @relation("UserAccounts")
+}
+
+// ==================== CAMPAIGN ====================
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  status      CampaignStatus @default(ACTIVE)
+  settings    Json?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  memberships      CampaignMembership[]
+  sessions         GameSession[]
+  npcs             NPC[]
+  playerCharacters PlayerCharacter[]
+  locations        Location[]
+  factions         Faction[]
+  threads          Thread[]
+  clues            Clue[]
+  worldEvents      WorldEvent[]
+  customFieldDefs  CustomFieldDefinition[]
+  inWorldDates     InWorldDate[]
+  relationships    Relationship[]
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+model CampaignMembership {
+  id         String     @id @default(cuid())
+  campaignId String
+  userId     String
+  role       MemberRole @default(PLAYER)
+  createdAt  DateTime   @default(now())
+
+  campaign         Campaign                @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playerCharacters PlayerCharacter[]
+  nodeReveals      InformationNodeReveal[]
+
+  @@unique([campaignId, userId])
+}
+
+enum MemberRole {
+  GM
+  CO_GM
+  PLAYER
+}
+
+// ==================== SESSIONS ====================
+
+model GameSession {
+  id         String        @id @default(cuid())
+  campaignId String
+  title      String?
+  number     Int
+  playedOn   DateTime?
+  gmSummary  String?
+  aiSummary  String?
+  status     SessionStatus @default(PLANNED)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  campaign     Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  inWorldDates SessionInWorldDate[]
+  entityTags   SessionEntityTag[]
+  clues        Clue[]
+  worldEvents  WorldEvent[]
+
+  @@unique([campaignId, number])
+  @@map("Session")
+}
+
+enum SessionStatus {
+  PLANNED
+  COMPLETED
+}
+
+model SessionInWorldDate {
+  id            String @id @default(cuid())
+  sessionId     String
+  inWorldDateId String
+
+  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  inWorldDate InWorldDate @relation(fields: [inWorldDateId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, inWorldDateId])
+}
+
+model SessionEntityTag {
+  id         String     @id @default(cuid())
+  sessionId  String
+  entityType EntityType
+  entityId   String
+
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, entityType, entityId])
+  @@index([entityType, entityId])
+}
+
+// ==================== IN-WORLD CALENDAR ====================
+
+model InWorldDate {
+  id         String   @id @default(cuid())
+  campaignId String
+  label      String
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+
+  campaign    Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sessions    SessionInWorldDate[]
+  worldEvents WorldEvent[]
+}
+
+// ==================== ENTITIES ====================
+
+model NPC {
+  id          String       @id @default(cuid())
+  campaignId  String
+  name        String
+  description String?
+  status      EntityStatus @default(ACTIVE)
+  locationId  String?
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  campaign           Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  location           Location?           @relation(fields: [locationId], references: [id])
+  factionMemberships FactionMembership[]
+}
+
+model PlayerCharacter {
+  id           String       @id @default(cuid())
+  campaignId   String
+  membershipId String
+  name         String
+  description  String?
+  status       EntityStatus @default(ACTIVE)
+  locationId   String?
+  deletedAt    DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  campaign   Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  membership CampaignMembership @relation(fields: [membershipId], references: [id])
+  location   Location?          @relation(fields: [locationId], references: [id])
+}
+
+model Location {
+  id          String       @id @default(cuid())
+  campaignId  String
+  name        String
+  description String?
+  status      EntityStatus @default(ACTIVE)
+  parentId    String?
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  campaign         Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parent           Location?         @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children         Location[]        @relation("LocationHierarchy")
+  npcs             NPC[]
+  playerCharacters PlayerCharacter[]
+}
+
+model Faction {
+  id          String       @id @default(cuid())
+  campaignId  String
+  name        String
+  description String?
+  agenda      String?
+  status      EntityStatus @default(ACTIVE)
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  campaign    Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  memberships FactionMembership[]
+}
+
+model FactionMembership {
+  id        String  @id @default(cuid())
+  factionId String
+  npcId     String
+  role      String?
+
+  faction Faction @relation(fields: [factionId], references: [id], onDelete: Cascade)
+  npc     NPC     @relation(fields: [npcId], references: [id], onDelete: Cascade)
+
+  @@unique([factionId, npcId])
+}
+
+model Thread {
+  id           String        @id @default(cuid())
+  campaignId   String
+  title        String
+  description  String?
+  status       ThreadStatus  @default(OPEN)
+  urgency      ThreadUrgency @default(MEDIUM)
+  resolvedNote String?
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  campaign   Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  entityTags ThreadEntityTag[]
+}
+
+enum ThreadStatus {
+  OPEN
+  RESOLVED
+  DORMANT
+}
+
+enum ThreadUrgency {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model ThreadEntityTag {
+  id         String     @id @default(cuid())
+  threadId   String
+  entityType EntityType
+  entityId   String
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, entityType, entityId])
+  @@index([entityType, entityId])
+}
+
+model Clue {
+  id                    String    @id @default(cuid())
+  campaignId            String
+  title                 String
+  description           String?
+  discoveredInSessionId String?
+  deletedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  campaign            Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  discoveredInSession GameSession? @relation(fields: [discoveredInSessionId], references: [id])
+}
+
+model WorldEvent {
+  id            String    @id @default(cuid())
+  campaignId    String
+  title         String
+  description   String?
+  inWorldDateId String?
+  sessionId     String?
+  createdAt     DateTime  @default(now())
+
+  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  inWorldDate InWorldDate? @relation(fields: [inWorldDateId], references: [id])
+  session     GameSession? @relation(fields: [sessionId], references: [id])
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+  DEAD
+  DESTROYED
+  RETIRED
+}
+
+enum EntityType {
+  NPC
+  PLAYER_CHARACTER
+  LOCATION
+  FACTION
+  THREAD
+  CLUE
+  WORLD_EVENT
+  SESSION
+}
+
+// ==================== CROSS-CUTTING ====================
+
+model Note {
+  id         String     @id @default(cuid())
+  entityType EntityType
+  entityId   String
+  campaignId String
+  sessionId  String?
+  authorId   String
+  content    String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([campaignId])
+  @@index([sessionId])
+}
+
+model InformationNode {
+  id         String         @id @default(cuid())
+  entityType EntityType
+  entityId   String
+  campaignId String
+  title      String
+  content    String
+  visibility NodeVisibility @default(GM_ONLY)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  revealedTo InformationNodeReveal[]
+
+  @@index([entityType, entityId])
+  @@index([campaignId])
+}
+
+enum NodeVisibility {
+  GM_ONLY
+  ALL_PLAYERS
+  SPECIFIC_PLAYERS
+}
+
+model InformationNodeReveal {
+  id                String   @id @default(cuid())
+  informationNodeId String
+  membershipId      String
+  revealedAt        DateTime @default(now())
+
+  informationNode InformationNode    @relation(fields: [informationNodeId], references: [id], onDelete: Cascade)
+  membership      CampaignMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([informationNodeId, membershipId])
+}
+
+model Relationship {
+  id            String     @id @default(cuid())
+  campaignId    String
+  entityTypeA   EntityType
+  entityIdA     String
+  entityTypeB   EntityType
+  entityIdB     String
+  label         String
+  description   String?
+  bidirectional Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([entityTypeA, entityIdA])
+  @@index([entityTypeB, entityIdB])
+  @@index([campaignId])
+}
+
+model ChangelogEntry {
+  id         String     @id @default(cuid())
+  entityType EntityType
+  entityId   String
+  campaignId String
+  sessionId  String?
+  authorId   String?
+  field      String
+  oldValue   String?
+  newValue   String?
+  note       String?
+  createdAt  DateTime   @default(now())
+
+  author User? @relation(fields: [authorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([campaignId])
+  @@index([sessionId])
+}
+
+// ==================== CUSTOM FIELDS ====================
+
+model CustomFieldDefinition {
+  id           String          @id @default(cuid())
+  campaignId   String
+  targetEntity EntityType
+  name         String
+  fieldType    CustomFieldType
+  config       Json?
+  displayAs    String?
+  sortOrder    Int             @default(0)
+  createdAt    DateTime        @default(now())
+
+  campaign Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  values   CustomFieldValue[]
+
+  @@unique([campaignId, targetEntity, name])
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  BOOLEAN
+  SELECT
+  MULTI_SELECT
+  PROGRESS
+}
+
+model CustomFieldValue {
+  id           String     @id @default(cuid())
+  definitionId String
+  entityType   EntityType
+  entityId     String
+  value        String
+  updatedAt    DateTime   @updatedAt
+
+  definition CustomFieldDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, entityId])
+  @@index([entityType, entityId])
+}
+
+// ==================== BETTER AUTH ====================
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation("UserAccounts", fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}

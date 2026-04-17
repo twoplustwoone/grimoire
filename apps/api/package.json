@@ -1,0 +1,20 @@
+{
+  "name": "@grimoire/api",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc --watch & node --env-file=.env --watch dist/index.js",
+    "build": "tsc",
+    "start": "node --env-file=.env dist/index.js"
+  },
+  "dependencies": {
+    "@grimoire/db": "workspace:*",
+    "@hono/node-server": "^1.19.14",
+    "better-auth": "latest",
+    "hono": "^4.12.14"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
+  }
+}
