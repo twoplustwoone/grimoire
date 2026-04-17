@@ -9,14 +9,16 @@
   "scripts": {
     "generate": "prisma generate --schema=./prisma/schema.prisma",
     "migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
-    "seed": "node --env-file=.env --import tsx/esm src/seed.ts"
+    "seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "latest",
     "@prisma/client": "latest",
+    "bcryptjs": "^3.0.3",
     "pg": "latest"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/pg": "latest",
     "dotenv": "latest",
     "prisma": "latest",

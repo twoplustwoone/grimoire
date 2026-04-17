@@ -1,3 +1,5 @@
+import 'dotenv/config'
+import bcrypt from 'bcryptjs'
 import { prisma } from './index'
 
 async function main() {
@@ -11,30 +13,39 @@ async function main() {
     console.log('🧹 Cleared existing seed campaign')
   }
 
-  const BASE_URL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3005'
+  // Create user and account directly — no running server needed
+  const passwordHash = await bcrypt.hash('grimoire123', 10)
 
-  // Create user via Better Auth so they have a real password and Account row
-  const signUpRes = await fetch(`${BASE_URL}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  let user = await prisma.user.upsert({
+    where: { email: 'gm@grimoire.dev' },
+    update: {},
+    create: {
       email: 'gm@grimoire.dev',
-      password: 'grimoire123',
       name: 'Seed GM',
-    }),
+      emailVerified: true,
+    },
   })
 
-  let user
-  if (signUpRes.ok) {
-    const data = await signUpRes.json()
-    user = data.user
-    console.log('✅ Created seed user via Better Auth')
-  } else {
-    // User may already exist — try to find them
-    user = await prisma.user.findFirst({ where: { email: 'gm@grimoire.dev' } })
-    if (!user) throw new Error('Could not create or find seed user')
-    console.log('✅ Found existing seed user')
+  // Create Better Auth account row if it doesn't exist
+  const existingAccount = await prisma.account.findFirst({
+    where: { userId: user.id, providerId: 'credential' },
+  })
+
+  if (!existingAccount) {
+    await prisma.account.create({
+      data: {
+        id: `seed-account-${user.id}`,
+        accountId: user.id,
+        providerId: 'credential',
+        userId: user.id,
+        password: passwordHash,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    })
   }
+
+  console.log('✅ Created seed user')
 
   const campaign = await prisma.campaign.create({
     data: {
