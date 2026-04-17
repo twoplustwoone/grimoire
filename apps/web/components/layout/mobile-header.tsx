@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 
 interface MobileHeaderProps {
   user: { name?: string | null; email: string }
@@ -58,6 +59,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
                 )
               })}
             </div>
+            <ThemeSwitcher />
             <Link
               href="/settings"
               onClick={() => setOpen(false)}

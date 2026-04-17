@@ -13,6 +13,7 @@ import {
   Calendar,
   Settings,
 } from 'lucide-react'
+import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 
 interface SidebarProps {
   user: { name?: string | null; email: string; image?: string | null }
@@ -60,7 +61,8 @@ export function Sidebar({ user }: SidebarProps) {
           )
         })}
       </nav>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-1">
+        <ThemeSwitcher />
         <Link
           href="/settings"
           className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
