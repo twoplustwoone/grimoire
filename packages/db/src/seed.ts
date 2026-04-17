@@ -26,24 +26,22 @@ async function main() {
     },
   })
 
-  // Create Better Auth account row if it doesn't exist
-  const existingAccount = await prisma.account.findFirst({
+  // Always recreate the account row to ensure the hash is current
+  await prisma.account.deleteMany({
     where: { userId: user.id, providerId: 'credential' },
   })
 
-  if (!existingAccount) {
-    await prisma.account.create({
-      data: {
-        id: `seed-account-${user.id}`,
-        accountId: user.id,
-        providerId: 'credential',
-        userId: user.id,
-        password: passwordHash,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    })
-  }
+  await prisma.account.create({
+    data: {
+      id: `seed-account-${user.id}`,
+      accountId: user.id,
+      providerId: 'credential',
+      userId: user.id,
+      password: passwordHash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  })
 
   console.log('✅ Created seed user')
 
