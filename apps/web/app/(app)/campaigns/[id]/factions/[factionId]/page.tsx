@@ -33,6 +33,7 @@ export default async function FactionDetailPage({ params }: Props) {
           <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/factions`} className="hover:underline">Factions</Link>{' / '}
+          <span>{faction.name}</span>
         </p>
         <FactionEditableFields
           campaignId={campaignId}

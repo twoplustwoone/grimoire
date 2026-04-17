@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, MapPin, Users } from 'lucide-react'
+import { pluralize } from '@/lib/utils'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -57,7 +58,7 @@ export default async function LocationsPage({ params }: Props) {
                   {loc.description && <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{loc.description}</p>}
                   <div className="flex gap-4 mt-2">
                     {loc.parent && <span className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />in {loc.parent.name}</span>}
-                    {loc.npcs.length > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Users className="h-3 w-3" />{loc.npcs.length} NPCs</span>}
+                    {loc.npcs.length > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Users className="h-3 w-3" />{pluralize(loc.npcs.length, 'NPC', 'NPCs')}</span>}
                   </div>
                 </CardHeader>
               </Card>

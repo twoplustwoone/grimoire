@@ -44,13 +44,14 @@ export function Sidebar({ user }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1">
         {navigation.map((item) => {
           const Icon = item.icon
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                pathname === item.href
+                isActive
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
               )}

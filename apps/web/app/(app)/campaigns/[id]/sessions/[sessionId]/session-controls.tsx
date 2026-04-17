@@ -36,6 +36,7 @@ export function SessionControls({
   const [savingNote, setSavingNote] = useState(false)
   const [savingSummary, setSavingSummary] = useState(false)
   const [generatingRecap, setGeneratingRecap] = useState(false)
+  const [recapError, setRecapError] = useState<string | null>(null)
   const [aiSummary, setAiSummary] = useState<string | null>(initialAiSummary ?? null)
 
   async function addNote() {
@@ -89,18 +90,27 @@ export function SessionControls({
 
   async function generateRecap() {
     setGeneratingRecap(true)
-    const res = await fetch(
-      `/api/v1/campaigns/${campaignId}/sessions/${sessionId}/recap`,
-      {
-        method: 'POST',
-        credentials: 'include',
+    setRecapError(null)
+    try {
+      const res = await fetch(
+        `/api/v1/campaigns/${campaignId}/sessions/${sessionId}/recap`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        setAiSummary(data.aiSummary)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setRecapError(data.error ?? 'Failed to generate recap. Check that your Anthropic API key is configured.')
       }
-    )
-    if (res.ok) {
-      const data = await res.json()
-      setAiSummary(data.aiSummary)
+    } catch {
+      setRecapError('Network error. Please try again.')
+    } finally {
+      setGeneratingRecap(false)
     }
-    setGeneratingRecap(false)
   }
 
   return (
@@ -119,7 +129,8 @@ export function SessionControls({
                 <div key={note.id} className="text-sm border-l-2 pl-3 py-1">
                   <p>{note.content}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(note.createdAt).toLocaleTimeString()}
+                    {new Date(note.createdAt).toLocaleDateString()}{' '}
+                    {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               ))}
@@ -184,6 +195,7 @@ export function SessionControls({
               <Button onClick={generateRecap} disabled={generatingRecap} variant="outline" size="sm">
                 {generatingRecap ? 'Regenerating...' : 'Regenerate'}
               </Button>
+              {recapError && <p className="text-sm text-destructive mt-2">{recapError}</p>}
             </div>
           ) : (
             <div className="space-y-2">
@@ -193,6 +205,7 @@ export function SessionControls({
               <Button onClick={generateRecap} disabled={generatingRecap} size="sm">
                 {generatingRecap ? 'Generating...' : 'Generate Recap'}
               </Button>
+              {recapError && <p className="text-sm text-destructive mt-2">{recapError}</p>}
             </div>
           )}
         </CardContent>

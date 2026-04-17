@@ -42,7 +42,6 @@ export default async function CampaignPage({ params }: Props) {
           <div className="flex-1">
             <p className="text-sm text-muted-foreground mb-1">
               <Link href="/campaigns" className="hover:underline">Campaigns</Link>
-              {' / '}
             </p>
             <CampaignEditableFields
               campaignId={campaign.id}

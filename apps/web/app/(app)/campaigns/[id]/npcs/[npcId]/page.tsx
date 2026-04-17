@@ -56,6 +56,7 @@ export default async function NPCDetailPage({ params }: Props) {
           {' / '}
           <Link href={`/campaigns/${campaignId}/npcs`} className="hover:underline">NPCs</Link>
           {' / '}
+          <span>{npc.name}</span>
         </p>
         <NpcEditableFields
           campaignId={campaignId}

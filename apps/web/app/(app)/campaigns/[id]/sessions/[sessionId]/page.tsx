@@ -72,6 +72,7 @@ export default async function SessionDetailPage({ params }: Props) {
           {' / '}
           <Link href={`/campaigns/${campaignId}/sessions`} className="hover:underline">Sessions</Link>
           {' / '}
+          <span>Session {gameSession.number}</span>
         </p>
         <div className="flex items-start justify-between">
           <div>

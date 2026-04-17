@@ -41,6 +41,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
             <div className="space-y-1 flex-1">
               {navigation.map((item) => {
                 const Icon = item.icon
+                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                 return (
                   <Link
                     key={item.name}
@@ -48,7 +49,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
                     onClick={() => setOpen(false)}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                      pathname === item.href
+                      isActive
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                     )}

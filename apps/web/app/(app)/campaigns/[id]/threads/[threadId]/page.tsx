@@ -43,6 +43,7 @@ export default async function ThreadDetailPage({ params }: Props) {
           <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/threads`} className="hover:underline">Threads</Link>{' / '}
+          <span>{thread.title}</span>
         </p>
         <ThreadEditableFields
           campaignId={campaignId}

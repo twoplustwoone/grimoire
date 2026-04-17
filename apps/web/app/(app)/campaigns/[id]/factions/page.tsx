@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Users } from 'lucide-react'
+import { pluralize } from '@/lib/utils'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -46,7 +47,7 @@ export default async function FactionsPage({ params }: Props) {
                 <CardHeader className="py-4">
                   <CardTitle className="text-base">{f.name}</CardTitle>
                   {f.agenda && <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{f.agenda}</p>}
-                  {f.memberships.length > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground mt-2"><Users className="h-3 w-3" />{f.memberships.length} members</span>}
+                  {f.memberships.length > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground mt-2"><Users className="h-3 w-3" />{pluralize(f.memberships.length, 'member', 'members')}</span>}
                 </CardHeader>
               </Card>
             </Link>

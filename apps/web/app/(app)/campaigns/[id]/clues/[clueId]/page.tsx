@@ -33,6 +33,7 @@ export default async function ClueDetailPage({ params }: Props) {
           <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/clues`} className="hover:underline">Clues</Link>{' / '}
+          <span>{clue.title}</span>
         </p>
         <ClueEditableFields
           campaignId={campaignId}

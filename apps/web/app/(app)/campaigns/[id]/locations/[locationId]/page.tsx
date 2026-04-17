@@ -37,6 +37,7 @@ export default async function LocationDetailPage({ params }: Props) {
           <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/locations`} className="hover:underline">Locations</Link>{' / '}
+          <span>{location.name}</span>
         </p>
         <LocationEditableFields
           campaignId={campaignId}
