@@ -4,6 +4,11 @@ import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
 import { auth } from './lib/auth.js'
 import campaigns from './routes/campaigns.js'
+import npcs from './routes/npcs.js'
+import locations from './routes/locations.js'
+import factions from './routes/factions.js'
+import threads from './routes/threads.js'
+import clues from './routes/clues.js'
 
 const app = new Hono()
 
@@ -22,6 +27,11 @@ app.on(['GET', 'POST'], '/api/auth/**', (c) => {
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
 app.route('/campaigns', campaigns)
+app.route('/campaigns/:campaignId/npcs', npcs)
+app.route('/campaigns/:campaignId/locations', locations)
+app.route('/campaigns/:campaignId/factions', factions)
+app.route('/campaigns/:campaignId/threads', threads)
+app.route('/campaigns/:campaignId/clues', clues)
 
 const port = Number(process.env.PORT ?? 3001)
 
