@@ -43,7 +43,7 @@ export function SessionControls({
     setSavingNote(true)
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/sessions/${sessionId}/notes`,
+      `/campaigns/${campaignId}/sessions/${sessionId}/notes`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,7 +63,7 @@ export function SessionControls({
   async function saveSummary() {
     setSavingSummary(true)
     await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/sessions/${sessionId}`,
+      `/campaigns/${campaignId}/sessions/${sessionId}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +76,7 @@ export function SessionControls({
 
   async function markCompleted() {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/sessions/${sessionId}`,
+      `/campaigns/${campaignId}/sessions/${sessionId}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -90,7 +90,7 @@ export function SessionControls({
   async function generateRecap() {
     setGeneratingRecap(true)
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/sessions/${sessionId}/recap`,
+      `/campaigns/${campaignId}/sessions/${sessionId}/recap`,
       {
         method: 'POST',
         credentials: 'include',

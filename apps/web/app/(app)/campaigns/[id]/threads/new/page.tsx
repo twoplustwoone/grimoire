@@ -24,7 +24,7 @@ export default function NewThreadPage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/threads`, {
+    const res = await fetch(`/campaigns/${campaignId}/threads`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ title, description, urgency }),
     })

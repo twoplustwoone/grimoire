@@ -21,7 +21,7 @@ export default function NewSessionPage() {
     setError(null)
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/sessions`,
+      `/campaigns/${campaignId}/sessions`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

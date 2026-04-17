@@ -20,7 +20,7 @@ export default function NewCampaignPage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/campaigns`, {
+    const res = await fetch(`/campaigns`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

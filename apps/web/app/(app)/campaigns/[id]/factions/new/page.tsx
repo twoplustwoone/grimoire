@@ -22,7 +22,7 @@ export default function NewFactionPage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/factions`, {
+    const res = await fetch(`/campaigns/${campaignId}/factions`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ name, description, agenda }),
     })

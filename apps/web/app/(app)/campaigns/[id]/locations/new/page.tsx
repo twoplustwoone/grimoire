@@ -21,7 +21,7 @@ export default function NewLocationPage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/locations`, {
+    const res = await fetch(`/campaigns/${campaignId}/locations`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ name, description }),
     })

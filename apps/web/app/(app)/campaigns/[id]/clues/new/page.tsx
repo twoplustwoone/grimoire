@@ -21,7 +21,7 @@ export default function NewCluePage() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/clues`, {
+    const res = await fetch(`/campaigns/${campaignId}/clues`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ title, description }),
     })
