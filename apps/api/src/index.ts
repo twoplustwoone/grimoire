@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { serve } from '@hono/node-server'
 import { auth } from './lib/auth.js'
+import campaigns from './routes/campaigns.js'
 
 const app = new Hono()
 
@@ -19,6 +20,8 @@ app.on(['GET', 'POST'], '/api/auth/**', (c) => {
 })
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
+
+app.route('/campaigns', campaigns)
 
 const port = Number(process.env.PORT ?? 3001)
 
