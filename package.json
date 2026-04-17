@@ -9,7 +9,9 @@
     "check-types": "turbo run check-types",
     "seed": "pnpm --filter @grimoire/db seed",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @grimoire/db migrate",
+    "db:reset": "pnpm --filter @grimoire/db exec prisma migrate reset --force --schema=./prisma/schema.prisma && pnpm seed"
   },
   "devDependencies": {
     "prettier": "^3.7.4",
