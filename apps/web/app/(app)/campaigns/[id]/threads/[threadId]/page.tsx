@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock } from 'lucide-react'
+import { ThreadEditableFields } from '@/components/entities/thread-editable-fields'
 
 interface Props { params: Promise<{ id: string; threadId: string }> }
 
@@ -43,15 +44,15 @@ export default async function ThreadDetailPage({ params }: Props) {
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/threads`} className="hover:underline">Threads</Link>{' / '}
         </p>
-        <div className="flex items-start justify-between">
-          <h1 className="text-3xl font-bold">{thread.title}</h1>
-          <div className="flex gap-2 mt-2">
-            <span className={`text-xs px-2 py-1 rounded-full font-medium ${urgencyColors[thread.urgency] ?? ''}`}>{thread.urgency}</span>
-            <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[thread.status] ?? ''}`}>{thread.status}</span>
-          </div>
-        </div>
-        {thread.description && <p className="text-muted-foreground mt-2">{thread.description}</p>}
-        {thread.resolvedNote && <Card className="mt-4"><CardContent className="py-3"><p className="text-sm"><span className="font-medium">Resolution:</span> {thread.resolvedNote}</p></CardContent></Card>}
+        <ThreadEditableFields
+          campaignId={campaignId}
+          threadId={threadId}
+          title={thread.title}
+          description={thread.description}
+          status={thread.status}
+          urgency={thread.urgency}
+          resolvedNote={thread.resolvedNote}
+        />
       </div>
 
       {notes.length > 0 && (<Card className="mb-4"><CardHeader><CardTitle className="text-base">Notes</CardTitle></CardHeader><CardContent><div className="space-y-3">{notes.map((n) => (<div key={n.id} className="text-sm border-l-2 pl-3"><p>{n.content}</p><p className="text-xs text-muted-foreground mt-1">{new Date(n.createdAt).toLocaleDateString()}</p></div>))}</div></CardContent></Card>)}

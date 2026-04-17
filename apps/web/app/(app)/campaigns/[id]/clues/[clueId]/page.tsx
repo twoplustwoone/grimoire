@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Clock } from 'lucide-react'
+import { ClueEditableFields } from '@/components/entities/clue-editable-fields'
 
 interface Props { params: Promise<{ id: string; clueId: string }> }
 
@@ -33,8 +34,12 @@ export default async function ClueDetailPage({ params }: Props) {
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/clues`} className="hover:underline">Clues</Link>{' / '}
         </p>
-        <h1 className="text-3xl font-bold">{clue.title}</h1>
-        {clue.description && <p className="text-muted-foreground mt-2">{clue.description}</p>}
+        <ClueEditableFields
+          campaignId={campaignId}
+          clueId={clueId}
+          title={clue.title}
+          description={clue.description}
+        />
       </div>
 
       {clue.discoveredInSession && (

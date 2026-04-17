@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MapPin, Users, Clock } from 'lucide-react'
+import { LocationEditableFields } from '@/components/entities/location-editable-fields'
 
 interface Props { params: Promise<{ id: string; locationId: string }> }
 
@@ -37,8 +38,13 @@ export default async function LocationDetailPage({ params }: Props) {
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/locations`} className="hover:underline">Locations</Link>{' / '}
         </p>
-        <h1 className="text-3xl font-bold">{location.name}</h1>
-        {location.description && <p className="text-muted-foreground mt-2">{location.description}</p>}
+        <LocationEditableFields
+          campaignId={campaignId}
+          locationId={locationId}
+          name={location.name}
+          description={location.description}
+          status={location.status}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 mb-6">

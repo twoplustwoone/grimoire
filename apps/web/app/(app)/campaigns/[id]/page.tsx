@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, MapPin, Shield, GitBranch, Search, Calendar, Plus } from 'lucide-react'
+import { CampaignEditableFields } from '@/components/entities/campaign-editable-fields'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -38,17 +39,18 @@ export default async function CampaignPage({ params }: Props) {
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
         <div className="flex items-start justify-between">
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-muted-foreground mb-1">
               <Link href="/campaigns" className="hover:underline">Campaigns</Link>
               {' / '}
             </p>
-            <h1 className="text-3xl font-bold">{campaign.name}</h1>
-            {campaign.description && (
-              <p className="text-muted-foreground mt-2">{campaign.description}</p>
-            )}
+            <CampaignEditableFields
+              campaignId={campaign.id}
+              name={campaign.name}
+              description={campaign.description}
+            />
           </div>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full mt-2">
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full mt-2 ml-4">
             {membership.role}
           </span>
         </div>

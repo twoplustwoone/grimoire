@@ -59,4 +59,27 @@ campaigns.get('/:id', async (c) => {
   return c.json({ ...membership.campaign, role: membership.role })
 })
 
+// Update a campaign
+campaigns.patch('/:id', async (c) => {
+  const user = c.get('user')
+  const id = c.req.param('id')
+
+  const membership = await prisma.campaignMembership.findFirst({
+    where: { campaignId: id, userId: user.id },
+    include: { campaign: true },
+  })
+  if (!membership) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  const updated = await prisma.campaign.update({
+    where: { id },
+    data: {
+      name: body.name?.trim() ?? membership.campaign.name,
+      description: body.description !== undefined ? body.description?.trim() ?? null : membership.campaign.description,
+    },
+  })
+
+  return c.json(updated)
+})
+
 export default campaigns

@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Clock } from 'lucide-react'
+import { FactionEditableFields } from '@/components/entities/faction-editable-fields'
 
 interface Props { params: Promise<{ id: string; factionId: string }> }
 
@@ -33,9 +34,14 @@ export default async function FactionDetailPage({ params }: Props) {
           <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}
           <Link href={`/campaigns/${campaignId}/factions`} className="hover:underline">Factions</Link>{' / '}
         </p>
-        <h1 className="text-3xl font-bold">{faction.name}</h1>
-        {faction.description && <p className="text-muted-foreground mt-2">{faction.description}</p>}
-        {faction.agenda && <p className="text-sm text-muted-foreground mt-1 italic">Agenda: {faction.agenda}</p>}
+        <FactionEditableFields
+          campaignId={campaignId}
+          factionId={factionId}
+          name={faction.name}
+          description={faction.description}
+          agenda={faction.agenda}
+          status={faction.status}
+        />
       </div>
 
       {faction.memberships.length > 0 && (
