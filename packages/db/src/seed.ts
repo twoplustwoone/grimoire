@@ -11,17 +11,29 @@ async function main() {
     console.log('🧹 Cleared existing seed campaign')
   }
 
-  let user = await prisma.user.findFirst({
-    where: { email: 'gm@grimoire.dev' },
+  const BASE_URL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3005'
+
+  // Create user via Better Auth so they have a real password and Account row
+  const signUpRes = await fetch(`${BASE_URL}/api/auth/sign-up/email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: 'gm@grimoire.dev',
+      password: 'grimoire123',
+      name: 'Seed GM',
+    }),
   })
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        email: 'gm@grimoire.dev',
-        name: 'Seed GM',
-        emailVerified: true,
-      },
-    })
+
+  let user
+  if (signUpRes.ok) {
+    const data = await signUpRes.json()
+    user = data.user
+    console.log('✅ Created seed user via Better Auth')
+  } else {
+    // User may already exist — try to find them
+    user = await prisma.user.findFirst({ where: { email: 'gm@grimoire.dev' } })
+    if (!user) throw new Error('Could not create or find seed user')
+    console.log('✅ Found existing seed user')
   }
 
   const campaign = await prisma.campaign.create({
@@ -153,7 +165,7 @@ async function main() {
   console.log('')
   console.log('🎲 Seed complete!')
   console.log(`   Campaign: ${campaign.name}`)
-  console.log(`   Login with: gm@grimoire.dev`)
+  console.log(`   Login: gm@grimoire.dev / grimoire123`)
   console.log(`   6 NPCs, 5 locations, 3 factions, 3 threads, 3 clues`)
   console.log(`   1 completed session with notes and AI recap`)
   console.log(`   1 planned session`)
