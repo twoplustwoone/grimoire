@@ -47,6 +47,10 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV API_INTERNAL_URL=""
+ENV BETTER_AUTH_SECRET=""
+ENV BETTER_AUTH_URL=""
+ENV DATABASE_URL=""
 
 # Copy the standalone Next.js output
 COPY --from=builder /app/apps/web/.next/standalone ./
