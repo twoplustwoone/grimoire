@@ -30,6 +30,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
   const [mentionStart, setMentionStart] = useState<number>(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
+  const dismissedRef = useRef(false)
 
   useEffect(() => {
     if (mentionQuery === null || !campaignId) {
@@ -38,12 +39,9 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
     }
 
     const timeout = setTimeout(async () => {
-      if (mentionQuery.length === 0) {
-        setMentionResults([])
-        return
-      }
+      const q = mentionQuery.length > 0 ? mentionQuery : 'a'
       const res = await fetch(
-        `/api/v1/search?campaignId=${campaignId}&q=${encodeURIComponent(mentionQuery)}`,
+        `/api/v1/search?campaignId=${campaignId}&q=${encodeURIComponent(q)}`,
         { credentials: 'include' }
       )
       if (res.ok) {
@@ -51,10 +49,29 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
         setMentionResults(data.slice(0, 8))
         setSelectedIndex(0)
       }
-    }, 150)
+    }, mentionQuery.length === 0 ? 0 : 150)
 
     return () => clearTimeout(timeout)
   }, [mentionQuery, campaignId])
+
+  useEffect(() => {
+    if (mentionQuery === null) return
+
+    function handleOutsideClick(e: MouseEvent) {
+      if (
+        textareaRef.current &&
+        !textareaRef.current.contains(e.target as Node) &&
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
+        setMentionQuery(null)
+        setMentionResults([])
+      }
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [mentionQuery])
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const newValue = e.target.value
@@ -69,6 +86,10 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
       const isValidTrigger = charBeforeAt === ' ' || charBeforeAt === '\n' || atIndex === 0
 
       if (isValidTrigger && !textAfterAt.includes(' ') && textAfterAt.length <= 30) {
+        if (dismissedRef.current) {
+          onChange(newValue)
+          return
+        }
         setMentionQuery(textAfterAt)
         setMentionStart(atIndex)
         onChange(newValue)
@@ -76,6 +97,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
       }
     }
 
+    dismissedRef.current = false
     setMentionQuery(null)
     setMentionResults([])
     onChange(newValue)
@@ -100,18 +122,18 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (mentionResults.length > 0) {
-      if (e.key === 'ArrowDown') {
+    if (mentionQuery !== null) {
+      if (e.key === 'ArrowDown' && mentionResults.length > 0) {
         e.preventDefault()
         setSelectedIndex((i) => Math.min(i + 1, mentionResults.length - 1))
         return
       }
-      if (e.key === 'ArrowUp') {
+      if (e.key === 'ArrowUp' && mentionResults.length > 0) {
         e.preventDefault()
         setSelectedIndex((i) => Math.max(i - 1, 0))
         return
       }
-      if (e.key === 'Enter' || e.key === 'Tab') {
+      if ((e.key === 'Enter' || e.key === 'Tab') && mentionResults.length > 0) {
         e.preventDefault()
         insertMention(mentionResults[selectedIndex])
         return
@@ -119,6 +141,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
       if (e.key === 'Escape') {
         setMentionQuery(null)
         setMentionResults([])
+        dismissedRef.current = true
         return
       }
     }
@@ -134,15 +157,21 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onBlur={() => {
+          setTimeout(() => {
+            setMentionQuery(null)
+            setMentionResults([])
+          }, 150)
+        }}
         placeholder={placeholder}
         rows={rows}
         className={className}
       />
 
-      {mentionResults.length > 0 && (
+      {mentionQuery !== null && (
         <div
           ref={popoverRef}
-          className="absolute z-50 w-72 bg-card border rounded-lg shadow-lg overflow-hidden mt-1"
+          className="absolute z-50 w-72 max-w-[calc(100vw-2rem)] bg-card border rounded-lg shadow-lg overflow-hidden mt-1"
           style={{ bottom: '100%', left: 0, marginBottom: '4px' }}
         >
           <div className="px-2 py-1.5 border-b">
@@ -160,7 +189,9 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
                   insertMention(result)
                 }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
-                  i === selectedIndex ? 'bg-muted text-foreground' : 'hover:bg-muted/50'
+                  i === selectedIndex
+                    ? 'bg-accent text-accent-foreground border-l-2 border-primary'
+                    : 'hover:bg-muted/50'
                 }`}
               >
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${colorClass(result.type)}`}>
@@ -169,9 +200,19 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
                 <span className="flex-1 truncate">{result.name}</span>
               </button>
             ))}
+            {mentionResults.length === 0 && mentionQuery.length > 0 && (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                No matches for &ldquo;{mentionQuery}&rdquo;
+              </div>
+            )}
+            {mentionResults.length === 0 && mentionQuery.length === 0 && (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                Searching...
+              </div>
+            )}
           </div>
           <div className="px-2 py-1 border-t">
-            <p className="text-[10px] text-muted-foreground">↑↓ navigate · ↵ insert · esc cancel</p>
+            <p className="text-xs text-foreground/60">↑↓ navigate · ↵ insert · esc cancel</p>
           </div>
         </div>
       )}

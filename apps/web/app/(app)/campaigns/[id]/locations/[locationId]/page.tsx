@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MapPin, Users, Clock } from 'lucide-react'
 import { LocationEditableFields } from '@/components/entities/location-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
-import { MentionRenderer } from '@/components/mentions/mention-renderer'
+import { EntityNotes } from '@/components/entities/entity-notes'
 
 interface Props { params: Promise<{ id: string; locationId: string }> }
 
@@ -76,7 +76,12 @@ export default async function LocationDetailPage({ params }: Props) {
         )}
       </div>
 
-      {notes.length > 0 && (<Card className="mb-4"><CardHeader><CardTitle className="text-base">Notes</CardTitle></CardHeader><CardContent><div className="space-y-3">{notes.map((n) => (<div key={n.id} className="text-sm border-l-2 pl-3"><p><MentionRenderer content={n.content} campaignId={campaignId} /></p><p className="text-xs text-muted-foreground mt-1">{new Date(n.createdAt).toLocaleDateString()}</p></div>))}</div></CardContent></Card>)}
+      <div className="mb-4">
+        <EntityNotes
+          notes={notes}
+          addNoteEndpoint={`/api/v1/campaigns/${campaignId}/locations/${locationId}/notes`}
+        />
+      </div>
       {changelog.length > 0 && (<Card><CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock className="h-4 w-4" />History</CardTitle></CardHeader><CardContent><div className="space-y-2">{changelog.map((e) => (<div key={e.id} className="flex items-start justify-between text-sm"><div><span className="font-medium">{e.field}</span>{e.oldValue && e.newValue && <span className="text-muted-foreground"> changed from <span className="line-through">{e.oldValue}</span> to {e.newValue}</span>}{!e.oldValue && e.newValue && <span className="text-muted-foreground"> set to {e.newValue}</span>}</div><span className="text-xs text-muted-foreground ml-4 shrink-0">{new Date(e.createdAt).toLocaleDateString()}</span></div>))}</div></CardContent></Card>)}
 
       <div className="mt-8 pt-6 border-t border-destructive/20">

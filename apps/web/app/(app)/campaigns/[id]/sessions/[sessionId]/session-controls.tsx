@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,6 +32,7 @@ export function SessionControls({
   initialNotes,
   initialAiSummary,
 }: Props) {
+  const router = useRouter()
   const [status, setStatus] = useState(initialStatus)
   const [gmSummary, setGmSummary] = useState(initialGmSummary)
   const [notes, setNotes] = useState<Note[]>(initialNotes)
@@ -111,6 +113,8 @@ export function SessionControls({
       }
     )
     setSavingSummary(false)
+    router.refresh()
+    setTimeout(() => router.replace(window.location.pathname), 100)
   }
 
   async function markCompleted() {

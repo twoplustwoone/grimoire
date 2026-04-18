@@ -9,7 +9,7 @@ import { Clock } from 'lucide-react'
 import { NpcEditableFields } from '@/components/entities/npc-editable-fields'
 import { NpcAssignments } from '@/components/entities/npc-assignments'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
-import { MentionRenderer } from '@/components/mentions/mention-renderer'
+import { EntityNotes } from '@/components/entities/entity-notes'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
@@ -100,21 +100,12 @@ export default async function NPCDetailPage({ params }: Props) {
         availableFactions={availableFactions}
       />
 
-      {notes.length > 0 && (
-        <Card className="mb-4">
-          <CardHeader><CardTitle className="text-base">Notes</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {notes.map((note) => (
-                <div key={note.id} className="text-sm border-l-2 pl-3">
-                  <p><MentionRenderer content={note.content} campaignId={campaignId} /></p>
-                  <p className="text-xs text-muted-foreground mt-1">{new Date(note.createdAt).toLocaleDateString()}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <div className="mb-4">
+        <EntityNotes
+          notes={notes}
+          addNoteEndpoint={`/api/v1/campaigns/${campaignId}/npcs/${npcId}/notes`}
+        />
+      </div>
 
       {changelog.length > 0 && (
         <Card>

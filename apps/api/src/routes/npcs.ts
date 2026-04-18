@@ -154,6 +154,30 @@ npcs.patch('/:npcId', async (c) => {
   return c.json(updated)
 })
 
+// Add a note to an NPC
+npcs.post('/:npcId/notes', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const npcId = c.req.param('npcId')!
+
+  if (!await getCampaignMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.create({
+    data: {
+      entityType: 'NPC',
+      entityId: npcId,
+      campaignId,
+      authorId: user.id,
+      content: body.content.trim(),
+    },
+  })
+
+  return c.json(note, 201)
+})
+
 // Add NPC to a faction
 npcs.post('/:npcId/factions', async (c) => {
   const user = c.get('user')

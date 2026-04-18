@@ -102,6 +102,29 @@ locations.patch('/:locationId', async (c) => {
   return c.json(updated)
 })
 
+locations.post('/:locationId/notes', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const locationId = c.req.param('locationId')!
+
+  if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.create({
+    data: {
+      entityType: 'LOCATION',
+      entityId: locationId,
+      campaignId,
+      authorId: user.id,
+      content: body.content.trim(),
+    },
+  })
+
+  return c.json(note, 201)
+})
+
 locations.delete('/:locationId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!

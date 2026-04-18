@@ -99,6 +99,29 @@ factions.patch('/:factionId', async (c) => {
   return c.json(updated)
 })
 
+factions.post('/:factionId/notes', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const factionId = c.req.param('factionId')!
+
+  if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.create({
+    data: {
+      entityType: 'FACTION',
+      entityId: factionId,
+      campaignId,
+      authorId: user.id,
+      content: body.content.trim(),
+    },
+  })
+
+  return c.json(note, 201)
+})
+
 factions.delete('/:factionId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
