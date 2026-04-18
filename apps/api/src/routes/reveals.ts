@@ -12,6 +12,116 @@ async function getGMMembership(userId: string, campaignId: string) {
   })
 }
 
+reveals.get('/preview', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const targetUserId = c.req.query('userId')
+
+  if (!targetUserId) return c.json({ error: 'userId is required' }, 400)
+
+  if (!await getGMMembership(user.id, campaignId)) {
+    return c.json({ error: 'Not authorized' }, 403)
+  }
+
+  const targetMembership = await prisma.campaignMembership.findFirst({
+    where: { campaignId, userId: targetUserId },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  })
+  if (!targetMembership) return c.json({ error: 'Player not found' }, 404)
+
+  const entityReveals = await prisma.entityReveal.findMany({
+    where: {
+      campaignId,
+      OR: [
+        { userId: targetUserId },
+        { userId: null },
+      ],
+    },
+  })
+
+  const allNodes = await prisma.informationNode.findMany({
+    where: { campaignId },
+  })
+
+  const specificRevealIds = await prisma.informationNodeReveal.findMany({
+    where: { membership: { userId: targetUserId, campaignId } },
+    select: { informationNodeId: true },
+  })
+  const specificRevealSet = new Set(specificRevealIds.map(r => r.informationNodeId))
+
+  const visibleNodes = allNodes.filter(node => {
+    if (node.visibility === 'GM_ONLY') return false
+    if (node.visibility === 'ALL_PLAYERS') return true
+    if (node.visibility === 'SPECIFIC_PLAYERS') return specificRevealSet.has(node.id)
+    return false
+  })
+
+  const revealMap = new Map(entityReveals.map(r => [r.entityId, r]))
+
+  const revealedByType = {
+    NPC: entityReveals.filter(r => r.entityType === 'NPC').map(r => r.entityId),
+    LOCATION: entityReveals.filter(r => r.entityType === 'LOCATION').map(r => r.entityId),
+    FACTION: entityReveals.filter(r => r.entityType === 'FACTION').map(r => r.entityId),
+    THREAD: entityReveals.filter(r => r.entityType === 'THREAD').map(r => r.entityId),
+    CLUE: entityReveals.filter(r => r.entityType === 'CLUE').map(r => r.entityId),
+  }
+
+  const [npcs, locations, factions, threads, clues] = await Promise.all([
+    revealedByType.NPC.length > 0
+      ? prisma.nPC.findMany({ where: { id: { in: revealedByType.NPC }, deletedAt: null }, select: { id: true, name: true, description: true } })
+      : [],
+    revealedByType.LOCATION.length > 0
+      ? prisma.location.findMany({ where: { id: { in: revealedByType.LOCATION }, deletedAt: null }, select: { id: true, name: true, description: true } })
+      : [],
+    revealedByType.FACTION.length > 0
+      ? prisma.faction.findMany({ where: { id: { in: revealedByType.FACTION }, deletedAt: null }, select: { id: true, name: true, description: true } })
+      : [],
+    revealedByType.THREAD.length > 0
+      ? prisma.thread.findMany({ where: { id: { in: revealedByType.THREAD }, deletedAt: null }, select: { id: true, title: true, description: true } })
+      : [],
+    revealedByType.CLUE.length > 0
+      ? prisma.clue.findMany({ where: { id: { in: revealedByType.CLUE }, deletedAt: null }, select: { id: true, title: true, description: true } })
+      : [],
+  ])
+
+  function applyNameReveal(entity: { id: string; name: string; description: string | null }) {
+    const reveal = revealMap.get(entity.id)
+    return {
+      id: entity.id,
+      name: reveal?.displayName ?? entity.name,
+      description: reveal?.displayDescription ?? entity.description ?? '',
+      isNameRevealed: !reveal?.displayName,
+      nodes: visibleNodes
+        .filter(n => n.entityId === entity.id)
+        .map(n => ({ id: n.id, title: n.title, content: n.content })),
+    }
+  }
+
+  function applyTitleReveal(entity: { id: string; title: string; description: string | null }) {
+    const reveal = revealMap.get(entity.id)
+    return {
+      id: entity.id,
+      name: reveal?.displayName ?? entity.title,
+      description: reveal?.displayDescription ?? entity.description ?? '',
+      isNameRevealed: !reveal?.displayName,
+      nodes: visibleNodes
+        .filter(n => n.entityId === entity.id)
+        .map(n => ({ id: n.id, title: n.title, content: n.content })),
+    }
+  }
+
+  return c.json({
+    player: targetMembership.user,
+    data: {
+      npcs: npcs.map(applyNameReveal),
+      locations: locations.map(applyNameReveal),
+      factions: factions.map(applyNameReveal),
+      threads: threads.map(applyTitleReveal),
+      clues: clues.map(applyTitleReveal),
+    },
+  })
+})
+
 reveals.get('/', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!

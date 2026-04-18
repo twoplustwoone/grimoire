@@ -10,6 +10,7 @@ import { CampaignEditableFields } from '@/components/entities/campaign-editable-
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { DemoBanner } from '@/components/campaign/demo-banner'
 import { InvitePlayers } from '@/components/campaign/invite-players'
+import { PlayerPreview } from '@/components/campaign/player-preview'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -122,6 +123,22 @@ export default async function CampaignPage({ params }: Props) {
           />
         </div>
       )}
+
+      {membership.role === 'GM' && (() => {
+        const playerMembers = members
+          .filter(m => m.role === 'PLAYER')
+          .map(m => ({
+            userId: m.userId,
+            name: m.user.name,
+            email: m.user.email,
+          }))
+        if (playerMembers.length === 0) return null
+        return (
+          <div className="mt-8">
+            <PlayerPreview campaignId={campaignId} players={playerMembers} />
+          </div>
+        )
+      })()}
 
       {membership.role === 'GM' && (
         <div className="mt-8 pt-6 border-t border-destructive/20">
