@@ -1,0 +1,193 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  type Node,
+  type Edge,
+  BackgroundVariant,
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { EntityNode } from './entity-node'
+import { buildGraphLayout } from '@/lib/graph-layout'
+import { useRouter } from 'next/navigation'
+
+const nodeTypes = { entityNode: EntityNode }
+
+interface Props {
+  campaignId: string
+}
+
+type FilterType = 'ALL' | 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE'
+
+export function CampaignGraph({ campaignId }: Props) {
+  const router = useRouter()
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filter, setFilter] = useState<FilterType>('ALL')
+  const [allNodes, setAllNodes] = useState<Node[]>([])
+
+  useEffect(() => {
+    async function loadGraph() {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/v1/graph?campaignId=${campaignId}`, {
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error('Failed to load graph')
+        const data = await res.json()
+        const { nodes: layoutNodes, edges: layoutEdges } = buildGraphLayout(
+          data.nodes,
+          data.edges,
+          campaignId
+        )
+        setAllNodes(layoutNodes)
+        setNodes(layoutNodes)
+        setEdges(layoutEdges)
+      } catch {
+        setError('Failed to load relationship graph')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadGraph()
+  }, [campaignId, setNodes, setEdges])
+
+  useEffect(() => {
+    if (filter === 'ALL') {
+      setNodes(allNodes)
+    } else {
+      setNodes(allNodes.filter(n => (n.data as { type: string }).type === filter))
+    }
+  }, [filter, allNodes, setNodes])
+
+  function handleNodeClick(_: React.MouseEvent, node: Node) {
+    const data = node.data as { type: string }
+    const typePaths: Record<string, string> = {
+      NPC: 'npcs',
+      LOCATION: 'locations',
+      FACTION: 'factions',
+      THREAD: 'threads',
+      CLUE: 'clues',
+    }
+    const path = typePaths[data.type]
+    if (path) {
+      router.push(`/campaigns/${campaignId}/${path}/${node.id}`)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        Loading graph...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full text-destructive">
+        {error}
+      </div>
+    )
+  }
+
+  const filterTypes: FilterType[] = ['ALL', 'NPC', 'LOCATION', 'FACTION', 'THREAD', 'CLUE']
+
+  return (
+    <div className="w-full h-full relative">
+      <div className="absolute top-4 left-4 z-10 flex gap-2">
+        {filterTypes.map((type) => (
+          <button
+            key={type}
+            onClick={() => setFilter(type)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+              filter === type
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card text-muted-foreground border-border hover:text-foreground'
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
+        onNodeClick={handleNodeClick}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.2}
+        maxZoom={2}
+        className="bg-background"
+      >
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+          color="currentColor"
+          className="text-muted-foreground/20"
+        />
+        <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
+        <MiniMap
+          className="!bg-card !border-border"
+          nodeColor={(node) => {
+            const colors: Record<string, string> = {
+              NPC: '#60a5fa',
+              LOCATION: '#34d399',
+              FACTION: '#a78bfa',
+              THREAD: '#fb923c',
+              CLUE: '#fbbf24',
+            }
+            return colors[(node.data as { type: string }).type] ?? '#6b7280'
+          }}
+        />
+      </ReactFlow>
+
+      <div className="absolute bottom-16 right-4 z-10 bg-card border rounded-lg p-3 text-xs space-y-1.5">
+        <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px] mb-2">Legend</p>
+        {[
+          { color: 'bg-blue-400', label: 'NPC' },
+          { color: 'bg-green-400', label: 'Location' },
+          { color: 'bg-purple-400', label: 'Faction' },
+          { color: 'bg-orange-400', label: 'Thread' },
+          { color: 'bg-yellow-400', label: 'Clue' },
+        ].map(({ color, label }) => (
+          <div key={label} className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${color}`} />
+            <span className="text-muted-foreground">{label}</span>
+          </div>
+        ))}
+        <div className="border-t mt-2 pt-2 space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-px bg-yellow-400" />
+            <span className="text-muted-foreground">Relationship</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-px bg-purple-400" />
+            <span className="text-muted-foreground">Membership</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-px bg-green-400" />
+            <span className="text-muted-foreground">Location</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-px border-t-2 border-dashed border-orange-400" />
+            <span className="text-muted-foreground">Thread</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
