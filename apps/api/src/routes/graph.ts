@@ -52,18 +52,9 @@ graph.get('/', async (c) => {
       id: `rel-${r.id}`,
       source: r.entityIdA,
       target: r.entityIdB,
-      label: r.label,
+      label: r.bidirectional ? `\u27F7 ${r.label}` : r.label,
       type: 'relationship',
     })
-    if (r.bidirectional) {
-      edges.push({
-        id: `rel-${r.id}-rev`,
-        source: r.entityIdB,
-        target: r.entityIdA,
-        label: r.label,
-        type: 'relationship',
-      })
-    }
   })
 
   factionMemberships.forEach(fm => {

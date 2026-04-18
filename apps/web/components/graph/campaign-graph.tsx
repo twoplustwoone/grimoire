@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -103,21 +103,34 @@ export function CampaignGraph({ campaignId }: Props) {
 
   return (
     <div className="w-full h-full relative">
-      <div className="absolute top-4 left-4 z-10 flex gap-2">
-        {filterTypes.map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
-              filter === type
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card text-muted-foreground border-border hover:text-foreground'
-            }`}
-          >
-            {type}
-          </button>
+      <div className="absolute top-4 left-4 right-4 z-10 flex gap-1.5 flex-wrap">
+        {filterTypes.map((type, i) => (
+          <Fragment key={type}>
+            <button
+              onClick={() => setFilter(type)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors border ${
+                filter === type
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-card text-muted-foreground border-border hover:text-foreground'
+              }`}
+            >
+              {type}
+            </button>
+            {i === 0 && <div className="w-px bg-border self-stretch mx-0.5" />}
+          </Fragment>
         ))}
       </div>
+
+      {!loading && !error && allNodes.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+          <div className="text-center space-y-2 max-w-sm px-6">
+            <p className="text-muted-foreground font-medium">No entities yet</p>
+            <p className="text-sm text-muted-foreground/70">
+              Create NPCs, Locations, Factions, Threads, or Clues to see them connected here.
+            </p>
+          </div>
+        </div>
+      )}
 
       <ReactFlow
         nodes={nodes}
@@ -155,7 +168,7 @@ export function CampaignGraph({ campaignId }: Props) {
         />
       </ReactFlow>
 
-      <div className="absolute bottom-16 right-4 z-10 bg-card border rounded-lg p-3 text-xs space-y-1.5">
+      <div className="absolute top-16 right-4 z-10 bg-card border rounded-lg p-3 text-xs space-y-1.5">
         <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px] mb-2">Legend</p>
         {[
           { color: 'bg-blue-400', label: 'NPC' },
@@ -183,7 +196,7 @@ export function CampaignGraph({ campaignId }: Props) {
             <span className="text-muted-foreground">Location</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-px border-t-2 border-dashed border-orange-400" />
+            <div className="w-6 h-px border-t-2 border-dashed border-orange-400" />
             <span className="text-muted-foreground">Thread</span>
           </div>
         </div>
