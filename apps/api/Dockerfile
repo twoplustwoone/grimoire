@@ -35,6 +35,9 @@ RUN pnpm --filter @grimoire/api build
 
 WORKDIR /app/apps/api
 
+COPY apps/api/entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
+
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "entrypoint.sh"]
