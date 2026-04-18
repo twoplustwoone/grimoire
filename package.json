@@ -8,6 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "seed": "pnpm --filter @grimoire/db seed",
+    "mcp": "pnpm --filter @grimoire/mcp dev",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @grimoire/db migrate",
