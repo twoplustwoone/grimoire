@@ -36,7 +36,7 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:flex flex-col w-64 border-r bg-card">
+    <aside className="hidden md:flex flex-col w-64 border-r bg-sidebar">
       <div className="p-6 border-b">
         <span className="text-xl font-bold tracking-tight">Grimoire</span>
         <p className="text-xs text-muted-foreground mt-1 truncate">{user.email}</p>
@@ -49,6 +49,7 @@ export function Sidebar({ user }: SidebarProps) {
             <Link
               key={item.name}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                 isActive

@@ -37,7 +37,12 @@ export function SignUpForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <div className="w-full max-w-md">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Grimoire</h1>
+        <p className="text-muted-foreground mt-1">Your campaign companion</p>
+      </div>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
         <CardDescription>Start managing your campaigns with Grimoire</CardDescription>
@@ -87,5 +92,6 @@ export function SignUpForm() {
         </p>
       </CardContent>
     </Card>
+    </div>
   )
 }

@@ -17,9 +17,12 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { npcId } = await params
-  const npc = await prisma.nPC.findUnique({ where: { id: npcId }, select: { name: true } })
-  return { title: npc?.name ?? 'NPC' }
+  const { id, npcId } = await params
+  const [npc, campaign] = await Promise.all([
+    prisma.nPC.findUnique({ where: { id: npcId }, select: { name: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
+  return { title: `${npc?.name ?? 'NPC'} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 export default async function NPCDetailPage({ params }: Props) {

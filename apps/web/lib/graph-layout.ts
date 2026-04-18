@@ -70,10 +70,8 @@ export function buildGraphLayout(
       type: 'smoothstep',
       animated: e.type === 'thread_tag',
       style,
-      labelStyle: { fill: '#9ca3af', fontSize: 10 },
-      labelBgStyle: { fill: '#1a1a2e', fillOpacity: 0.85 },
-      labelBgPadding: [2, 4] as [number, number],
-      labelBgBorderRadius: 3,
+      labelStyle: { fill: '#9ca3af', fontSize: 10, fontFamily: 'inherit' },
+      labelBgStyle: { fill: 'transparent' },
     }
   })
 

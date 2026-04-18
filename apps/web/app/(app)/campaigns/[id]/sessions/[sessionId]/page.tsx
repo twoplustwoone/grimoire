@@ -15,10 +15,14 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { sessionId } = await params
-  const gameSession = await prisma.gameSession.findUnique({ where: { id: sessionId }, select: { number: true, title: true } })
+  const { id, sessionId } = await params
+  const [gameSession, campaign] = await Promise.all([
+    prisma.gameSession.findUnique({ where: { id: sessionId }, select: { number: true, title: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
   if (!gameSession) return { title: 'Session' }
-  return { title: `Session ${gameSession.number}${gameSession.title ? ` — ${gameSession.title}` : ''}` }
+  const sessionLabel = `Session ${gameSession.number}${gameSession.title ? ` — ${gameSession.title}` : ''}`
+  return { title: `${sessionLabel} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 const statusColors: Record<string, string> = {

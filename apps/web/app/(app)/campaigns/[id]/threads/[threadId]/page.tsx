@@ -14,9 +14,12 @@ import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 interface Props { params: Promise<{ id: string; threadId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { threadId } = await params
-  const thread = await prisma.thread.findUnique({ where: { id: threadId }, select: { title: true } })
-  return { title: thread?.title ?? 'Thread' }
+  const { id, threadId } = await params
+  const [thread, campaign] = await Promise.all([
+    prisma.thread.findUnique({ where: { id: threadId }, select: { title: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
+  return { title: `${thread?.title ?? 'Thread'} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 const entityTypeColors: Record<string, string> = {

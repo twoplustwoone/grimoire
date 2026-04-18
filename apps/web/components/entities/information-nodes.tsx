@@ -4,6 +4,17 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { BookOpen, Eye, EyeOff, Trash2, Pencil, Check, X } from 'lucide-react'
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
@@ -131,6 +142,7 @@ export function InformationNodes({ nodes: initialNodes, campaignId }: Props) {
                           onClick={() => handleVisibilityToggle(node)}
                           className={`p-0.5 transition-colors ${visConfig.color} hover:opacity-70`}
                           title={`Visibility: ${visConfig.label} — click to toggle`}
+                          aria-label={`Visibility: ${visConfig.label} — click to toggle`}
                         >
                           <VisIcon className="h-3.5 w-3.5" />
                         </button>
@@ -141,15 +153,37 @@ export function InformationNodes({ nodes: initialNodes, campaignId }: Props) {
                             setEditContent(node.content)
                           }}
                           className="text-muted-foreground hover:text-foreground p-0.5 transition-colors"
+                          aria-label="Edit information node"
                         >
                           <Pencil className="h-3 w-3" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(node.id)}
-                          className="text-muted-foreground hover:text-destructive p-0.5 transition-colors"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              className="text-muted-foreground hover:text-destructive p-0.5 transition-colors"
+                              aria-label="Delete information node"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this information node?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This information node will be permanently deleted.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(node.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                     <MentionRenderer content={node.content} campaignId={campaignId} />

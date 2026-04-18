@@ -132,6 +132,21 @@ export function CampaignGraph({ campaignId }: Props) {
         </div>
       )}
 
+      <div className="absolute top-14 left-4 right-4 z-10 flex gap-3 flex-wrap md:hidden">
+        {[
+          { color: 'bg-blue-400', label: 'NPC' },
+          { color: 'bg-green-400', label: 'Loc' },
+          { color: 'bg-purple-400', label: 'Faction' },
+          { color: 'bg-orange-400', label: 'Thread' },
+          { color: 'bg-yellow-400', label: 'Clue' },
+        ].map(({ color, label }) => (
+          <div key={label} className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${color}`} />
+            <span className="text-[10px] text-muted-foreground">{label}</span>
+          </div>
+        ))}
+      </div>
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -139,6 +154,7 @@ export function CampaignGraph({ campaignId }: Props) {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeClick}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}
@@ -153,22 +169,24 @@ export function CampaignGraph({ campaignId }: Props) {
           className="text-muted-foreground/20"
         />
         <Controls className="[&>button]:bg-card [&>button]:border-border [&>button]:text-foreground" />
-        <MiniMap
-          className="!bg-card !border-border"
-          nodeColor={(node) => {
-            const colors: Record<string, string> = {
-              NPC: '#60a5fa',
-              LOCATION: '#34d399',
-              FACTION: '#a78bfa',
-              THREAD: '#fb923c',
-              CLUE: '#fbbf24',
-            }
-            return colors[(node.data as { type: string }).type] ?? '#6b7280'
-          }}
-        />
+        <div className="hidden md:block">
+          <MiniMap
+            className="!bg-card !border-border"
+            nodeColor={(node) => {
+              const colors: Record<string, string> = {
+                NPC: '#60a5fa',
+                LOCATION: '#34d399',
+                FACTION: '#a78bfa',
+                THREAD: '#fb923c',
+                CLUE: '#fbbf24',
+              }
+              return colors[(node.data as { type: string }).type] ?? '#6b7280'
+            }}
+          />
+        </div>
       </ReactFlow>
 
-      <div className="absolute top-16 right-4 z-10 bg-card border rounded-lg p-3 text-xs space-y-1.5">
+      <div className="absolute top-16 right-4 z-10 bg-card border rounded-lg p-3 text-xs space-y-1.5 hidden md:block">
         <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px] mb-2">Legend</p>
         {[
           { color: 'bg-blue-400', label: 'NPC' },

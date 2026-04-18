@@ -7,6 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Plus, Globe, Calendar, Pencil, Trash2, X, Check } from 'lucide-react'
 import Link from 'next/link'
 
@@ -323,15 +334,37 @@ function EventCard({
               <button
                 onClick={() => onStartEdit(event)}
                 className="text-muted-foreground hover:text-foreground p-1 rounded transition-colors"
+                aria-label="Edit event"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </button>
-              <button
-                onClick={() => onDelete(event.id)}
-                className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                    aria-label="Delete event"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this world event?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This world event will be permanently deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDelete(event.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         )}

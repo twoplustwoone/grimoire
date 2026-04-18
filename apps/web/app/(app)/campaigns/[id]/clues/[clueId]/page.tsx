@@ -14,9 +14,12 @@ import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 interface Props { params: Promise<{ id: string; clueId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { clueId } = await params
-  const clue = await prisma.clue.findUnique({ where: { id: clueId }, select: { title: true } })
-  return { title: clue?.title ?? 'Clue' }
+  const { id, clueId } = await params
+  const [clue, campaign] = await Promise.all([
+    prisma.clue.findUnique({ where: { id: clueId }, select: { title: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
+  return { title: `${clue?.title ?? 'Clue'} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 export default async function ClueDetailPage({ params }: Props) {

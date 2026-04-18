@@ -31,8 +31,8 @@ export default async function CampaignsPage() {
         </div>
         <Button asChild>
           <Link href="/campaigns/new">
-            <Plus className="h-4 w-4 mr-2" />
-            New Campaign
+            <Plus className="h-4 w-4 mr-0 sm:mr-2" />
+            <span className="hidden sm:inline">New Campaign</span>
           </Link>
         </Button>
       </div>

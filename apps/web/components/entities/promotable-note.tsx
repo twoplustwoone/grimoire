@@ -4,6 +4,17 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
 import { ArrowUpCircle, Check, X, Pencil, Trash2 } from 'lucide-react'
 
@@ -153,21 +164,44 @@ export function PromotableNote({
               onClick={() => setShowPromoteForm(true)}
               className="text-muted-foreground hover:text-primary transition-colors p-0.5"
               title="Promote to information node"
+              aria-label="Promote to information node"
             >
               <ArrowUpCircle className="h-3 w-3" />
             </button>
             <button
               onClick={() => onStartEdit?.(note.id, note.content)}
               className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+              aria-label="Edit note"
             >
               <Pencil className="h-3 w-3" />
             </button>
-            <button
-              onClick={() => onDelete?.(note.id)}
-              className="text-muted-foreground hover:text-destructive transition-colors p-0.5"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  className="text-muted-foreground hover:text-destructive transition-colors p-0.5"
+                  aria-label="Delete note"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete note?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This note will be permanently deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onDelete?.(note.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </div>

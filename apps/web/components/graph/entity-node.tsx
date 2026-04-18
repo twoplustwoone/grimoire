@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { Users, MapPin, Shield, GitBranch, Search } from 'lucide-react'
+import { Users, MapPin, Shield, GitBranch, Search, ExternalLink } from 'lucide-react'
 
 function isLightTheme(): boolean {
   if (typeof document === 'undefined') return false
@@ -72,7 +72,7 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
       <Handle type="target" position={Position.Top} className="!border-0 !bg-white/20 !w-2 !h-2" />
       <div
         className={`
-          relative px-3 py-2 rounded-lg border-2 backdrop-blur-sm
+          group relative px-3 py-2 rounded-lg border-2 backdrop-blur-sm
           min-w-[120px] max-w-[180px] cursor-pointer
           transition-all duration-150
           ${config.bg} ${borderClass}
@@ -93,6 +93,9 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
             </span>
           </div>
         )}
+        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ExternalLink className={`h-2.5 w-2.5 ${mutedTextColor}`} />
+        </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="!border-0 !bg-white/20 !w-2 !h-2" />
     </>

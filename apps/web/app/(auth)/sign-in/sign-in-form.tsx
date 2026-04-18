@@ -35,7 +35,12 @@ export function SignInForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <div className="w-full max-w-md">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Grimoire</h1>
+        <p className="text-muted-foreground mt-1">Your campaign companion</p>
+      </div>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Sign in to Grimoire</CardTitle>
         <CardDescription>Enter your email and password to continue</CardDescription>
@@ -75,5 +80,6 @@ export function SignInForm() {
         </p>
       </CardContent>
     </Card>
+    </div>
   )
 }

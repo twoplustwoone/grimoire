@@ -22,7 +22,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
 
   return (
     <>
-      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b bg-card">
+      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b bg-sidebar">
         <span className="text-lg font-bold tracking-tight">Grimoire</span>
         <Button
           variant="ghost"
@@ -35,7 +35,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
       </header>
       {open && (
         <div className="md:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={() => setOpen(false)}>
-          <nav className="absolute top-0 left-0 w-72 h-full bg-card border-r p-6 flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <nav className="absolute top-0 left-0 w-72 h-full bg-sidebar border-r p-6 flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <span className="text-lg font-bold">Grimoire</span>
               <Button
@@ -57,6 +57,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
                     key={item.name}
                     href={item.href}
                     onClick={() => setOpen(false)}
+                    aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                       isActive

@@ -14,9 +14,12 @@ import { InformationNodes } from '@/components/entities/information-nodes'
 interface Props { params: Promise<{ id: string; locationId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locationId } = await params
-  const location = await prisma.location.findUnique({ where: { id: locationId }, select: { name: true } })
-  return { title: location?.name ?? 'Location' }
+  const { id, locationId } = await params
+  const [location, campaign] = await Promise.all([
+    prisma.location.findUnique({ where: { id: locationId }, select: { name: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
+  return { title: `${location?.name ?? 'Location'} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 export default async function LocationDetailPage({ params }: Props) {

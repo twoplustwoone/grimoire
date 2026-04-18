@@ -14,9 +14,12 @@ import { InformationNodes } from '@/components/entities/information-nodes'
 interface Props { params: Promise<{ id: string; factionId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { factionId } = await params
-  const faction = await prisma.faction.findUnique({ where: { id: factionId }, select: { name: true } })
-  return { title: faction?.name ?? 'Faction' }
+  const { id, factionId } = await params
+  const [faction, campaign] = await Promise.all([
+    prisma.faction.findUnique({ where: { id: factionId }, select: { name: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
+  return { title: `${faction?.name ?? 'Faction'} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 export default async function FactionDetailPage({ params }: Props) {

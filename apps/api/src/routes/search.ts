@@ -28,6 +28,8 @@ search.get('/', async (c) => {
     { title: { contains: q, mode: 'insensitive' as const } },
   ]
   if (!isNaN(parsedNumber)) sessionOr.push({ number: parsedNumber })
+  const sessionPhraseMatch = q.match(/^session\s+(\d+)$/i)
+  if (sessionPhraseMatch) sessionOr.push({ number: parseInt(sessionPhraseMatch[1], 10) })
 
   const [npcs, locations, factions, threads, clues, sessions] = await Promise.all([
     prisma.nPC.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
