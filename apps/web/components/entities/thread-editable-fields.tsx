@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { EditableField } from './editable-field'
+import { EntityStatusSelect } from './entity-status-select'
 
 interface Props {
   campaignId: string
@@ -15,16 +16,10 @@ interface Props {
 }
 
 const urgencyColors: Record<string, string> = {
-  LOW: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+  LOW: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   MEDIUM: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   HIGH: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   CRITICAL: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-}
-
-const statusColors: Record<string, string> = {
-  OPEN: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  RESOLVED: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  DORMANT: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
 }
 
 export function ThreadEditableFields({ campaignId, threadId, title, description, status, urgency, resolvedNote }: Props) {
@@ -62,21 +57,13 @@ export function ThreadEditableFields({ campaignId, threadId, title, description,
           <select
             value={currentUrgency}
             onChange={(e) => saveUrgency(e.target.value)}
-            className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer ${urgencyColors[currentUrgency] ?? ''}`}
+            className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer focus:outline-none ${urgencyColors[currentUrgency] ?? ''}`}
           >
             {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((u) => (
               <option key={u} value={u}>{u}</option>
             ))}
           </select>
-          <select
-            value={currentStatus}
-            onChange={(e) => saveStatus(e.target.value)}
-            className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer ${statusColors[currentStatus] ?? ''}`}
-          >
-            {['OPEN', 'RESOLVED', 'DORMANT'].map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <EntityStatusSelect status={currentStatus} entityType="THREAD" onSave={saveStatus} />
         </div>
       </div>
       <div className="mt-2">

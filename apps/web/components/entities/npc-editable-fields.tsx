@@ -31,7 +31,7 @@ export function NpcEditableFields({ campaignId, npcId, name, description, status
         <h1 className="text-3xl font-bold flex-1">
           <EditableField value={name} onSave={(v) => save('name', v)} placeholder="NPC name" />
         </h1>
-        <EntityStatusSelect status={status} onSave={(v) => save('status', v)} />
+        <EntityStatusSelect status={status} entityType="NPC" onSave={(v) => save('status', v)} />
       </div>
       <div className="mt-2">
         <EditableField

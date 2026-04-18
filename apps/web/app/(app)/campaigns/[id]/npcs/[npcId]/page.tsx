@@ -4,8 +4,9 @@ import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MapPin, Shield, Clock } from 'lucide-react'
+import { Clock } from 'lucide-react'
 import { NpcEditableFields } from '@/components/entities/npc-editable-fields'
+import { NpcAssignments } from '@/components/entities/npc-assignments'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
@@ -44,6 +45,19 @@ export default async function NPCDetailPage({ params }: Props) {
     take: 20,
   })
 
+  const [availableLocations, availableFactions] = await Promise.all([
+    prisma.location.findMany({
+      where: { campaignId, deletedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    }),
+    prisma.faction.findMany({
+      where: { campaignId, deletedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    }),
+  ])
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
@@ -67,43 +81,15 @@ export default async function NPCDetailPage({ params }: Props) {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
-        {npc.location && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <MapPin className="h-4 w-4" />Location
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/campaigns/${campaignId}/locations/${npc.location.id}`} className="text-sm hover:underline">
-                {npc.location.name}
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-        {npc.factionMemberships.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Shield className="h-4 w-4" />Factions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                {npc.factionMemberships.map((fm) => (
-                  <div key={fm.factionId} className="flex items-center justify-between">
-                    <Link href={`/campaigns/${campaignId}/factions/${fm.faction.id}`} className="text-sm hover:underline">
-                      {fm.faction.name}
-                    </Link>
-                    {fm.role && <span className="text-xs text-muted-foreground">{fm.role}</span>}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <NpcAssignments
+        campaignId={campaignId}
+        npcId={npcId}
+        currentLocationId={npc.locationId}
+        currentLocation={npc.location}
+        factionMemberships={npc.factionMemberships}
+        availableLocations={availableLocations}
+        availableFactions={availableFactions}
+      />
 
       {notes.length > 0 && (
         <Card className="mb-4">

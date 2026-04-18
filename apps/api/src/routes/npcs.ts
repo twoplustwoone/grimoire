@@ -154,6 +154,44 @@ npcs.patch('/:npcId', async (c) => {
   return c.json(updated)
 })
 
+// Add NPC to a faction
+npcs.post('/:npcId/factions', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const npcId = c.req.param('npcId')!
+
+  const membership = await getCampaignMembership(user.id, campaignId)
+  if (!membership) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.factionId) return c.json({ error: 'factionId is required' }, 400)
+
+  const fm = await prisma.factionMembership.upsert({
+    where: { factionId_npcId: { factionId: body.factionId, npcId } },
+    create: { factionId: body.factionId, npcId, role: body.role ?? null },
+    update: { role: body.role ?? null },
+  })
+
+  return c.json(fm, 201)
+})
+
+// Remove NPC from a faction
+npcs.delete('/:npcId/factions/:factionId', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const npcId = c.req.param('npcId')!
+  const factionId = c.req.param('factionId')!
+
+  const membership = await getCampaignMembership(user.id, campaignId)
+  if (!membership) return c.json({ error: 'Not found' }, 404)
+
+  await prisma.factionMembership.deleteMany({
+    where: { factionId, npcId },
+  })
+
+  return c.json({ success: true })
+})
+
 // Soft delete an NPC
 npcs.delete('/:npcId', async (c) => {
   const user = c.get('user')

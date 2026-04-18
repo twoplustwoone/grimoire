@@ -31,7 +31,7 @@ export function LocationEditableFields({ campaignId, locationId, name, descripti
         <h1 className="text-3xl font-bold flex-1">
           <EditableField value={name} onSave={(v) => save('name', v)} placeholder="Location name" />
         </h1>
-        <EntityStatusSelect status={status} onSave={(v) => save('status', v)} />
+        <EntityStatusSelect status={status} entityType="LOCATION" onSave={(v) => save('status', v)} />
       </div>
       <div className="mt-2">
         <EditableField
