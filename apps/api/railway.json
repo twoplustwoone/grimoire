@@ -5,6 +5,7 @@
     "dockerfilePath": "apps/api/Dockerfile"
   },
   "deploy": {
+    "startCommand": "sh entrypoint.sh",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE"
   }
