@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Sparkles, StickyNote, Pencil, X } from 'lucide-react'
+import { MentionInput } from '@/components/mentions/mention-input'
+import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface Note {
   id: string
@@ -178,7 +180,7 @@ export function SessionControls({
                     </div>
                   ) : (
                     <>
-                      <p>{note.content}</p>
+                      <p><MentionRenderer content={note.content} campaignId={campaignId} /></p>
                       <div className="flex items-center justify-between mt-1">
                         <p className="text-xs text-muted-foreground">
                           {new Date(note.createdAt).toLocaleDateString()}{' '}
@@ -206,12 +208,12 @@ export function SessionControls({
             </div>
           )}
           <div className="flex gap-2">
-            <Textarea
+            <MentionInput
               value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Quick note during play..."
+              onChange={setNewNote}
+              placeholder="Quick note... (type @ to mention an entity)"
               rows={2}
-              className="flex-1"
+              className="flex-1 min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addNote()
               }}
@@ -230,11 +232,12 @@ export function SessionControls({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Textarea
+            <MentionInput
               value={gmSummary}
-              onChange={(e) => setGmSummary(e.target.value)}
-              placeholder="What happened this session..."
+              onChange={setGmSummary}
+              placeholder="What happened this session... (type @ to mention an entity)"
               rows={4}
+              className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
             />
             <div className="flex gap-2">
               <Button onClick={saveSummary} disabled={savingSummary} size="sm">

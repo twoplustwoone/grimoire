@@ -9,6 +9,7 @@ import { Clock } from 'lucide-react'
 import { NpcEditableFields } from '@/components/entities/npc-editable-fields'
 import { NpcAssignments } from '@/components/entities/npc-assignments'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
@@ -106,7 +107,7 @@ export default async function NPCDetailPage({ params }: Props) {
             <div className="space-y-3">
               {notes.map((note) => (
                 <div key={note.id} className="text-sm border-l-2 pl-3">
-                  <p>{note.content}</p>
+                  <p><MentionRenderer content={note.content} campaignId={campaignId} /></p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(note.createdAt).toLocaleDateString()}</p>
                 </div>
               ))}

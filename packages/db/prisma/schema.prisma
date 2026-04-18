@@ -88,6 +88,7 @@ model GameSession {
   number     Int
   playedOn   DateTime?
   gmSummary  String?
+  summaryMentions Json?
   aiSummary  String?
   status     SessionStatus @default(PLANNED)
   createdAt  DateTime      @default(now())
@@ -323,6 +324,7 @@ model Note {
   sessionId  String?
   authorId   String
   content    String
+  mentions   Json?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 

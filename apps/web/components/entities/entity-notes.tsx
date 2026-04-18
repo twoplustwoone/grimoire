@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { StickyNote, Plus } from 'lucide-react'
+import { MentionInput } from '@/components/mentions/mention-input'
+import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface Note {
   id: string
@@ -19,6 +20,8 @@ interface Props {
 }
 
 export function EntityNotes({ notes: initialNotes, addNoteEndpoint }: Props) {
+  const params = useParams()
+  const campaignId = params?.id as string | undefined
   const router = useRouter()
   const [notes, setNotes] = useState<Note[]>(initialNotes)
   const [content, setContent] = useState('')
@@ -55,7 +58,7 @@ export function EntityNotes({ notes: initialNotes, addNoteEndpoint }: Props) {
           <div className="space-y-3 mb-4">
             {notes.map((note) => (
               <div key={note.id} className="text-sm border-l-2 pl-3 py-1">
-                <p>{note.content}</p>
+                <p><MentionRenderer content={note.content} campaignId={campaignId} /></p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {new Date(note.createdAt).toLocaleDateString()}{' '}
                   {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -68,12 +71,12 @@ export function EntityNotes({ notes: initialNotes, addNoteEndpoint }: Props) {
           <p className="text-sm text-muted-foreground mb-4">No notes yet.</p>
         )}
         <div className="flex gap-2">
-          <Textarea
+          <MentionInput
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Add a note..."
+            onChange={setContent}
+            placeholder="Add a note... (type @ to mention an entity)"
             rows={2}
-            className="flex-1"
+            className="flex-1 min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addNote()
             }}

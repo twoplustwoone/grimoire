@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, FileText } from 'lucide-react'
 import { SessionControls } from './session-controls'
 import { SessionEntityTagger } from '@/components/entities/session-entity-tagger'
+import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
@@ -135,7 +136,9 @@ export default async function SessionDetailPage({ params }: Props) {
             {gameSession.gmSummary && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">GM NOTES</p>
-                <p className="text-sm whitespace-pre-wrap">{gameSession.gmSummary}</p>
+                <p className="text-sm whitespace-pre-wrap">
+                  <MentionRenderer content={gameSession.gmSummary} campaignId={campaignId} />
+                </p>
               </div>
             )}
           </CardContent>
