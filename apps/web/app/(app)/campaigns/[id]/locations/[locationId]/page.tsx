@@ -10,6 +10,7 @@ import { LocationEditableFields } from '@/components/entities/location-editable-
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityNotes } from '@/components/entities/entity-notes'
 import { InformationNodes } from '@/components/entities/information-nodes'
+import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
 
 interface Props { params: Promise<{ id: string; locationId: string }> }
 
@@ -43,6 +44,12 @@ export default async function LocationDetailPage({ params }: Props) {
   const notes = await prisma.note.findMany({ where: { entityType: 'LOCATION', entityId: locationId }, orderBy: { createdAt: 'desc' } })
   const changelog = await prisma.changelogEntry.findMany({ where: { entityType: 'LOCATION', entityId: locationId }, orderBy: { createdAt: 'desc' }, take: 20 })
   const infoNodes = await prisma.informationNode.findMany({ where: { campaignId, entityType: 'LOCATION', entityId: locationId }, orderBy: { createdAt: 'asc' } })
+  const players = await prisma.campaignMembership.findMany({
+    where: { campaignId, role: 'PLAYER' },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  })
+  const isGM = membership.role === 'GM' || membership.role === 'CO_GM'
+  const playerMembers = players.map(m => ({ userId: m.userId, name: m.user.name, email: m.user.email }))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -87,6 +94,16 @@ export default async function LocationDetailPage({ params }: Props) {
         entityType="LOCATION"
         entityId={locationId}
       />
+
+      {isGM && players.length > 0 && (
+        <EntityRevealPanel
+          campaignId={campaignId}
+          entityType="LOCATION"
+          entityId={locationId}
+          entityName={location.name}
+          members={playerMembers}
+        />
+      )}
 
       <div className="mb-4">
         <EntityNotes

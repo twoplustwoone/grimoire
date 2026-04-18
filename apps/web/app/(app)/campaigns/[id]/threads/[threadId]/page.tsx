@@ -10,6 +10,7 @@ import { ThreadEditableFields } from '@/components/entities/thread-editable-fiel
 import { EntityNotes } from '@/components/entities/entity-notes'
 import { InformationNodes } from '@/components/entities/information-nodes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
 
 interface Props { params: Promise<{ id: string; threadId: string }> }
 
@@ -43,6 +44,13 @@ export default async function ThreadDetailPage({ params }: Props) {
   const notes = await prisma.note.findMany({ where: { entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'desc' } })
   const changelog = await prisma.changelogEntry.findMany({ where: { entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'desc' }, take: 20 })
   const infoNodes = await prisma.informationNode.findMany({ where: { campaignId, entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'asc' } })
+
+  const players = await prisma.campaignMembership.findMany({
+    where: { campaignId, role: 'PLAYER' },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  })
+  const isGM = membership.role === 'GM' || membership.role === 'CO_GM'
+  const playerMembers = players.map(m => ({ userId: m.userId, name: m.user.name, email: m.user.email }))
 
   const entityTags = await prisma.threadEntityTag.findMany({ where: { threadId } })
   const resolvedTags = await Promise.all(
@@ -121,6 +129,16 @@ export default async function ThreadDetailPage({ params }: Props) {
         entityType="THREAD"
         entityId={threadId}
       />
+
+      {isGM && players.length > 0 && (
+        <EntityRevealPanel
+          campaignId={campaignId}
+          entityType="THREAD"
+          entityId={threadId}
+          entityName={thread.title}
+          members={playerMembers}
+        />
+      )}
 
       <div className="mb-4">
         <EntityNotes

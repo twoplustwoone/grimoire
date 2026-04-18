@@ -8,12 +8,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export function SignInForm() {
+interface SignInFormProps {
+  inviteToken?: string
+}
+
+export function SignInForm({ inviteToken }: SignInFormProps = {}) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const redirectTarget = inviteToken ? `/invite/${inviteToken}` : '/dashboard'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,14 +29,14 @@ export function SignInForm() {
     const { error } = await signIn.email({
       email,
       password,
-      callbackURL: '/dashboard',
+      callbackURL: redirectTarget,
     })
 
     if (error) {
       setError(error.message ?? 'Sign in failed')
       setLoading(false)
     } else {
-      router.push('/dashboard')
+      router.push(redirectTarget)
     }
   }
 
@@ -74,7 +80,10 @@ export function SignInForm() {
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <a href="/sign-up" className="underline underline-offset-4 hover:text-primary">
+          <a
+            href={inviteToken ? `/sign-up?invite=${inviteToken}` : '/sign-up'}
+            className="underline underline-offset-4 hover:text-primary"
+          >
             Sign up
           </a>
         </p>

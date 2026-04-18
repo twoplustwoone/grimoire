@@ -16,6 +16,9 @@ import graph from './routes/graph.js'
 import worldEvents from './routes/world-events.js'
 import notes from './routes/notes.js'
 import infoNodes from './routes/information-nodes.js'
+import invites from './routes/invites.js'
+import inviteAccept from './routes/invite-accept.js'
+import reveals from './routes/reveals.js'
 
 const app = new Hono()
 
@@ -44,6 +47,9 @@ app.route('/campaigns/:campaignId/sessions', recapRouter)
 app.route('/campaigns/:campaignId/world-events', worldEvents)
 app.route('/campaigns/:campaignId/notes', notes)
 app.route('/campaigns/:campaignId/information-nodes', infoNodes)
+app.route('/campaigns/:campaignId/invites', invites)
+app.route('/campaigns/:campaignId/reveals', reveals)
+app.route('/invites', inviteAccept)
 app.route('/search', search)
 app.route('/graph', graph)
 

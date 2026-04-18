@@ -11,6 +11,7 @@ import { NpcAssignments } from '@/components/entities/npc-assignments'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityNotes } from '@/components/entities/entity-notes'
 import { InformationNodes } from '@/components/entities/information-nodes'
+import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
@@ -63,7 +64,7 @@ export default async function NPCDetailPage({ params }: Props) {
     orderBy: { createdAt: 'asc' },
   })
 
-  const [availableLocations, availableFactions] = await Promise.all([
+  const [availableLocations, availableFactions, players] = await Promise.all([
     prisma.location.findMany({
       where: { campaignId, deletedAt: null },
       select: { id: true, name: true },
@@ -74,7 +75,18 @@ export default async function NPCDetailPage({ params }: Props) {
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
+    prisma.campaignMembership.findMany({
+      where: { campaignId, role: 'PLAYER' },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    }),
   ])
+
+  const isGM = membership.role === 'GM' || membership.role === 'CO_GM'
+  const playerMembers = players.map(m => ({
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email,
+  }))
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -115,6 +127,16 @@ export default async function NPCDetailPage({ params }: Props) {
         entityType="NPC"
         entityId={npcId}
       />
+
+      {isGM && players.length > 0 && (
+        <EntityRevealPanel
+          campaignId={campaignId}
+          entityType="NPC"
+          entityId={npcId}
+          entityName={npc.name}
+          members={playerMembers}
+        />
+      )}
 
       <div className="mb-4">
         <EntityNotes

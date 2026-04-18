@@ -8,13 +8,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export function SignUpForm() {
+interface SignUpFormProps {
+  inviteToken?: string
+  invitedEmail?: string
+}
+
+export function SignUpForm({ inviteToken, invitedEmail }: SignUpFormProps = {}) {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(invitedEmail ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const redirectTarget = inviteToken ? `/invite/${inviteToken}` : '/dashboard'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -25,14 +32,14 @@ export function SignUpForm() {
       name,
       email,
       password,
-      callbackURL: '/dashboard',
+      callbackURL: redirectTarget,
     })
 
     if (error) {
       setError(error.message ?? 'Sign up failed')
       setLoading(false)
     } else {
-      router.push('/dashboard')
+      router.push(redirectTarget)
     }
   }
 
@@ -86,7 +93,10 @@ export function SignUpForm() {
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <a href="/sign-in" className="underline underline-offset-4 hover:text-primary">
+          <a
+            href={inviteToken ? `/sign-in?invite=${inviteToken}` : '/sign-in'}
+            className="underline underline-offset-4 hover:text-primary"
+          >
             Sign in
           </a>
         </p>

@@ -4,12 +4,12 @@ import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, MapPin, Shield, GitBranch, Search, Calendar, Network, Globe } from 'lucide-react'
 import { CampaignEditableFields } from '@/components/entities/campaign-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { DemoBanner } from '@/components/campaign/demo-banner'
+import { InvitePlayers } from '@/components/campaign/invite-players'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -45,6 +45,18 @@ export default async function CampaignPage({ params }: Props) {
   if (!membership) notFound()
 
   const campaign = membership.campaign
+  const campaignId = id
+
+  const [members, pendingInvites] = await Promise.all([
+    prisma.campaignMembership.findMany({
+      where: { campaignId },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    }),
+    prisma.campaignInvite.findMany({
+      where: { campaignId, acceptedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ])
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -89,6 +101,27 @@ export default async function CampaignPage({ params }: Props) {
           )
         })}
       </div>
+
+      {membership.role === 'PLAYER' && (
+        <div className="mt-6">
+          <Link
+            href={`/portal/${campaignId}`}
+            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+          >
+            View your character's knowledge →
+          </Link>
+        </div>
+      )}
+
+      {membership.role === 'GM' && (
+        <div className="mt-8">
+          <InvitePlayers
+            campaignId={campaignId}
+            initialInvites={pendingInvites}
+            members={members}
+          />
+        </div>
+      )}
 
       {membership.role === 'GM' && (
         <div className="mt-8 pt-6 border-t border-destructive/20">

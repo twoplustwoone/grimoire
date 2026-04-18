@@ -24,6 +24,7 @@ model User {
   changelogEntries ChangelogEntry[]
   sessions         Session[] @relation("UserSessions")
   accounts         Account[]           @relation("UserAccounts")
+  entityReveals    EntityReveal[]
 }
 
 // ==================== CAMPAIGN ====================
@@ -50,6 +51,8 @@ model Campaign {
   customFieldDefs  CustomFieldDefinition[]
   inWorldDates     InWorldDate[]
   relationships    Relationship[]
+  reveals          EntityReveal[]
+  invites          CampaignInvite[]
 }
 
 enum CampaignStatus {
@@ -409,6 +412,41 @@ model ChangelogEntry {
   @@index([entityType, entityId])
   @@index([campaignId])
   @@index([sessionId])
+}
+
+model EntityReveal {
+  id                 String     @id @default(cuid())
+  campaignId         String
+  entityType         EntityType
+  entityId           String
+  userId             String?
+  displayName        String?
+  displayDescription String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([entityType, entityId, userId])
+  @@index([campaignId])
+  @@index([userId])
+}
+
+model CampaignInvite {
+  id         String     @id @default(cuid())
+  campaignId String
+  email      String
+  token      String     @unique @default(cuid())
+  role       MemberRole @default(PLAYER)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([token])
 }
 
 // ==================== CUSTOM FIELDS ====================
