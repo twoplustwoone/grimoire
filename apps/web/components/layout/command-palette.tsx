@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Command } from 'cmdk'
-import { Search, Users, MapPin, Shield, GitBranch, Calendar, X } from 'lucide-react'
+import { Search, Users, MapPin, Shield, GitBranch, Calendar, X, Lightbulb } from 'lucide-react'
 
 interface SearchResult {
   id: string
@@ -17,7 +17,7 @@ const typeIcons = {
   LOCATION: MapPin,
   FACTION: Shield,
   THREAD: GitBranch,
-  CLUE: Search,
+  CLUE: Lightbulb,
   SESSION: Calendar,
 }
 
@@ -105,15 +105,15 @@ export function CommandPalette() {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] animate-in fade-in duration-150">
       <div
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={() => setOpen(false)}
       />
-      <div className="relative w-full max-w-lg mx-4 bg-card border rounded-xl shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-lg mx-4 bg-card border rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
         <Command shouldFilter={false}>
           <div className="flex items-center gap-3 px-4 py-3 border-b">
-            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <Command.Input
               value={query}
               onValueChange={setQuery}
@@ -122,13 +122,14 @@ export function CommandPalette() {
               autoFocus
             />
             {query && (
-              <button onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground">
+              <button
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <X className="h-4 w-4" />
               </button>
             )}
-            <kbd className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground border rounded px-1.5 py-0.5">
-              esc
-            </kbd>
           </div>
 
           <Command.List className="max-h-80 overflow-y-auto p-2">
@@ -140,7 +141,7 @@ export function CommandPalette() {
 
             {campaignId && !query && (
               <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-                Type to search NPCs, locations, factions, threads, clues, and sessions.
+                Search NPCs, locations, sessions…
               </Command.Empty>
             )}
 
@@ -162,19 +163,26 @@ export function CommandPalette() {
                 <Command.Group
                   key={type}
                   heading={typeLabels[type as keyof typeof typeLabels]}
-                  className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-medium"
+                  className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:text-foreground/50 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider"
                 >
                   {items.map((result) => (
                     <Command.Item
                       key={result.id}
                       value={result.id}
                       onSelect={() => handleSelect(result)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer text-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer text-sm aria-selected:bg-muted aria-selected:text-foreground"
                     >
                       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="flex-1 truncate">{result.name}</span>
                       {result.meta && (
-                        <span className="text-xs text-muted-foreground shrink-0">{result.meta}</span>
+                        <span className={`text-[10px] font-mono uppercase tracking-wider shrink-0 ${
+                          result.meta === 'CRITICAL' ? 'text-red-400' :
+                          result.meta === 'HIGH' ? 'text-orange-400' :
+                          result.meta === 'MEDIUM' ? 'text-yellow-400' :
+                          'text-muted-foreground'
+                        }`}>
+                          {result.meta}
+                        </span>
                       )}
                     </Command.Item>
                   ))}
@@ -183,7 +191,7 @@ export function CommandPalette() {
             })}
           </Command.List>
 
-          {campaignId && (
+          {campaignId && results.length > 0 && (
             <div className="px-4 py-2 border-t flex items-center justify-between text-xs text-muted-foreground">
               <span>↑↓ navigate</span>
               <span>↵ open</span>
