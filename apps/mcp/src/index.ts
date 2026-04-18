@@ -1,7 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { prisma } from '@grimoire/db'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 const server = new McpServer({
   name: 'grimoire',

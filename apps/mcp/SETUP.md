@@ -12,14 +12,16 @@
 pnpm --filter @grimoire/mcp build
 ```
 
-2. Add to Claude Desktop config at `~/Library/Application Support/Claude/claude_desktop_config.json`:
+2. Add to Claude Desktop config at `~/Library/Application Support/Claude/claude_desktop_config.json`.
+
+   Claude Desktop may pick up whichever Node is first on its PATH (often an old nvm default). Point `command` at a specific Node 22 binary to avoid that entirely:
 
 ```json
 {
   "mcpServers": {
     "grimoire": {
-      "command": "node",
-      "args": ["/absolute/path/to/grimoire/apps/mcp/dist/index.js"],
+      "command": "/Users/twoplustwoone/.nvm/versions/node/v22.21.1/bin/node",
+      "args": ["/Users/twoplustwoone/code/personal/web/grimoire/apps/mcp/dist/index.js"],
       "env": {
         "DATABASE_URL": "postgresql://grimoire:grimoire@localhost:5432/grimoire"
       }
@@ -27,6 +29,8 @@ pnpm --filter @grimoire/mcp build
   }
 }
 ```
+
+Adjust both paths for your machine. Run `which node` and `pwd` inside the repo to confirm. The MCP server requires Node 22+ — Node 16 and 18 will fail.
 
 3. Restart Claude Desktop.
 
