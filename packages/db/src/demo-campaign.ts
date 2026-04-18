@@ -29,7 +29,6 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     prisma.location.create({ data: { campaignId: campaign.id, name: 'The Undercity', description: 'A labyrinth of tunnels, collapsed aqueducts, and forgotten vaults beneath Verath. The Ash Network operates from somewhere down here.' } }),
   ])
 
-  void towerOfAshes
   void undercity
 
   const [apprentices, merchantGuild, cityGuard, ashNetwork, templeOrder] = await Promise.all([
@@ -88,7 +87,7 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     prisma.threadEntityTag.create({ data: { threadId: templeThread.id, entityType: 'NPC', entityId: lena.id } }),
   ])
 
-  await Promise.all([
+  const [simultaneousClue] = await Promise.all([
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Simultaneous Strike', description: 'All five mages died within minutes of each other across different locations. This required either extraordinary coordination or magic capable of reaching multiple targets at once. The Conclave itself had such magic — but it was supposedly locked in the central vault.' } }),
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'Aldric\'s Burnt Hands', description: 'Aldric\'s hands show old burn scarring consistent with a failed warding spell. The burns are three months old. He claims they are from a cooking accident.' } }),
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Ash Network Knew First', description: 'A contact revealed that Voss was offering information about "a coming change in the city\'s leadership" two weeks before the assassination. Someone told them it was coming.' } }),
@@ -148,6 +147,136 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     prisma.informationNode.create({ data: { campaignId: campaign.id, entityType: 'NPC', entityId: aldric.id, title: 'Aldric Was There', content: 'Confirmed via street informant: Aldric Mourne was seen near the Tower of Ashes within one hour of the mages\' deaths. His alibi is false.', visibility: 'GM_ONLY' } }),
     prisma.informationNode.create({ data: { campaignId: campaign.id, entityType: 'FACTION', entityId: merchantGuild.id, title: 'Pre-drafted Legislation', content: 'The Aurelius tariff removal paperwork was filed within days of the assassination. It was clearly drafted in advance. Someone in the company knew this was coming.', visibility: 'GM_ONLY' } }),
   ])
+
+  const demoPlayer = await prisma.user.upsert({
+    where: { email: 'player@grimoire.dev' },
+    update: {},
+    create: {
+      email: 'player@grimoire.dev',
+      name: 'Serafine Ashveil',
+      emailVerified: true,
+    },
+  })
+
+  const demoPlayerMembership = await prisma.campaignMembership.upsert({
+    where: { campaignId_userId: { campaignId: campaign.id, userId: demoPlayer.id } },
+    update: {},
+    create: {
+      campaignId: campaign.id,
+      userId: demoPlayer.id,
+      role: 'PLAYER',
+    },
+  })
+
+  async function ensureAllPlayersReveal(
+    entityType: 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE',
+    entityId: string,
+    overrides?: { displayName?: string; displayDescription?: string }
+  ) {
+    const existing = await prisma.entityReveal.findFirst({
+      where: { campaignId: campaign.id, entityType, entityId, userId: null },
+    })
+    if (existing) return existing
+    return prisma.entityReveal.create({
+      data: {
+        campaignId: campaign.id,
+        entityType,
+        entityId,
+        userId: null,
+        displayName: overrides?.displayName ?? null,
+        displayDescription: overrides?.displayDescription ?? null,
+      },
+    })
+  }
+
+  await Promise.all([
+    ensureAllPlayersReveal('NPC', mira.id),
+    ensureAllPlayersReveal('NPC', castor.id),
+    ensureAllPlayersReveal('NPC', tideborn.id, {
+      displayName: 'A Grey-Cloaked Figure',
+      displayDescription: 'A figure seen moving against the crowd on the night of the assassination. Multiple witnesses. No name. No face.',
+    }),
+    ensureAllPlayersReveal('LOCATION', cityOfVerath.id),
+    ensureAllPlayersReveal('LOCATION', towerOfAshes.id),
+    ensureAllPlayersReveal('FACTION', apprentices.id),
+    ensureAllPlayersReveal('FACTION', merchantGuild.id),
+    ensureAllPlayersReveal('THREAD', whoThread.id),
+    ensureAllPlayersReveal('THREAD', tidebornThread.id),
+  ])
+
+  await Promise.all([
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'NPC', entityId: aldric.id, userId: demoPlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'NPC', entityId: aldric.id, userId: demoPlayer.id },
+      update: {},
+    }),
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'FACTION', entityId: ashNetwork.id, userId: demoPlayer.id } },
+      create: {
+        campaignId: campaign.id,
+        entityType: 'FACTION',
+        entityId: ashNetwork.id,
+        userId: demoPlayer.id,
+        displayName: 'An Unknown Network',
+        displayDescription: 'A contact hinted at an information brokerage operating somewhere in the city. No name. No face. Just a rumor.',
+      },
+      update: {},
+    }),
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'CLUE', entityId: simultaneousClue.id, userId: demoPlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'CLUE', entityId: simultaneousClue.id, userId: demoPlayer.id },
+      update: {},
+    }),
+  ])
+
+  const [, , , aldricRevealedNode] = await Promise.all([
+    prisma.informationNode.create({
+      data: {
+        campaignId: campaign.id,
+        entityType: 'NPC',
+        entityId: mira.id,
+        title: 'Sorell\'s Apprentice',
+        content: 'Mira Sorell was the direct apprentice of Archmage Sorell, the most powerful of the five murdered mages. She is now the de facto leader of the surviving apprentices and is actively investigating the assassination.',
+        visibility: 'ALL_PLAYERS',
+      },
+    }),
+    prisma.informationNode.create({
+      data: {
+        campaignId: campaign.id,
+        entityType: 'NPC',
+        entityId: castor.id,
+        title: 'More Than a Merchant',
+        content: 'Castor Vel presents himself as a simple spice trader but his knowledge of city politics and faction movements suggests he is something more. He offered information freely in your first meeting — perhaps too freely.',
+        visibility: 'ALL_PLAYERS',
+      },
+    }),
+    prisma.informationNode.create({
+      data: {
+        campaignId: campaign.id,
+        entityType: 'FACTION',
+        entityId: merchantGuild.id,
+        title: 'They Had Motive',
+        content: 'The Aurelius Trading Company filed paperwork to eliminate Conclave trade tariffs within days of the assassination. The paperwork was clearly drafted in advance. Someone inside knew this was coming.',
+        visibility: 'ALL_PLAYERS',
+      },
+    }),
+    prisma.informationNode.create({
+      data: {
+        campaignId: campaign.id,
+        entityType: 'NPC',
+        entityId: aldric.id,
+        title: 'He Was There',
+        content: 'A street informant placed Aldric near the Tower of Ashes within the hour before the mages died. His alibi puts him across the city. One of these is a lie.',
+        visibility: 'SPECIFIC_PLAYERS',
+      },
+    }),
+  ])
+
+  await prisma.informationNodeReveal.upsert({
+    where: { informationNodeId_membershipId: { informationNodeId: aldricRevealedNode.id, membershipId: demoPlayerMembership.id } },
+    create: { informationNodeId: aldricRevealedNode.id, membershipId: demoPlayerMembership.id },
+    update: {},
+  })
 
   return campaign
 }

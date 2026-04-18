@@ -188,10 +188,32 @@ async function main() {
   await createDemoCampaign(prisma, demoUser.id)
   console.log('✅ Created demo campaign (The Shattered Conclave)')
 
+  const demoPlayer = await prisma.user.findUniqueOrThrow({
+    where: { email: 'player@grimoire.dev' },
+  })
+  const demoPlayerPasswordHash = await hashPassword('player@grimoire.dev')
+  await prisma.account.deleteMany({
+    where: { userId: demoPlayer.id, providerId: 'credential' },
+  })
+  await prisma.account.create({
+    data: {
+      id: `seed-account-${demoPlayer.id}`,
+      accountId: demoPlayer.id,
+      providerId: 'credential',
+      userId: demoPlayer.id,
+      password: demoPlayerPasswordHash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  })
+  console.log('✅ Created demo player: player@grimoire.dev')
+  console.log('✅ Pre-seeded entity reveals for player portal')
+
   console.log('')
   console.log('🎲 Seed complete!')
   console.log(`   Campaign: ${campaign.name}`)
-  console.log(`   Login: gm@grimoire.dev / gm@grimoire.dev`)
+  console.log(`   GM login: gm@grimoire.dev / gm@grimoire.dev`)
+  console.log(`   Player login: player@grimoire.dev / player@grimoire.dev`)
   console.log(`   6 NPCs, 5 locations, 3 factions, 3 threads, 3 clues`)
   console.log(`   1 completed session with notes and AI recap`)
   console.log(`   1 planned session`)

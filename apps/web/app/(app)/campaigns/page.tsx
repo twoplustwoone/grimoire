@@ -52,28 +52,38 @@ export default async function CampaignsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {memberships.map(({ campaign, role }) => (
-            <Link key={campaign.id} href={`/campaigns/${campaign.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                      {role}
-                    </span>
-                  </div>
-                  {campaign.description && (
-                    <CardDescription className="line-clamp-2">
-                      {campaign.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs text-muted-foreground">
-                    {campaign.status} · Updated {new Date(campaign.updatedAt).toLocaleDateString()}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
+            <div key={campaign.id} className="relative">
+              <Link href={`/campaigns/${campaign.id}`} className="block">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                        {role}
+                      </span>
+                    </div>
+                    {campaign.description && (
+                      <CardDescription className="line-clamp-2">
+                        {campaign.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground">
+                      {campaign.status} · Updated {new Date(campaign.updatedAt).toLocaleDateString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              {role === 'PLAYER' && (
+                <Link
+                  href={`/portal/${campaign.id}`}
+                  className="absolute bottom-4 right-4 text-xs text-primary hover:underline z-10"
+                >
+                  Player View →
+                </Link>
+              )}
+            </div>
           ))}
         </div>
       )}
