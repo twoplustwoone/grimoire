@@ -13,6 +13,7 @@ import sessions from './routes/sessions.js'
 import recapRouter from './routes/recap.js'
 import search from './routes/search.js'
 import graph from './routes/graph.js'
+import worldEvents from './routes/world-events.js'
 
 const app = new Hono()
 
@@ -38,6 +39,7 @@ app.route('/campaigns/:campaignId/threads', threads)
 app.route('/campaigns/:campaignId/clues', clues)
 app.route('/campaigns/:campaignId/sessions', sessions)
 app.route('/campaigns/:campaignId/sessions', recapRouter)
+app.route('/campaigns/:campaignId/world-events', worldEvents)
 app.route('/search', search)
 app.route('/graph', graph)
 

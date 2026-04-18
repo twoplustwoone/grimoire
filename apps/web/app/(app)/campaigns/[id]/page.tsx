@@ -6,7 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, MapPin, Shield, GitBranch, Search, Calendar, Network } from 'lucide-react'
+import { Users, MapPin, Shield, GitBranch, Search, Calendar, Network, Globe } from 'lucide-react'
 import { CampaignEditableFields } from '@/components/entities/campaign-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
@@ -27,6 +27,7 @@ const sections = [
   { name: 'Factions', href: 'factions', icon: Shield, description: 'Organizations and their agendas' },
   { name: 'Threads', href: 'threads', icon: GitBranch, description: 'Unresolved plot threads' },
   { name: 'Clues', href: 'clues', icon: Search, description: 'Information the party has discovered' },
+  { name: 'World Events', href: 'world-events', icon: Globe, description: 'Events happening in your world' },
   { name: 'Graph', href: 'graph', icon: Network, description: 'Visualize entity relationships' },
 ]
 
