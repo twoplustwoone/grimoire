@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -6,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus } from 'lucide-react'
 import { redirect } from 'next/navigation'
+
+export const metadata: Metadata = { title: 'Campaigns' }
 
 export default async function CampaignsPage() {
   const session = await auth.api.getSession({ headers: await headers() })

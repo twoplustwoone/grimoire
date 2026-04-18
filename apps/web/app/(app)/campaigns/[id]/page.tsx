@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -11,6 +12,12 @@ import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const campaign = await prisma.campaign.findUnique({ where: { id }, select: { name: true } })
+  return { title: campaign?.name ?? 'Campaign' }
 }
 
 const sections = [
@@ -43,6 +50,8 @@ export default async function CampaignPage({ params }: Props) {
           <div className="flex-1">
             <p className="text-sm text-muted-foreground mb-1">
               <Link href="/campaigns" className="hover:underline">Campaigns</Link>
+              {' / '}
+              <span>{campaign.name}</span>
             </p>
             <CampaignEditableFields
               campaignId={campaign.id}

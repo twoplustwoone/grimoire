@@ -1,9 +1,9 @@
 export type Theme = 'grimoire' | 'minimal' | 'fey'
 
 export const themes: { id: Theme; name: string; description: string }[] = [
-  { id: 'grimoire', name: 'Grimoire', description: 'Dark and atmospheric' },
-  { id: 'minimal', name: 'Minimal', description: 'Clean and professional' },
-  { id: 'fey', name: 'Fey', description: 'Whimsical and colorful' },
+  { id: 'grimoire', name: 'Grimoire', description: 'Dark & atmospheric' },
+  { id: 'minimal', name: 'Minimal', description: 'Clean & minimal' },
+  { id: 'fey', name: 'Fey', description: 'Whimsical & colorful' },
 ]
 
 export function applyTheme(theme: Theme) {

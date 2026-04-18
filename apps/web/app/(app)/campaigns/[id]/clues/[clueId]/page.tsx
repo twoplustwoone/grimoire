@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -10,6 +11,12 @@ import { EntityNotes } from '@/components/entities/entity-notes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; clueId: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { clueId } = await params
+  const clue = await prisma.clue.findUnique({ where: { id: clueId }, select: { title: true } })
+  return { title: clue?.title ?? 'Clue' }
+}
 
 export default async function ClueDetailPage({ params }: Props) {
   const { id: campaignId, clueId } = await params

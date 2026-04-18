@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -8,6 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Calendar } from 'lucide-react'
 
 interface Props { params: Promise<{ id: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const campaign = await prisma.campaign.findUnique({ where: { id }, select: { name: true } })
+  return { title: `Clues — ${campaign?.name ?? 'Campaign'}` }
+}
 
 export default async function CluesPage({ params }: Props) {
   const { id: campaignId } = await params

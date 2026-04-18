@@ -1,46 +1,16 @@
-'use client'
+import type { Metadata } from 'next'
+import { NewLocationForm } from './new-location-form'
 
-import { useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+export const metadata: Metadata = { title: 'New Location' }
 
-export default function NewLocationPage() {
-  const router = useRouter()
-  const { id: campaignId } = useParams<{ id: string }>()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+interface Props { params: Promise<{ id: string }> }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    const res = await fetch(`/api/v1/campaigns/${campaignId}/locations`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ name, description }),
-    })
-
-    if (!res.ok) { setError((await res.json().catch(() => ({}))).error ?? 'Failed'); setLoading(false); return }
-    const loc = await res.json()
-    router.push(`/campaigns/${campaignId}/locations/${loc.id}`)
-  }
-
+export default async function NewLocationPage({ params }: Props) {
+  const { id: campaignId } = await params
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8"><h1 className="text-3xl font-bold">New Location</h1><p className="text-muted-foreground mt-1">Add a place to your campaign</p></div>
-      <Card><CardHeader><CardTitle>Location Details</CardTitle><CardDescription>You can set parent locations after creation</CardDescription></CardHeader>
-        <CardContent><form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2"><Label htmlFor="name">Name</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Yawning Portal Inn" required /></div>
-          <div className="space-y-2"><Label htmlFor="description">Description</Label><Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A famous tavern in Waterdeep..." rows={4} /></div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <div className="flex gap-3 pt-2"><Button type="submit" disabled={loading}>{loading ? 'Creating...' : 'Create Location'}</Button><Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button></div>
-        </form></CardContent></Card>
+      <NewLocationForm campaignId={campaignId} />
     </div>
   )
 }

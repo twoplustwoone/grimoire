@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -10,6 +11,13 @@ import { SessionEntityTagger } from '@/components/entities/session-entity-tagger
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { sessionId } = await params
+  const gameSession = await prisma.gameSession.findUnique({ where: { id: sessionId }, select: { number: true, title: true } })
+  if (!gameSession) return { title: 'Session' }
+  return { title: `Session ${gameSession.number}${gameSession.title ? ` — ${gameSession.title}` : ''}` }
 }
 
 const statusColors: Record<string, string> = {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -9,6 +10,12 @@ import { Plus, Users } from 'lucide-react'
 import { pluralize } from '@/lib/utils'
 
 interface Props { params: Promise<{ id: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const campaign = await prisma.campaign.findUnique({ where: { id }, select: { name: true } })
+  return { title: `Factions — ${campaign?.name ?? 'Campaign'}` }
+}
 
 const statusColors: Record<string, string> = {
   ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',

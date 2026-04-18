@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -9,6 +10,12 @@ import { FactionEditableFields } from '@/components/entities/faction-editable-fi
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; factionId: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { factionId } = await params
+  const faction = await prisma.faction.findUnique({ where: { id: factionId }, select: { name: true } })
+  return { title: faction?.name ?? 'Faction' }
+}
 
 export default async function FactionDetailPage({ params }: Props) {
   const { id: campaignId, factionId } = await params

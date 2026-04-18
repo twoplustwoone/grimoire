@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -10,6 +11,12 @@ import { EntityNotes } from '@/components/entities/entity-notes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; threadId: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { threadId } = await params
+  const thread = await prisma.thread.findUnique({ where: { id: threadId }, select: { title: true } })
+  return { title: thread?.title ?? 'Thread' }
+}
 
 const entityTypeColors: Record<string, string> = {
   NPC: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',

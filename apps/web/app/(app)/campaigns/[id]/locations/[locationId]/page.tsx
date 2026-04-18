@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -9,6 +10,12 @@ import { LocationEditableFields } from '@/components/entities/location-editable-
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; locationId: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locationId } = await params
+  const location = await prisma.location.findUnique({ where: { id: locationId }, select: { name: true } })
+  return { title: location?.name ?? 'Location' }
+}
 
 export default async function LocationDetailPage({ params }: Props) {
   const { id: campaignId, locationId } = await params

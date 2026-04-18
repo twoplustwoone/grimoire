@@ -26,7 +26,7 @@ export function ThemeSwitcher() {
       >
         {themes.map((t) => (
           <option key={t.id} value={t.id}>
-            {t.name} — {t.description}
+            {t.name}
           </option>
         ))}
       </select>

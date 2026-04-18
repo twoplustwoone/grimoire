@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
@@ -11,6 +12,12 @@ import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { npcId } = await params
+  const npc = await prisma.nPC.findUnique({ where: { id: npcId }, select: { name: true } })
+  return { title: npc?.name ?? 'NPC' }
 }
 
 export default async function NPCDetailPage({ params }: Props) {
