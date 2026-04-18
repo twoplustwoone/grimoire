@@ -206,28 +206,23 @@ export function ApiKeyManager() {
         <CardHeader>
           <CardTitle className="text-base">Connect to Claude Desktop</CardTitle>
           <CardDescription>
-            Add Grimoire to your Claude Desktop MCP config
+            The recommended way to connect Grimoire to Claude
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p>1. Create an API key above</p>
-            <p>2. Open Claude Desktop config at <code className="text-xs bg-muted px-1 py-0.5 rounded">~/Library/Application Support/Claude/claude_desktop_config.json</code></p>
-            <p>3. Add the following:</p>
-            <pre className="bg-muted rounded-md p-3 text-xs overflow-x-auto">
-{`{
-  "mcpServers": {
-    "grimoire": {
-      "url": "https://grimoire.twoplustwoone.dev/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_API_KEY"
-      }
-    }
-  }
-}`}
-            </pre>
-            <p>4. Restart Claude Desktop</p>
-            <p>5. Try: <em>&ldquo;List my Grimoire campaigns&rdquo;</em></p>
+            <p>1. Open Claude Desktop → Settings → Connectors</p>
+            <p>2. Click &ldquo;Add custom connector&rdquo;</p>
+            <p>3. Enter:</p>
+            <ul className="ml-4 space-y-1">
+              <li>Name: <code className="text-xs bg-muted px-1 py-0.5 rounded">Grimoire</code></li>
+              <li>URL: <code className="text-xs bg-muted px-1 py-0.5 rounded">https://grimoire.twoplustwoone.dev/mcp</code></li>
+            </ul>
+            <p>4. Click Add. Claude will open a browser window to authorize access.</p>
+            <p>5. Click Allow to connect. Done!</p>
+            <p className="text-xs text-muted-foreground/70 pt-2">
+              Once connected, try asking: <em>&ldquo;List my Grimoire campaigns&rdquo;</em> or <em>&ldquo;What&rsquo;s happening in The Shattered Conclave?&rdquo;</em>
+            </p>
           </div>
         </CardContent>
       </Card>

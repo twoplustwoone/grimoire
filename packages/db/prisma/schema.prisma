@@ -26,6 +26,9 @@ model User {
   accounts         Account[]           @relation("UserAccounts")
   entityReveals    EntityReveal[]
   apiKeys          ApiKey[]
+  oauthCodes         OAuthAuthorizationCode[]
+  oauthAccessTokens  OAuthAccessToken[]
+  oauthRefreshTokens OAuthRefreshToken[]
 }
 
 // ==================== CAMPAIGN ====================
@@ -463,6 +466,63 @@ model ApiKey {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model OAuthClient {
+  id                      String   @id @default(cuid())
+  clientId                String   @unique
+  clientSecretHash        String?
+  clientName              String
+  redirectUris            String[]
+  grantTypes              String[] @default(["authorization_code", "refresh_token"])
+  tokenEndpointAuthMethod String   @default("none")
+  createdAt               DateTime @default(now())
+}
+
+model OAuthAuthorizationCode {
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  clientId            String
+  userId              String
+  redirectUri         String
+  scope               String?
+  codeChallenge       String
+  codeChallengeMethod String   @default("S256")
+  expiresAt           DateTime
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+}
+
+model OAuthAccessToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  clientId  String
+  userId    String
+  scope     String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model OAuthRefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  clientId  String
+  userId    String
+  scope     String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
 }
 
 // ==================== CUSTOM FIELDS ====================

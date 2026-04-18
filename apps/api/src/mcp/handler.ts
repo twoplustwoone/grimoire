@@ -9,30 +9,39 @@ async function authenticateRequest(c: Context): Promise<string | null> {
   const authHeader = c.req.header('Authorization')
   if (!authHeader?.startsWith('Bearer ')) return null
 
-  const rawKey = authHeader.slice(7).trim()
-  if (!rawKey) return null
-  const keyHash = createHash('sha256').update(rawKey).digest('hex')
+  const rawToken = authHeader.slice(7).trim()
+  if (!rawToken) return null
 
+  const accessToken = await prisma.oAuthAccessToken.findUnique({
+    where: { token: rawToken },
+    include: { user: { select: { id: true } } },
+  })
+  if (accessToken && accessToken.expiresAt > new Date()) {
+    return accessToken.userId
+  }
+
+  const keyHash = createHash('sha256').update(rawToken).digest('hex')
   const apiKey = await prisma.apiKey.findUnique({
     where: { keyHash },
     include: { user: { select: { id: true } } },
   })
+  if (apiKey && (!apiKey.expiresAt || apiKey.expiresAt > new Date())) {
+    prisma.apiKey.update({
+      where: { id: apiKey.id },
+      data: { lastUsedAt: new Date() },
+    }).catch(() => { /* non-blocking */ })
+    return apiKey.user.id
+  }
 
-  if (!apiKey) return null
-  if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null
-
-  prisma.apiKey.update({
-    where: { id: apiKey.id },
-    data: { lastUsedAt: new Date() },
-  }).catch(() => { /* non-blocking */ })
-
-  return apiKey.user.id
+  return null
 }
 
 export async function handleMcpRequest(c: Context): Promise<Response> {
   const userId = await authenticateRequest(c)
   if (!userId) {
-    return c.json({ error: 'Unauthorized. Provide a valid Grimoire API key as Bearer token.' }, 401)
+    const issuer = process.env.WEB_URL ?? 'http://localhost:3000'
+    c.header('WWW-Authenticate', `Bearer resource_metadata="${issuer}/.well-known/oauth-protected-resource"`)
+    return c.json({ error: 'Unauthorized. Provide a valid OAuth access token or API key as Bearer token.' }, 401)
   }
 
   const env = c.env as { incoming?: IncomingMessage; outgoing?: ServerResponse }

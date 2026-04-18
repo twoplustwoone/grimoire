@@ -21,6 +21,7 @@ import inviteAccept from './routes/invite-accept.js'
 import reveals from './routes/reveals.js'
 import apiKeys from './routes/api-keys.js'
 import { handleMcpRequest } from './mcp/handler.js'
+import oauth from './mcp/oauth-routes.js'
 
 const app = new Hono()
 
@@ -55,6 +56,8 @@ app.route('/invites', inviteAccept)
 app.route('/api-keys', apiKeys)
 app.route('/search', search)
 app.route('/graph', graph)
+
+app.route('/', oauth)
 
 app.all('/mcp', handleMcpRequest)
 app.all('/mcp/*', handleMcpRequest)
