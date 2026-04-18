@@ -218,7 +218,6 @@ export function ApiKeyManager() {
 {`{
   "mcpServers": {
     "grimoire": {
-      "type": "http",
       "url": "https://grimoire.twoplustwoone.dev/mcp",
       "headers": {
         "Authorization": "Bearer YOUR_API_KEY"

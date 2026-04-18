@@ -1,8 +1,34 @@
 # Grimoire MCP Server — Claude Desktop Setup
 
-> ⚠️ **Deprecated** — The local stdio MCP server has been replaced by a hosted HTTP MCP server.
-> See Settings → API Keys in your Grimoire account for setup instructions.
-> The HTTP server requires no local installation and works for all users.
+## Recommended: Hosted HTTP MCP server
+
+The fastest way to connect is via the hosted HTTP endpoint. No local installation required.
+
+1. Create an API key at **Settings → API Keys** in your Grimoire account.
+2. Open Claude Desktop config at `~/Library/Application Support/Claude/claude_desktop_config.json`.
+3. Add:
+
+```json
+{
+  "mcpServers": {
+    "grimoire": {
+      "url": "https://grimoire.twoplustwoone.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+4. Restart Claude Desktop. Try: *"List my Grimoire campaigns"*.
+
+---
+
+## Legacy: local stdio MCP server
+
+> ⚠️ **Deprecated** — Use the hosted HTTP server above.
+> The local stdio setup remains here for development use only.
 
 ## Prerequisites
 - Node.js 22+
