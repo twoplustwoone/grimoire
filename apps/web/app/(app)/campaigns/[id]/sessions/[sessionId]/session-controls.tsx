@@ -212,16 +212,15 @@ export function SessionControls({
             </div>
           )}
           <div className="flex gap-2">
-            <MentionInput
-              value={newNote}
-              onChange={setNewNote}
-              placeholder="Quick note... (type @ to mention an entity)"
-              rows={2}
-              className="flex-1 min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addNote()
-              }}
-            />
+            <div className="flex-1">
+              <MentionInput
+                value={newNote}
+                onChange={setNewNote}
+                placeholder="Quick note... (type @ to mention an entity)"
+                rows={2}
+                onSave={addNote}
+              />
+            </div>
             <Button onClick={addNote} disabled={savingNote || !newNote.trim()} size="sm" className="self-end">
               <Plus className="h-4 w-4" />
             </Button>
@@ -241,7 +240,7 @@ export function SessionControls({
               onChange={setGmSummary}
               placeholder="What happened this session... (type @ to mention an entity)"
               rows={4}
-              className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+              onSave={saveSummary}
             />
             <div className="flex gap-2">
               <Button onClick={saveSummary} disabled={savingSummary} size="sm">
