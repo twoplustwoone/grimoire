@@ -1,159 +1,156 @@
-# Turborepo starter
+# Grimoire
 
-This Turborepo starter is maintained by the Turborepo core team.
+> A GM companion platform for running rich, stateful tabletop campaigns.
 
-## Using this example
+Grimoire helps game masters build and manage living campaign worlds — tracking NPCs, locations, factions, threads, and clues across sessions. At the end of each session, an AI recap engine reads your actual campaign state and generates a structured summary that knows your world.
 
-Run the following command:
+[Add a screenshot or demo gif here once available]
 
-```sh
-npx create-turbo@latest
+---
+
+## Features
+
+- **Campaign management** — Create and manage campaigns with full entity graphs: NPCs, locations, factions, plot threads, and clues
+- **Living world model** — Every entity has status, relationships, faction memberships, and a structured changelog tracking how it evolved across sessions
+- **Session tracking** — Log notes mid-session, tag which entities were involved, write GM summaries
+- **AI recap generation** — After each session, Claude reads your tagged entities, notes, and campaign context to generate a structured recap that reflects your specific world
+- **Inline editing** — Every entity field is editable in place with optimistic UI and audit trail
+- **Three themes** — Dark atmospheric (Grimoire), clean (Minimal), and whimsical (Fey) — persisted per user
+- **Mobile-first session mode** — Fast entity lookup and note logging during play
+
+---
+
+## Architecture
+
+Grimoire is a TypeScript monorepo built with Turborepo, structured as two applications sharing a common database package.
+
+```
+grimoire/
+├── apps/
+│   ├── web/          # Next.js 15 — UI, server components, auth-gated routes
+│   └── api/          # Hono — REST API, business logic, AI pipeline
+├── packages/
+│   ├── db/           # Prisma schema, client singleton, migrations
+│   ├── types/        # Shared TypeScript types
+│   ├── ai/           # AI pipeline utilities (planned)
+│   └── realtime/     # Real-time layer (planned)
 ```
 
-## What's inside?
+### Stack
 
-This Turborepo includes the following packages/apps:
+| Layer | Technology | Why |
+|---|---|---|
+| Frontend | Next.js 15 (App Router) | Server components for data fetching, client components for interactivity |
+| API | Hono | Lightweight, TypeScript-native, excellent monorepo fit |
+| Database | PostgreSQL + Prisma | Relational model fits interconnected campaign data |
+| Auth | Better Auth | Best self-hosted TypeScript auth library, Prisma adapter |
+| AI | Vercel AI SDK + Anthropic | Model-agnostic SDK, claude-sonnet-4 for recap generation |
+| Styling | Tailwind CSS + shadcn/ui | Owned components, CSS variable theming |
+| Hosting | Railway | Postgres + API + web in one platform |
 
-### Apps and Packages
+### Data model highlights
 
-- `@grimoire/web`: a [Next.js](https://nextjs.org/) app
-- `@grimoire/api`: a [Hono](https://hono.dev/) Node.js API
-- `@grimoire/ai`, `@grimoire/db`, `@grimoire/realtime`, `@grimoire/types`, `@grimoire/config`: shared internal packages
-- `@grimoire/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@grimoire/typescript-config`: `tsconfig.json`s used throughout the monorepo
+The schema uses a **polymorphic entity pattern** — cross-cutting concerns (notes, changelog entries, relationships, session tags) reference any entity type via `entityType + entityId` pairs rather than separate join tables per entity. This keeps the schema extensible without an explosion of tables.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Key design decisions:
+- **GameSession vs Session** — the campaign session model is named `GameSession` in Prisma to avoid collision with Better Auth's `Session` model
+- **Soft deletes** — all entities have `deletedAt` for safe removal without losing historical references
+- **Changelog over event sourcing** — every field mutation writes a structured changelog entry, giving the AI pipeline historical context without the complexity of full event sourcing
+- **Custom field definitions** — campaigns can define typed custom fields (text, number, progress, select) per entity type, enabling module-specific tracking like Dragon Heist faction reputation
 
-### Utilities
+### AI pipeline
 
-This Turborepo has some additional tools already setup for you:
+The recap generator in `apps/api/src/lib/recap.ts` builds a structured context payload from:
+- Session notes (chronological)
+- Tagged entity details (NPCs with descriptions and status, locations, factions with agendas, threads with urgency, clues)
+- Campaign settings (system, world, tone)
+- GM's own summary notes
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+This context is passed to Claude with a system prompt instructing it to write a concise, evocative recap in 3-5 paragraphs using only information present in the notes. The result is stored as `aiSummary` on the session, distinct from the GM's own `gmSummary`.
 
-### Build
+---
 
-To build all apps and packages, run the following command:
+## Getting started
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### Prerequisites
 
-```sh
-cd my-turborepo
-turbo build
+- Node.js 22+
+- pnpm 10+
+- Docker (for local Postgres)
+
+### Installation
+
+```bash
+git clone https://github.com/twoplustwoone/grimoire.git
+cd grimoire
+pnpm install
 ```
 
-Without global `turbo`, use your package manager:
+### Local development
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+```bash
+# Start local Postgres
+pnpm db:up
+
+# Apply migrations
+pnpm db:migrate
+
+# Seed with a full Dragon Heist campaign
+pnpm seed
+# Login: gm@grimoire.dev / grimoire123
+
+# Start both servers
+pnpm dev
+# Web: http://localhost:3000
+# API: http://localhost:3005
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### Environment variables
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+**`apps/api/.env`**
+```
+DATABASE_URL=postgresql://grimoire:grimoire@localhost:5432/grimoire
+BETTER_AUTH_SECRET=your-secret-here
+BETTER_AUTH_URL=http://localhost:3005
+WEB_URL=http://localhost:3000
+ANTHROPIC_API_KEY=your-anthropic-key-here
+PORT=3005
 ```
 
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+**`apps/web/.env.local`**
+```
+DATABASE_URL=postgresql://grimoire:grimoire@localhost:5432/grimoire
+BETTER_AUTH_SECRET=your-secret-here
+BETTER_AUTH_URL=http://localhost:3005
+NEXT_PUBLIC_API_URL=http://localhost:3005
+API_INTERNAL_URL=http://localhost:3005
 ```
 
-### Develop
+### Useful commands
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+pnpm db:up        # Start Postgres container
+pnpm db:down      # Stop Postgres container
+pnpm db:migrate   # Apply pending migrations
+pnpm db:reset     # Wipe DB, reapply migrations, reseed
+pnpm seed         # Seed Dragon Heist campaign data
+pnpm dev          # Start API + web dev servers
+pnpm build        # Build all packages
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
+## Roadmap
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+See [SCOPE.md](./SCOPE.md) for the full backlog. Near-term priorities:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+- [ ] MCP server — expose campaign data to Claude and other MCP clients
+- [ ] Player portal — controlled information reveal per player
+- [ ] Relationship visualization — graph view of entity connections
+- [ ] Plugin system — shareable campaign module configurations
 
-```sh
-turbo dev --filter=web
-```
+---
 
-Without global `turbo`:
+## License
 
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+MIT
