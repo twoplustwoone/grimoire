@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Clock } from 'lucide-react'
 import { ClueEditableFields } from '@/components/entities/clue-editable-fields'
 import { EntityNotes } from '@/components/entities/entity-notes'
+import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; clueId: string }> }
 
@@ -85,6 +86,15 @@ export default async function ClueDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       )}
+
+      <div className="mt-8 pt-6 border-t border-destructive/20">
+        <p className="text-sm text-muted-foreground mb-3">Danger zone</p>
+        <DeleteEntityButton
+          entityName={clue.title}
+          deleteEndpoint={`/api/v1/campaigns/${campaignId}/clues/${clueId}`}
+          redirectTo={`/campaigns/${campaignId}/clues`}
+        />
+      </div>
     </div>
   )
 }

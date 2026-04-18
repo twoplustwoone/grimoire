@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock } from 'lucide-react'
 import { NpcEditableFields } from '@/components/entities/npc-editable-fields'
 import { NpcAssignments } from '@/components/entities/npc-assignments'
+import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
@@ -134,6 +135,15 @@ export default async function NPCDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       )}
+
+      <div className="mt-8 pt-6 border-t border-destructive/20">
+        <p className="text-sm text-muted-foreground mb-3">Danger zone</p>
+        <DeleteEntityButton
+          entityName={npc.name}
+          deleteEndpoint={`/api/v1/campaigns/${campaignId}/npcs/${npcId}`}
+          redirectTo={`/campaigns/${campaignId}/npcs`}
+        />
+      </div>
     </div>
   )
 }

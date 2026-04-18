@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock, Tag } from 'lucide-react'
 import { ThreadEditableFields } from '@/components/entities/thread-editable-fields'
 import { EntityNotes } from '@/components/entities/entity-notes'
+import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; threadId: string }> }
 
@@ -132,6 +133,15 @@ export default async function ThreadDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       )}
+
+      <div className="mt-8 pt-6 border-t border-destructive/20">
+        <p className="text-sm text-muted-foreground mb-3">Danger zone</p>
+        <DeleteEntityButton
+          entityName={thread.title}
+          deleteEndpoint={`/api/v1/campaigns/${campaignId}/threads/${threadId}`}
+          redirectTo={`/campaigns/${campaignId}/threads`}
+        />
+      </div>
     </div>
   )
 }
