@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
 echo "Running database migrations..."
-npx prisma migrate deploy --schema=../../packages/db/prisma/schema.prisma
+(cd /app && pnpm --filter @grimoire/db exec prisma migrate deploy --schema=./prisma/schema.prisma)
 echo "Migrations complete. Starting API..."
 exec node dist/index.js
