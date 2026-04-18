@@ -27,7 +27,7 @@ Grimoire is a TypeScript monorepo built with Turborepo, structured as two applic
 ```
 grimoire/
 ├── apps/
-│   ├── web/          # Next.js 15 — UI, server components, auth-gated routes
+│   ├── web/          # Next.js 16 — UI, server components, auth-gated routes
 │   └── api/          # Hono — REST API, business logic, AI pipeline
 ├── packages/
 │   ├── db/           # Prisma schema, client singleton, migrations
@@ -40,7 +40,7 @@ grimoire/
 
 | Layer | Technology | Why |
 |---|---|---|
-| Frontend | Next.js 15 (App Router) | Server components for data fetching, client components for interactivity |
+| Frontend | Next.js 16 (App Router) | Server components for data fetching, client components for interactivity |
 | API | Hono | Lightweight, TypeScript-native, excellent monorepo fit |
 | Database | PostgreSQL + Prisma | Relational model fits interconnected campaign data |
 | Auth | Better Auth | Best self-hosted TypeScript auth library, Prisma adapter |
