@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { EntityNode } from './entity-node'
-import { buildGraphLayout } from '@/lib/graph-layout'
+import { buildGraphLayout, buildColumnLayout, type RawNode, type RawEdge } from '@/lib/graph-layout'
 import { useRouter } from 'next/navigation'
 
 const nodeTypes = { entityNode: EntityNode }
@@ -24,6 +24,7 @@ interface Props {
 }
 
 type FilterType = 'ALL' | 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE'
+type LayoutMode = 'force' | 'column'
 
 export function CampaignGraph({ campaignId }: Props) {
   const router = useRouter()
@@ -33,6 +34,8 @@ export function CampaignGraph({ campaignId }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterType>('ALL')
   const [allNodes, setAllNodes] = useState<Node[]>([])
+  const [rawData, setRawData] = useState<{ nodes: RawNode[]; edges: RawEdge[] } | null>(null)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('force')
 
   useEffect(() => {
     async function loadGraph() {
@@ -43,14 +46,7 @@ export function CampaignGraph({ campaignId }: Props) {
         })
         if (!res.ok) throw new Error('Failed to load graph')
         const data = await res.json()
-        const { nodes: layoutNodes, edges: layoutEdges } = buildGraphLayout(
-          data.nodes,
-          data.edges,
-          campaignId
-        )
-        setAllNodes(layoutNodes)
-        setNodes(layoutNodes)
-        setEdges(layoutEdges)
+        setRawData({ nodes: data.nodes, edges: data.edges })
       } catch {
         setError('Failed to load relationship graph')
       } finally {
@@ -58,7 +54,20 @@ export function CampaignGraph({ campaignId }: Props) {
       }
     }
     loadGraph()
-  }, [campaignId, setNodes, setEdges])
+  }, [campaignId])
+
+  useEffect(() => {
+    if (!rawData) return
+    const layoutFn = layoutMode === 'force' ? buildGraphLayout : buildColumnLayout
+    const { nodes: layoutNodes, edges: layoutEdges } = layoutFn(
+      rawData.nodes,
+      rawData.edges,
+      campaignId
+    )
+    setAllNodes(layoutNodes)
+    setNodes(layoutNodes)
+    setEdges(layoutEdges)
+  }, [rawData, layoutMode, campaignId, setNodes, setEdges])
 
   useEffect(() => {
     if (filter === 'ALL') {
@@ -119,6 +128,14 @@ export function CampaignGraph({ campaignId }: Props) {
             {i === 0 && <div className="w-px bg-border self-stretch mx-0.5" />}
           </Fragment>
         ))}
+        <div className="w-px bg-border self-stretch mx-0.5" />
+        <button
+          onClick={() => setLayoutMode(m => m === 'force' ? 'column' : 'force')}
+          className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors border bg-card text-muted-foreground border-border hover:text-foreground"
+          title={layoutMode === 'force' ? 'Switch to column layout' : 'Switch to force layout'}
+        >
+          {layoutMode === 'force' ? '⬡ Force' : '▦ Grid'}
+        </button>
       </div>
 
       {!loading && !error && allNodes.length === 0 && (
