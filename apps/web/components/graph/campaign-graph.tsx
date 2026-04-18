@@ -36,6 +36,7 @@ export function CampaignGraph({ campaignId }: Props) {
   const [allNodes, setAllNodes] = useState<Node[]>([])
   const [rawData, setRawData] = useState<{ nodes: RawNode[]; edges: RawEdge[] } | null>(null)
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('force')
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadGraph() {
@@ -67,6 +68,7 @@ export function CampaignGraph({ campaignId }: Props) {
     setAllNodes(layoutNodes)
     setNodes(layoutNodes)
     setEdges(layoutEdges)
+    setHoveredNodeId(null)
   }, [rawData, layoutMode, campaignId, setNodes, setEdges])
 
   useEffect(() => {
@@ -75,7 +77,52 @@ export function CampaignGraph({ campaignId }: Props) {
     } else {
       setNodes(allNodes.filter(n => (n.data as { type: string }).type === filter))
     }
+    setHoveredNodeId(null)
   }, [filter, allNodes, setNodes])
+
+  useEffect(() => {
+    if (!hoveredNodeId) {
+      setNodes(ns => ns.map(n => ({
+        ...n,
+        data: { ...n.data, dimmed: false, highlighted: false },
+      })))
+      setEdges(es => es.map(e => {
+        const edgeType = (e.data as { edgeType?: string } | undefined)?.edgeType
+        return {
+          ...e,
+          style: { ...e.style, opacity: 1 },
+          labelStyle: { ...e.labelStyle, opacity: 1 },
+          animated: edgeType === 'thread_tag',
+        }
+      }))
+      return
+    }
+
+    const connectedNodeIds = new Set<string>([hoveredNodeId])
+    setEdges(es => es.map(e => {
+      const isConnected = e.source === hoveredNodeId || e.target === hoveredNodeId
+      if (isConnected) {
+        connectedNodeIds.add(e.source as string)
+        connectedNodeIds.add(e.target as string)
+      }
+      const edgeType = (e.data as { edgeType?: string } | undefined)?.edgeType
+      return {
+        ...e,
+        style: { ...e.style, opacity: isConnected ? 1 : 0.08 },
+        labelStyle: { ...e.labelStyle, opacity: isConnected ? 1 : 0 },
+        animated: isConnected && edgeType === 'thread_tag',
+      }
+    }))
+
+    setNodes(ns => ns.map(n => ({
+      ...n,
+      data: {
+        ...n.data,
+        dimmed: !connectedNodeIds.has(n.id),
+        highlighted: n.id === hoveredNodeId,
+      },
+    })))
+  }, [hoveredNodeId, setNodes, setEdges])
 
   function handleNodeClick(_: React.MouseEvent, node: Node) {
     const data = node.data as { type: string }
@@ -172,6 +219,9 @@ export function CampaignGraph({ campaignId }: Props) {
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeClick}
+        onNodeMouseEnter={(_event, node) => setHoveredNodeId(node.id)}
+        onNodeMouseLeave={() => setHoveredNodeId(null)}
+        onPaneClick={() => setHoveredNodeId(null)}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}

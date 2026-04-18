@@ -69,6 +69,7 @@ function buildEdges(rawEdges: RawEdge[], validIds: Set<string>): Edge[] {
         style,
         labelStyle: { fill: '#9ca3af', fontSize: 10 },
         labelBgStyle: { fill: 'transparent' },
+        data: { edgeType: e.type },
       }
     })
 }

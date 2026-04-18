@@ -53,7 +53,7 @@ const urgencyColors = {
 } as const
 
 export const EntityNode = memo(({ data, selected }: NodeProps) => {
-  const nodeData = data as { label: string; type: string; status: string; urgency?: string; campaignId?: string; entityId?: string }
+  const nodeData = data as { label: string; type: string; status: string; urgency?: string; campaignId?: string; entityId?: string; dimmed?: boolean; highlighted?: boolean }
   const light = isLightTheme()
   const typeConfig = getTypeConfig(light)
   const config = typeConfig[nodeData.type as keyof typeof typeConfig] ?? typeConfig.NPC
@@ -66,6 +66,8 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
     : config.border
 
   const mutedTextColor = light ? 'text-foreground/50' : 'text-white/40'
+  const isDimmed = nodeData.dimmed === true
+  const isHighlighted = nodeData.highlighted === true
 
   return (
     <>
@@ -76,8 +78,10 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
           min-w-[120px] max-w-[180px] cursor-pointer
           transition-all duration-150
           ${config.bg} ${borderClass}
-          ${selected ? 'ring-2 ring-white/50 scale-105' : 'hover:scale-105'}
-          ${isInactive ? 'opacity-50' : ''}
+          ${isHighlighted ? 'ring-2 ring-white/60 scale-110 shadow-lg' : ''}
+          ${isDimmed ? 'opacity-20 scale-95' : ''}
+          ${!isDimmed && !isHighlighted && selected ? 'ring-2 ring-white/50 scale-105' : ''}
+          ${isInactive && !isDimmed ? 'opacity-50' : ''}
         `}
       >
         <div className="flex items-center gap-2">
