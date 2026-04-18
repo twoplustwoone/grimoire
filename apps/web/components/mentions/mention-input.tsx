@@ -94,6 +94,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
   const campaignId = params?.id as string | undefined
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         bold: false,
