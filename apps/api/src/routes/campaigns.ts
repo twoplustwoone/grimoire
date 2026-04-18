@@ -82,4 +82,18 @@ campaigns.patch('/:id', async (c) => {
   return c.json(updated)
 })
 
+campaigns.delete('/:id', async (c) => {
+  const user = c.get('user')
+  const id = c.req.param('id')
+
+  const membership = await prisma.campaignMembership.findFirst({
+    where: { campaignId: id, userId: user.id, role: 'GM' },
+  })
+  if (!membership) return c.json({ error: 'Not found or not authorized' }, 404)
+
+  await prisma.campaign.delete({ where: { id } })
+
+  return c.json({ success: true })
+})
+
 export default campaigns

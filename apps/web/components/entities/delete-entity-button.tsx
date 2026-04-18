@@ -20,9 +20,10 @@ interface Props {
   entityName: string
   deleteEndpoint: string
   redirectTo: string
+  warningText?: string
 }
 
-export function DeleteEntityButton({ entityName, deleteEndpoint, redirectTo }: Props) {
+export function DeleteEntityButton({ entityName, deleteEndpoint, redirectTo, warningText }: Props) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
 
@@ -51,7 +52,7 @@ export function DeleteEntityButton({ entityName, deleteEndpoint, redirectTo }: P
         <AlertDialogHeader>
           <AlertDialogTitle>Delete {entityName}?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will remove &quot;{entityName}&quot; from your campaign. This action can be undone by contacting support, but will not be visible in the app.
+            {warningText ?? `This will remove "${entityName}" from your campaign. This action can be undone by contacting support, but will not be visible in the app.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -23,7 +23,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
   return (
     <>
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b bg-card">
-        <h1 className="text-lg font-bold tracking-tight">Grimoire</h1>
+        <span className="text-lg font-bold tracking-tight">Grimoire</span>
         <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -32,7 +32,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
         <div className="md:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={() => setOpen(false)}>
           <nav className="absolute top-0 left-0 w-72 h-full bg-card border-r p-6 flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-lg font-bold">Grimoire</h1>
+              <span className="text-lg font-bold">Grimoire</span>
               <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>

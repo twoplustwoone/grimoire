@@ -10,6 +10,12 @@ import { pluralize } from '@/lib/utils'
 
 interface Props { params: Promise<{ id: string }> }
 
+const statusColors: Record<string, string> = {
+  ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  INACTIVE: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  DESTROYED: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+}
+
 export default async function FactionsPage({ params }: Props) {
   const { id: campaignId } = await params
   const session = await auth.api.getSession({ headers: await headers() })
@@ -45,7 +51,12 @@ export default async function FactionsPage({ params }: Props) {
             <Link key={f.id} href={`/campaigns/${campaignId}/factions/${f.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardHeader className="py-4">
-                  <CardTitle className="text-base">{f.name}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{f.name}</CardTitle>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[f.status] ?? ''}`}>
+                      {f.status}
+                    </span>
+                  </div>
                   {f.agenda && <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{f.agenda}</p>}
                   {f.memberships.length > 0 && <span className="flex items-center gap-1 text-xs text-muted-foreground mt-2"><Users className="h-3 w-3" />{pluralize(f.memberships.length, 'member', 'members')}</span>}
                 </CardHeader>

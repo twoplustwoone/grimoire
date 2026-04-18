@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, MapPin, Shield, GitBranch, Search, Calendar, Plus } from 'lucide-react'
 import { CampaignEditableFields } from '@/components/entities/campaign-editable-fields'
+import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -75,6 +76,18 @@ export default async function CampaignPage({ params }: Props) {
           )
         })}
       </div>
+
+      {membership.role === 'GM' && (
+        <div className="mt-8 pt-6 border-t border-destructive/20">
+          <p className="text-sm text-muted-foreground mb-3">Danger zone</p>
+          <DeleteEntityButton
+            entityName={campaign.name}
+            deleteEndpoint={`/api/v1/campaigns/${campaign.id}`}
+            redirectTo="/campaigns"
+            warningText="This will permanently delete the campaign and ALL associated data — NPCs, locations, sessions, notes, and everything else. This cannot be undone."
+          />
+        </div>
+      )}
     </div>
   )
 }

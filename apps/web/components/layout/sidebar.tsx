@@ -38,7 +38,7 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-card">
       <div className="p-6 border-b">
-        <h1 className="text-xl font-bold tracking-tight">Grimoire</h1>
+        <span className="text-xl font-bold tracking-tight">Grimoire</span>
         <p className="text-xs text-muted-foreground mt-1 truncate">{user.email}</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">
