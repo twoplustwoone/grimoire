@@ -98,6 +98,29 @@ clues.patch('/:clueId', async (c) => {
   return c.json(updated)
 })
 
+clues.post('/:clueId/notes', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const clueId = c.req.param('clueId')!
+
+  if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.create({
+    data: {
+      entityType: 'CLUE',
+      entityId: clueId,
+      campaignId,
+      authorId: user.id,
+      content: body.content.trim(),
+    },
+  })
+
+  return c.json(note, 201)
+})
+
 clues.delete('/:clueId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!

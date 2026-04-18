@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Sparkles, StickyNote } from 'lucide-react'
+import { Plus, Sparkles, StickyNote, Pencil, X } from 'lucide-react'
 
 interface Note {
   id: string
@@ -38,6 +38,42 @@ export function SessionControls({
   const [generatingRecap, setGeneratingRecap] = useState(false)
   const [recapError, setRecapError] = useState<string | null>(null)
   const [aiSummary, setAiSummary] = useState<string | null>(initialAiSummary ?? null)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState('')
+
+  function startEditNote(id: string, content: string) {
+    setEditingNoteId(id)
+    setEditingContent(content)
+  }
+
+  async function saveNoteEdit(noteId: string) {
+    const res = await fetch(
+      `/api/v1/campaigns/${campaignId}/sessions/${sessionId}/notes/${noteId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: editingContent }),
+      }
+    )
+    if (res.ok) {
+      setNotes(notes.map((n) => (n.id === noteId ? { ...n, content: editingContent } : n)))
+      setEditingNoteId(null)
+    }
+  }
+
+  async function deleteNote(noteId: string) {
+    const res = await fetch(
+      `/api/v1/campaigns/${campaignId}/sessions/${sessionId}/notes/${noteId}`,
+      {
+        method: 'DELETE',
+        credentials: 'include',
+      }
+    )
+    if (res.ok) {
+      setNotes(notes.filter((n) => n.id !== noteId))
+    }
+  }
 
   async function addNote() {
     if (!newNote.trim()) return
@@ -126,12 +162,45 @@ export function SessionControls({
           {notes.length > 0 && (
             <div className="space-y-2 mb-4">
               {notes.map((note) => (
-                <div key={note.id} className="text-sm border-l-2 pl-3 py-1">
-                  <p>{note.content}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(note.createdAt).toLocaleDateString()}{' '}
-                    {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+                <div key={note.id} className="text-sm border-l-2 pl-3 py-1 group">
+                  {editingNoteId === note.id ? (
+                    <div className="space-y-1">
+                      <Textarea
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => saveNoteEdit(note.id)}>Save</Button>
+                        <Button size="sm" variant="outline" onClick={() => setEditingNoteId(null)}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p>{note.content}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(note.createdAt).toLocaleDateString()}{' '}
+                          {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+                          <button
+                            onClick={() => startEditNote(note.id, note.content)}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => deleteNote(note.id)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

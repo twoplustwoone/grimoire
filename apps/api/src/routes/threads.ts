@@ -96,6 +96,29 @@ threads.patch('/:threadId', async (c) => {
   return c.json(updated)
 })
 
+threads.post('/:threadId/notes', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const threadId = c.req.param('threadId')!
+
+  if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.create({
+    data: {
+      entityType: 'THREAD',
+      entityId: threadId,
+      campaignId,
+      authorId: user.id,
+      content: body.content.trim(),
+    },
+  })
+
+  return c.json(note, 201)
+})
+
 threads.delete('/:threadId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!

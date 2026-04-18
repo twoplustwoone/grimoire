@@ -121,6 +121,36 @@ sessions.post('/:sessionId/notes', async (c) => {
   return c.json(note, 201)
 })
 
+sessions.patch('/:sessionId/notes/:noteId', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const noteId = c.req.param('noteId')!
+
+  if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.update({
+    where: { id: noteId },
+    data: { content: body.content.trim() },
+  })
+
+  return c.json(note)
+})
+
+sessions.delete('/:sessionId/notes/:noteId', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const noteId = c.req.param('noteId')!
+
+  if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  await prisma.note.delete({ where: { id: noteId } })
+
+  return c.json({ success: true })
+})
+
 sessions.post('/:sessionId/tags', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
