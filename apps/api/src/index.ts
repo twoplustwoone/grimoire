@@ -19,6 +19,8 @@ import infoNodes from './routes/information-nodes.js'
 import invites from './routes/invites.js'
 import inviteAccept from './routes/invite-accept.js'
 import reveals from './routes/reveals.js'
+import apiKeys from './routes/api-keys.js'
+import { handleMcpRequest } from './mcp/handler.js'
 
 const app = new Hono()
 
@@ -50,8 +52,12 @@ app.route('/campaigns/:campaignId/information-nodes', infoNodes)
 app.route('/campaigns/:campaignId/invites', invites)
 app.route('/campaigns/:campaignId/reveals', reveals)
 app.route('/invites', inviteAccept)
+app.route('/api-keys', apiKeys)
 app.route('/search', search)
 app.route('/graph', graph)
+
+app.all('/mcp', handleMcpRequest)
+app.all('/mcp/*', handleMcpRequest)
 
 const port = Number(process.env.PORT ?? 3001)
 

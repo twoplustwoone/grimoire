@@ -10,9 +10,11 @@
     "@ai-sdk/anthropic": "^3.0.71",
     "@grimoire/db": "workspace:*",
     "@hono/node-server": "^1.19.14",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "ai": "^6.0.168",
     "better-auth": "latest",
-    "hono": "^4.12.14"
+    "hono": "^4.12.14",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",

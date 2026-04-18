@@ -25,6 +25,7 @@ model User {
   sessions         Session[] @relation("UserSessions")
   accounts         Account[]           @relation("UserAccounts")
   entityReveals    EntityReveal[]
+  apiKeys          ApiKey[]
 }
 
 // ==================== CAMPAIGN ====================
@@ -447,6 +448,21 @@ model CampaignInvite {
 
   @@index([campaignId])
   @@index([token])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String    @default("My API Key")
+  keyHash    String    @unique
+  keyPrefix  String
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ==================== CUSTOM FIELDS ====================

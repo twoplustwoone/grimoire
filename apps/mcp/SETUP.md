@@ -1,5 +1,9 @@
 # Grimoire MCP Server — Claude Desktop Setup
 
+> ⚠️ **Deprecated** — The local stdio MCP server has been replaced by a hosted HTTP MCP server.
+> See Settings → API Keys in your Grimoire account for setup instructions.
+> The HTTP server requires no local installation and works for all users.
+
 ## Prerequisites
 - Node.js 22+
 - pnpm installed
