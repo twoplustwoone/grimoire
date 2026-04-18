@@ -11,6 +11,7 @@ import threads from './routes/threads.js'
 import clues from './routes/clues.js'
 import sessions from './routes/sessions.js'
 import recapRouter from './routes/recap.js'
+import search from './routes/search.js'
 
 const app = new Hono()
 
@@ -36,6 +37,7 @@ app.route('/campaigns/:campaignId/threads', threads)
 app.route('/campaigns/:campaignId/clues', clues)
 app.route('/campaigns/:campaignId/sessions', sessions)
 app.route('/campaigns/:campaignId/sessions', recapRouter)
+app.route('/search', search)
 
 const port = Number(process.env.PORT ?? 3001)
 

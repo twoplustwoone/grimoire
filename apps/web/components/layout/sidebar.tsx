@@ -63,6 +63,21 @@ export function Sidebar({ user }: SidebarProps) {
         })}
       </nav>
       <div className="p-4 border-t space-y-1">
+        <button
+          onClick={() => {
+            const event = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
+            document.dispatchEvent(event)
+          }}
+          className="flex items-center justify-between w-full px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
+        >
+          <span className="flex items-center gap-2">
+            <Search className="h-3 w-3" />
+            Search
+          </span>
+          <kbd className="flex items-center gap-0.5 border rounded px-1 py-0.5 text-[10px]">
+            <span>⌘</span><span>K</span>
+          </kbd>
+        </button>
         <ThemeSwitcher />
         <Link
           href="/settings"
