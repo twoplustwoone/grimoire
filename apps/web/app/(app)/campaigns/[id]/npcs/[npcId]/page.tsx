@@ -10,6 +10,7 @@ import { NpcEditableFields } from '@/components/entities/npc-editable-fields'
 import { NpcAssignments } from '@/components/entities/npc-assignments'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityNotes } from '@/components/entities/entity-notes'
+import { InformationNodes } from '@/components/entities/information-nodes'
 
 interface Props {
   params: Promise<{ id: string; npcId: string }>
@@ -52,6 +53,11 @@ export default async function NPCDetailPage({ params }: Props) {
     where: { entityType: 'NPC', entityId: npcId },
     orderBy: { createdAt: 'desc' },
     take: 20,
+  })
+
+  const infoNodes = await prisma.informationNode.findMany({
+    where: { campaignId, entityType: 'NPC', entityId: npcId },
+    orderBy: { createdAt: 'asc' },
   })
 
   const [availableLocations, availableFactions] = await Promise.all([
@@ -100,10 +106,20 @@ export default async function NPCDetailPage({ params }: Props) {
         availableFactions={availableFactions}
       />
 
+      <InformationNodes
+        nodes={infoNodes}
+        campaignId={campaignId}
+        entityType="NPC"
+        entityId={npcId}
+      />
+
       <div className="mb-4">
         <EntityNotes
           notes={notes}
           addNoteEndpoint={`/api/v1/campaigns/${campaignId}/npcs/${npcId}/notes`}
+          campaignId={campaignId}
+          entityType="NPC"
+          entityId={npcId}
         />
       </div>
 

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StickyNote, Plus } from 'lucide-react'
 import { MentionInput } from '@/components/mentions/mention-input'
-import { MentionRenderer } from '@/components/mentions/mention-renderer'
+import { PromotableNote } from '@/components/entities/promotable-note'
 
 interface Note {
   id: string
@@ -17,15 +17,21 @@ interface Note {
 interface Props {
   notes: Note[]
   addNoteEndpoint: string
+  campaignId: string
+  entityType: string
+  entityId: string
 }
 
-export function EntityNotes({ notes: initialNotes, addNoteEndpoint }: Props) {
-  const params = useParams()
-  const campaignId = params?.id as string | undefined
+export function EntityNotes({ notes: initialNotes, addNoteEndpoint, campaignId }: Props) {
   const router = useRouter()
   const [notes, setNotes] = useState<Note[]>(initialNotes)
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState('')
+
+  const noteEndpointFor = (noteId: string) =>
+    addNoteEndpoint.replace(/\/notes$/, '') + `/notes/${noteId}`
 
   async function addNote() {
     if (!content.trim()) return
@@ -45,6 +51,31 @@ export function EntityNotes({ notes: initialNotes, addNoteEndpoint }: Props) {
     setSaving(false)
   }
 
+  async function saveNoteEdit(noteId: string) {
+    const res = await fetch(noteEndpointFor(noteId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ content: editingContent }),
+    })
+    if (res.ok) {
+      setNotes(notes.map(n => n.id === noteId ? { ...n, content: editingContent } : n))
+      setEditingNoteId(null)
+      router.refresh()
+    }
+  }
+
+  async function deleteNote(noteId: string) {
+    const res = await fetch(noteEndpointFor(noteId), {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+    if (res.ok) {
+      setNotes(notes.filter(n => n.id !== noteId))
+      router.refresh()
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -57,13 +88,23 @@ export function EntityNotes({ notes: initialNotes, addNoteEndpoint }: Props) {
         {notes.length > 0 && (
           <div className="space-y-3 mb-4">
             {notes.map((note) => (
-              <div key={note.id} className="text-sm border-l-2 pl-3 py-1">
-                <p><MentionRenderer content={note.content} campaignId={campaignId} /></p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(note.createdAt).toLocaleDateString()}{' '}
-                  {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
+              <PromotableNote
+                key={note.id}
+                note={note}
+                campaignId={campaignId}
+                editingNoteId={editingNoteId}
+                editingContent={editingContent}
+                onStartEdit={(id, noteContent) => {
+                  setEditingNoteId(id)
+                  setEditingContent(noteContent)
+                }}
+                onSaveEdit={saveNoteEdit}
+                onCancelEdit={() => setEditingNoteId(null)}
+                onEditContentChange={setEditingContent}
+                onDelete={deleteNote}
+                onPromote={() => router.refresh()}
+                promoteEndpoint={`/api/v1/campaigns/${campaignId}/notes/${note.id}/promote`}
+              />
             ))}
           </div>
         )}

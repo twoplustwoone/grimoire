@@ -9,6 +9,7 @@ import { Users, Clock } from 'lucide-react'
 import { FactionEditableFields } from '@/components/entities/faction-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityNotes } from '@/components/entities/entity-notes'
+import { InformationNodes } from '@/components/entities/information-nodes'
 
 interface Props { params: Promise<{ id: string; factionId: string }> }
 
@@ -34,6 +35,7 @@ export default async function FactionDetailPage({ params }: Props) {
 
   const notes = await prisma.note.findMany({ where: { entityType: 'FACTION', entityId: factionId }, orderBy: { createdAt: 'desc' } })
   const changelog = await prisma.changelogEntry.findMany({ where: { entityType: 'FACTION', entityId: factionId }, orderBy: { createdAt: 'desc' }, take: 20 })
+  const infoNodes = await prisma.informationNode.findMany({ where: { campaignId, entityType: 'FACTION', entityId: factionId }, orderBy: { createdAt: 'asc' } })
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -64,10 +66,20 @@ export default async function FactionDetailPage({ params }: Props) {
           ))}</div></CardContent></Card>
       )}
 
+      <InformationNodes
+        nodes={infoNodes}
+        campaignId={campaignId}
+        entityType="FACTION"
+        entityId={factionId}
+      />
+
       <div className="mb-4">
         <EntityNotes
           notes={notes}
           addNoteEndpoint={`/api/v1/campaigns/${campaignId}/factions/${factionId}/notes`}
+          campaignId={campaignId}
+          entityType="FACTION"
+          entityId={factionId}
         />
       </div>
       {changelog.length > 0 && (<Card><CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock className="h-4 w-4" />History</CardTitle></CardHeader><CardContent><div className="space-y-2">{changelog.map((e) => (<div key={e.id} className="flex items-start justify-between text-sm"><div><span className="font-medium">{e.field}</span>{e.oldValue && e.newValue && <span className="text-muted-foreground"> changed from <span className="line-through">{e.oldValue}</span> to {e.newValue}</span>}{!e.oldValue && e.newValue && <span className="text-muted-foreground"> set to {e.newValue}</span>}</div><span className="text-xs text-muted-foreground ml-4 shrink-0">{new Date(e.createdAt).toLocaleDateString()}</span></div>))}</div></CardContent></Card>)}

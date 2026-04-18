@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Clock } from 'lucide-react'
 import { ClueEditableFields } from '@/components/entities/clue-editable-fields'
 import { EntityNotes } from '@/components/entities/entity-notes'
+import { InformationNodes } from '@/components/entities/information-nodes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; clueId: string }> }
@@ -34,6 +35,7 @@ export default async function ClueDetailPage({ params }: Props) {
 
   const notes = await prisma.note.findMany({ where: { entityType: 'CLUE', entityId: clueId }, orderBy: { createdAt: 'desc' } })
   const changelog = await prisma.changelogEntry.findMany({ where: { entityType: 'CLUE', entityId: clueId }, orderBy: { createdAt: 'desc' }, take: 20 })
+  const infoNodes = await prisma.informationNode.findMany({ where: { campaignId, entityType: 'CLUE', entityId: clueId }, orderBy: { createdAt: 'asc' } })
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -63,10 +65,20 @@ export default async function ClueDetailPage({ params }: Props) {
         </Card>
       )}
 
+      <InformationNodes
+        nodes={infoNodes}
+        campaignId={campaignId}
+        entityType="CLUE"
+        entityId={clueId}
+      />
+
       <div className="mb-4">
         <EntityNotes
           notes={notes}
           addNoteEndpoint={`/api/v1/campaigns/${campaignId}/clues/${clueId}/notes`}
+          campaignId={campaignId}
+          entityType="CLUE"
+          entityId={clueId}
         />
       </div>
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock, Tag } from 'lucide-react'
 import { ThreadEditableFields } from '@/components/entities/thread-editable-fields'
 import { EntityNotes } from '@/components/entities/entity-notes'
+import { InformationNodes } from '@/components/entities/information-nodes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 
 interface Props { params: Promise<{ id: string; threadId: string }> }
@@ -38,6 +39,7 @@ export default async function ThreadDetailPage({ params }: Props) {
 
   const notes = await prisma.note.findMany({ where: { entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'desc' } })
   const changelog = await prisma.changelogEntry.findMany({ where: { entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'desc' }, take: 20 })
+  const infoNodes = await prisma.informationNode.findMany({ where: { campaignId, entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'asc' } })
 
   const entityTags = await prisma.threadEntityTag.findMany({ where: { threadId } })
   const resolvedTags = await Promise.all(
@@ -110,10 +112,20 @@ export default async function ThreadDetailPage({ params }: Props) {
         </Card>
       )}
 
+      <InformationNodes
+        nodes={infoNodes}
+        campaignId={campaignId}
+        entityType="THREAD"
+        entityId={threadId}
+      />
+
       <div className="mb-4">
         <EntityNotes
           notes={notes}
           addNoteEndpoint={`/api/v1/campaigns/${campaignId}/threads/${threadId}/notes`}
+          campaignId={campaignId}
+          entityType="THREAD"
+          entityId={threadId}
         />
       </div>
 

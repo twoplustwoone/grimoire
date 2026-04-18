@@ -154,6 +154,37 @@ npcs.patch('/:npcId', async (c) => {
   return c.json(updated)
 })
 
+// Update a note on an NPC
+npcs.patch('/:npcId/notes/:noteId', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const noteId = c.req.param('noteId')!
+
+  if (!await getCampaignMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  const body = await c.req.json()
+  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+
+  const note = await prisma.note.update({
+    where: { id: noteId },
+    data: { content: body.content.trim() },
+  })
+
+  return c.json(note)
+})
+
+// Delete a note on an NPC
+npcs.delete('/:npcId/notes/:noteId', async (c) => {
+  const user = c.get('user')
+  const campaignId = c.req.param('campaignId')!
+  const noteId = c.req.param('noteId')!
+
+  if (!await getCampaignMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
+
+  await prisma.note.delete({ where: { id: noteId } })
+  return c.json({ success: true })
+})
+
 // Add a note to an NPC
 npcs.post('/:npcId/notes', async (c) => {
   const user = c.get('user')
