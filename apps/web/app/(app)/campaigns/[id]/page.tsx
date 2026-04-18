@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, MapPin, Shield, GitBranch, Search, Calendar, Network, Globe } from 'lucide-react'
 import { CampaignEditableFields } from '@/components/entities/campaign-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { DemoBanner } from '@/components/campaign/demo-banner'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -47,6 +48,7 @@ export default async function CampaignPage({ params }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {campaign.isDemo && <DemoBanner />}
       <div className="mb-8">
         <div className="flex items-start justify-between">
           <div className="flex-1">

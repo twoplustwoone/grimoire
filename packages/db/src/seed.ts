@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { hashPassword } from '@better-auth/utils/password'
 import { prisma } from './index'
+import { createDemoCampaign } from './demo-campaign'
 
 async function main() {
   console.log('🌱 Seeding Grimoire with Dragon Heist campaign...')
@@ -170,6 +171,22 @@ async function main() {
   })
 
   console.log('✅ Created sessions')
+
+  const demoUser = await prisma.user.upsert({
+    where: { email: 'demo@grimoire.dev' },
+    update: {},
+    create: { email: 'demo@grimoire.dev', name: 'Demo User', emailVerified: true },
+  })
+
+  const existingDemo = await prisma.campaign.findFirst({
+    where: { name: 'The Shattered Conclave', memberships: { some: { userId: demoUser.id } } },
+  })
+  if (existingDemo) {
+    await prisma.campaign.delete({ where: { id: existingDemo.id } })
+  }
+
+  await createDemoCampaign(prisma, demoUser.id)
+  console.log('✅ Created demo campaign (The Shattered Conclave)')
 
   console.log('')
   console.log('🎲 Seed complete!')

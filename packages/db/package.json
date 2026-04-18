@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./demo-campaign": "./src/demo-campaign.ts"
   },
   "scripts": {
     "generate": "prisma generate --schema=./prisma/schema.prisma",

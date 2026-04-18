@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { prisma } from '@grimoire/db'
+import { createDemoCampaign } from '@grimoire/db/demo-campaign'
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3005',
@@ -12,6 +13,19 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            await createDemoCampaign(prisma, user.id)
+          } catch (e) {
+            console.error('Failed to create demo campaign for new user:', e)
+          }
+        },
+      },
+    },
   },
 })
 
