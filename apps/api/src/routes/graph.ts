@@ -16,8 +16,9 @@ graph.get('/', async (c) => {
   })
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
-  const [npcs, locations, factions, threads, clues, relationships, factionMemberships, npcLocations, threadTags] = await Promise.all([
+  const [npcs, pcs, locations, factions, threads, clues, relationships, factionMemberships, npcLocations, threadTags] = await Promise.all([
     prisma.nPC.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true, locationId: true } }),
+    prisma.playerCharacter.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true } }),
     prisma.location.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true } }),
     prisma.faction.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true } }),
     prisma.thread.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true, status: true, urgency: true } }),
@@ -39,6 +40,7 @@ graph.get('/', async (c) => {
 
   const nodes = [
     ...npcs.map(e => ({ id: e.id, type: 'NPC', label: e.name, status: e.status })),
+    ...pcs.map(e => ({ id: e.id, type: 'PLAYER_CHARACTER', label: e.name, status: e.status })),
     ...locations.map(e => ({ id: e.id, type: 'LOCATION', label: e.name, status: e.status })),
     ...factions.map(e => ({ id: e.id, type: 'FACTION', label: e.name, status: e.status })),
     ...threads.map(e => ({ id: e.id, type: 'THREAD', label: e.title, status: e.status, urgency: e.urgency })),

@@ -10,6 +10,7 @@ interface Props {
 
 const entityTypePaths: Record<string, string> = {
   NPC: 'npcs',
+  PLAYER_CHARACTER: 'player-characters',
   LOCATION: 'locations',
   FACTION: 'factions',
   THREAD: 'threads',

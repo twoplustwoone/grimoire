@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   BookOpen,
   Users,
+  UserCircle,
   MapPin,
   Shield,
   GitBranch,
@@ -25,6 +26,7 @@ const navigation = [
 
 const campaignNavigation = [
   { name: 'Sessions', href: 'sessions', icon: Calendar },
+  { name: 'Player Characters', href: 'player-characters', icon: UserCircle },
   { name: 'NPCs', href: 'npcs', icon: Users },
   { name: 'Locations', href: 'locations', icon: MapPin },
   { name: 'Factions', href: 'factions', icon: Shield },

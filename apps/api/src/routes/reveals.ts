@@ -60,15 +60,19 @@ reveals.get('/preview', async (c) => {
 
   const revealedByType = {
     NPC: entityReveals.filter(r => r.entityType === 'NPC').map(r => r.entityId),
+    PLAYER_CHARACTER: entityReveals.filter(r => r.entityType === 'PLAYER_CHARACTER').map(r => r.entityId),
     LOCATION: entityReveals.filter(r => r.entityType === 'LOCATION').map(r => r.entityId),
     FACTION: entityReveals.filter(r => r.entityType === 'FACTION').map(r => r.entityId),
     THREAD: entityReveals.filter(r => r.entityType === 'THREAD').map(r => r.entityId),
     CLUE: entityReveals.filter(r => r.entityType === 'CLUE').map(r => r.entityId),
   }
 
-  const [npcs, locations, factions, threads, clues] = await Promise.all([
+  const [npcs, pcs, locations, factions, threads, clues, yourCharacter] = await Promise.all([
     revealedByType.NPC.length > 0
       ? prisma.nPC.findMany({ where: { id: { in: revealedByType.NPC }, deletedAt: null }, select: { id: true, name: true, description: true } })
+      : [],
+    revealedByType.PLAYER_CHARACTER.length > 0
+      ? prisma.playerCharacter.findMany({ where: { id: { in: revealedByType.PLAYER_CHARACTER }, deletedAt: null }, select: { id: true, name: true, description: true } })
       : [],
     revealedByType.LOCATION.length > 0
       ? prisma.location.findMany({ where: { id: { in: revealedByType.LOCATION }, deletedAt: null }, select: { id: true, name: true, description: true } })
@@ -82,6 +86,10 @@ reveals.get('/preview', async (c) => {
     revealedByType.CLUE.length > 0
       ? prisma.clue.findMany({ where: { id: { in: revealedByType.CLUE }, deletedAt: null }, select: { id: true, title: true, description: true } })
       : [],
+    prisma.playerCharacter.findFirst({
+      where: { campaignId, linkedUserId: targetUserId, deletedAt: null },
+      select: { id: true, name: true, description: true },
+    }),
   ])
 
   function applyNameReveal(entity: { id: string; name: string; description: string | null }) {
@@ -110,10 +118,26 @@ reveals.get('/preview', async (c) => {
     }
   }
 
+  const otherPCs = yourCharacter
+    ? pcs.filter(pc => pc.id !== yourCharacter.id)
+    : pcs
+
   return c.json({
     player: targetMembership.user,
     data: {
+      yourCharacter: yourCharacter
+        ? {
+            id: yourCharacter.id,
+            name: yourCharacter.name,
+            description: yourCharacter.description ?? '',
+            isNameRevealed: true,
+            nodes: visibleNodes
+              .filter(n => n.entityId === yourCharacter.id)
+              .map(n => ({ id: n.id, title: n.title, content: n.content })),
+          }
+        : null,
       npcs: npcs.map(applyNameReveal),
+      playerCharacters: otherPCs.map(applyNameReveal),
       locations: locations.map(applyNameReveal),
       factions: factions.map(applyNameReveal),
       threads: threads.map(applyTitleReveal),

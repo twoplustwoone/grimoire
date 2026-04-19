@@ -2,7 +2,7 @@
 
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { Users, MapPin, Shield, GitBranch, Search, ExternalLink } from 'lucide-react'
+import { Users, UserCircle, MapPin, Shield, GitBranch, Search, ExternalLink } from 'lucide-react'
 
 function isLightTheme(): boolean {
   if (typeof document === 'undefined') return false
@@ -17,6 +17,12 @@ function getTypeConfig(light: boolean) {
       bg: light ? 'bg-blue-50/90' : 'bg-blue-950/80',
       border: 'border-blue-400',
       textColor: light ? 'text-blue-700' : 'text-blue-200',
+    },
+    PLAYER_CHARACTER: {
+      icon: UserCircle,
+      bg: light ? 'bg-indigo-50/90' : 'bg-indigo-950/80',
+      border: 'border-indigo-400',
+      textColor: light ? 'text-indigo-700' : 'text-indigo-200',
     },
     LOCATION: {
       icon: MapPin,

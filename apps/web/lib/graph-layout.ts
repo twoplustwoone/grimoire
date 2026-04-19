@@ -34,6 +34,7 @@ interface SimNode extends SimulationNodeDatum {
 const typeCharge: Record<string, number> = {
   FACTION: -800,
   NPC: -500,
+  PLAYER_CHARACTER: -600,
   LOCATION: -400,
   THREAD: -600,
   CLUE: -300,
@@ -41,6 +42,7 @@ const typeCharge: Record<string, number> = {
 
 const typeXBias: Record<string, number> = {
   FACTION: -300,
+  PLAYER_CHARACTER: -200,
   NPC: -100,
   LOCATION: 100,
   THREAD: 300,

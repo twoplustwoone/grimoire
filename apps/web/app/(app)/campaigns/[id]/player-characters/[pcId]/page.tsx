@@ -1,0 +1,178 @@
+import type { Metadata } from 'next'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth-server'
+import { prisma } from '@grimoire/db'
+import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Clock } from 'lucide-react'
+import { PcEditableFields } from '@/components/entities/pc-editable-fields'
+import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { EntityNotes } from '@/components/entities/entity-notes'
+import { InformationNodes } from '@/components/entities/information-nodes'
+import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
+
+interface Props {
+  params: Promise<{ id: string; pcId: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id, pcId } = await params
+  const [pc, campaign] = await Promise.all([
+    prisma.playerCharacter.findUnique({ where: { id: pcId }, select: { name: true } }),
+    prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
+  ])
+  return { title: `${pc?.name ?? 'PC'} — ${campaign?.name ?? 'Campaign'}` }
+}
+
+export default async function PlayerCharacterDetailPage({ params }: Props) {
+  const { id: campaignId, pcId } = await params
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session) redirect('/sign-in')
+
+  const membership = await prisma.campaignMembership.findFirst({
+    where: { campaignId, userId: session.user.id },
+    include: { campaign: { select: { name: true } } },
+  })
+  if (!membership) notFound()
+
+  const pc = await prisma.playerCharacter.findFirst({
+    where: { id: pcId, campaignId, deletedAt: null },
+    include: {
+      linkedUser: { select: { id: true, name: true, email: true } },
+    },
+  })
+  if (!pc) notFound()
+
+  const [notes, changelog, infoNodes, playerMembers] = await Promise.all([
+    prisma.note.findMany({
+      where: { entityType: 'PLAYER_CHARACTER', entityId: pcId },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.changelogEntry.findMany({
+      where: { entityType: 'PLAYER_CHARACTER', entityId: pcId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    }),
+    prisma.informationNode.findMany({
+      where: { campaignId, entityType: 'PLAYER_CHARACTER', entityId: pcId },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.campaignMembership.findMany({
+      where: { campaignId, role: 'PLAYER' },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    }),
+  ])
+
+  const isGM = membership.role === 'GM' || membership.role === 'CO_GM'
+  const playerOptions = playerMembers.map(m => ({
+    userId: m.userId,
+    label: m.user.name ?? m.user.email,
+  }))
+  const revealMembers = playerMembers.map(m => ({
+    userId: m.userId,
+    name: m.user.name,
+    email: m.user.email,
+  }))
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="mb-8">
+        <p className="text-sm text-muted-foreground mb-1">
+          <Link href="/campaigns" className="hover:underline">Campaigns</Link>
+          {' / '}
+          <Link href={`/campaigns/${campaignId}`} className="hover:underline">
+            {membership.campaign.name}
+          </Link>
+          {' / '}
+          <Link href={`/campaigns/${campaignId}/player-characters`} className="hover:underline">
+            Player Characters
+          </Link>
+          {' / '}
+          <span>{pc.name}</span>
+        </p>
+        <PcEditableFields
+          campaignId={campaignId}
+          pcId={pcId}
+          name={pc.name}
+          description={pc.description}
+          status={pc.status}
+          linkedUserId={pc.linkedUserId}
+          players={playerOptions}
+          isGM={isGM}
+        />
+        {pc.linkedUser && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Played by {pc.linkedUser.name ?? pc.linkedUser.email}
+          </p>
+        )}
+      </div>
+
+      <InformationNodes
+        nodes={infoNodes}
+        campaignId={campaignId}
+        entityType="PLAYER_CHARACTER"
+        entityId={pcId}
+      />
+
+      {isGM && revealMembers.length > 0 && (
+        <EntityRevealPanel
+          campaignId={campaignId}
+          entityType="PLAYER_CHARACTER"
+          entityId={pcId}
+          entityName={pc.name}
+          members={revealMembers}
+        />
+      )}
+
+      <div className="mb-4">
+        <EntityNotes
+          notes={notes}
+          addNoteEndpoint={`/api/v1/campaigns/${campaignId}/player-characters/${pcId}/notes`}
+          campaignId={campaignId}
+          entityType="PLAYER_CHARACTER"
+          entityId={pcId}
+        />
+      </div>
+
+      {changelog.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4" />History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {changelog.map((entry) => (
+                <div key={entry.id} className="flex items-start justify-between text-sm">
+                  <div>
+                    <span className="font-medium">{entry.field}</span>
+                    {entry.oldValue && entry.newValue && (
+                      <span className="text-muted-foreground"> changed from <span className="line-through">{entry.oldValue}</span> to {entry.newValue}</span>
+                    )}
+                    {!entry.oldValue && entry.newValue && (
+                      <span className="text-muted-foreground"> set to {entry.newValue}</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground ml-4 shrink-0">{new Date(entry.createdAt).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isGM && (
+        <div className="mt-8 pt-6 border-t border-destructive/20">
+          <p className="text-sm text-muted-foreground mb-3">Danger zone</p>
+          <DeleteEntityButton
+            entityName={pc.name}
+            deleteEndpoint={`/api/v1/campaigns/${campaignId}/player-characters/${pcId}`}
+            redirectTo={`/campaigns/${campaignId}/player-characters`}
+          />
+        </div>
+      )}
+    </div>
+  )
+}

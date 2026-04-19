@@ -5,7 +5,7 @@ import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, MapPin, Shield, GitBranch, Search, Calendar, Network, Globe } from 'lucide-react'
+import { Users, UserCircle, MapPin, Shield, GitBranch, Search, Calendar, Network, Globe } from 'lucide-react'
 import { CampaignEditableFields } from '@/components/entities/campaign-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { DemoBanner } from '@/components/campaign/demo-banner'
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const sections = [
   { name: 'Sessions', href: 'sessions', icon: Calendar, description: 'Track play sessions and generate recaps' },
+  { name: 'Player Characters', href: 'player-characters', icon: UserCircle, description: 'Party members played at your table' },
   { name: 'NPCs', href: 'npcs', icon: Users, description: 'Named characters in the world' },
   { name: 'Locations', href: 'locations', icon: MapPin, description: 'Places the party has visited or heard of' },
   { name: 'Factions', href: 'factions', icon: Shield, description: 'Organizations and their agendas' },

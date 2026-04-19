@@ -23,7 +23,7 @@ interface Props {
   campaignId: string
 }
 
-type FilterType = 'ALL' | 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE'
+type FilterType = 'ALL' | 'NPC' | 'PC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE'
 type LayoutMode = 'force' | 'column'
 
 export function CampaignGraph({ campaignId }: Props) {
@@ -75,7 +75,8 @@ export function CampaignGraph({ campaignId }: Props) {
     if (filter === 'ALL') {
       setNodes(allNodes)
     } else {
-      setNodes(allNodes.filter(n => (n.data as { type: string }).type === filter))
+      const targetType = filter === 'PC' ? 'PLAYER_CHARACTER' : filter
+      setNodes(allNodes.filter(n => (n.data as { type: string }).type === targetType))
     }
     setHoveredNodeId(null)
   }, [filter, allNodes, setNodes])
@@ -128,6 +129,7 @@ export function CampaignGraph({ campaignId }: Props) {
     const data = node.data as { type: string }
     const typePaths: Record<string, string> = {
       NPC: 'npcs',
+      PLAYER_CHARACTER: 'player-characters',
       LOCATION: 'locations',
       FACTION: 'factions',
       THREAD: 'threads',
@@ -155,7 +157,7 @@ export function CampaignGraph({ campaignId }: Props) {
     )
   }
 
-  const filterTypes: FilterType[] = ['ALL', 'NPC', 'LOCATION', 'FACTION', 'THREAD', 'CLUE']
+  const filterTypes: FilterType[] = ['ALL', 'NPC', 'PC', 'LOCATION', 'FACTION', 'THREAD', 'CLUE']
 
   return (
     <div className="w-full h-full relative">
@@ -199,6 +201,7 @@ export function CampaignGraph({ campaignId }: Props) {
       <div className="absolute top-14 left-4 right-4 z-10 flex gap-3 flex-wrap md:hidden">
         {[
           { color: 'bg-blue-400', label: 'NPC' },
+          { color: 'bg-indigo-400', label: 'PC' },
           { color: 'bg-green-400', label: 'Loc' },
           { color: 'bg-purple-400', label: 'Faction' },
           { color: 'bg-orange-400', label: 'Thread' },
@@ -242,6 +245,7 @@ export function CampaignGraph({ campaignId }: Props) {
             nodeColor={(node) => {
               const colors: Record<string, string> = {
                 NPC: '#60a5fa',
+                PLAYER_CHARACTER: '#818cf8',
                 LOCATION: '#34d399',
                 FACTION: '#a78bfa',
                 THREAD: '#fb923c',
@@ -257,6 +261,7 @@ export function CampaignGraph({ campaignId }: Props) {
         <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px] mb-2">Legend</p>
         {[
           { color: 'bg-blue-400', label: 'NPC' },
+          { color: 'bg-indigo-400', label: 'Player Character' },
           { color: 'bg-green-400', label: 'Location' },
           { color: 'bg-purple-400', label: 'Faction' },
           { color: 'bg-orange-400', label: 'Thread' },

@@ -31,8 +31,9 @@ search.get('/', async (c) => {
   const sessionPhraseMatch = q.match(/^session\s+(\d+)$/i)
   if (sessionPhraseMatch) sessionOr.push({ number: parseInt(sessionPhraseMatch[1], 10) })
 
-  const [npcs, locations, factions, threads, clues, sessions] = await Promise.all([
+  const [npcs, pcs, locations, factions, threads, clues, sessions] = await Promise.all([
     prisma.nPC.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
+    prisma.playerCharacter.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     prisma.location.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     prisma.faction.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     prisma.thread.findMany({ where: { campaignId, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true, status: true, urgency: true }, take: 5 }),
@@ -42,6 +43,7 @@ search.get('/', async (c) => {
 
   const results = [
     ...npcs.map(e => ({ id: e.id, type: 'NPC' as const, name: e.name, meta: e.status })),
+    ...pcs.map(e => ({ id: e.id, type: 'PLAYER_CHARACTER' as const, name: e.name, meta: e.status })),
     ...locations.map(e => ({ id: e.id, type: 'LOCATION' as const, name: e.name, meta: e.status })),
     ...factions.map(e => ({ id: e.id, type: 'FACTION' as const, name: e.name, meta: e.status })),
     ...threads.map(e => ({ id: e.id, type: 'THREAD' as const, name: e.title, meta: e.urgency })),

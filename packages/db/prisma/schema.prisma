@@ -29,6 +29,7 @@ model User {
   oauthCodes         OAuthAuthorizationCode[]
   oauthAccessTokens  OAuthAccessToken[]
   oauthRefreshTokens OAuthRefreshToken[]
+  playerCharacters   PlayerCharacter[]
 }
 
 // ==================== CAMPAIGN ====================
@@ -75,7 +76,6 @@ model CampaignMembership {
 
   campaign         Campaign                @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  playerCharacters PlayerCharacter[]
   nodeReveals      InformationNodeReveal[]
 
   @@unique([campaignId, userId])
@@ -173,20 +173,27 @@ model NPC {
 }
 
 model PlayerCharacter {
-  id           String       @id @default(cuid())
+  id           String                @id @default(cuid())
   campaignId   String
-  membershipId String
+  linkedUserId String?
   name         String
   description  String?
-  status       EntityStatus @default(ACTIVE)
-  locationId   String?
+  status       PlayerCharacterStatus @default(ACTIVE)
   deletedAt    DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
 
-  campaign   Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  membership CampaignMembership @relation(fields: [membershipId], references: [id])
-  location   Location?          @relation(fields: [locationId], references: [id])
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  linkedUser User?    @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([linkedUserId])
+}
+
+enum PlayerCharacterStatus {
+  ACTIVE
+  RETIRED
+  DECEASED
 }
 
 model Location {
@@ -200,11 +207,10 @@ model Location {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  campaign         Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  parent           Location?         @relation("LocationHierarchy", fields: [parentId], references: [id])
-  children         Location[]        @relation("LocationHierarchy")
-  npcs             NPC[]
-  playerCharacters PlayerCharacter[]
+  campaign Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  parent   Location?  @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children Location[] @relation("LocationHierarchy")
+  npcs     NPC[]
 }
 
 model Faction {

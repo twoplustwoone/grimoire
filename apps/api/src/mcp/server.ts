@@ -48,7 +48,7 @@ export function createMcpServer(userId: string) {
       })
       if (!membership) return { content: [{ type: 'text', text: 'Campaign not found or access denied' }] }
 
-      const [campaign, openThreads, recentSessions, activeNPCs, recentEvents] = await Promise.all([
+      const [campaign, openThreads, recentSessions, activeNPCs, playerCharacters, recentEvents] = await Promise.all([
         prisma.campaign.findUnique({
           where: { id: campaignId },
           select: { name: true, description: true, settings: true },
@@ -69,6 +69,16 @@ export function createMcpServer(userId: string) {
           select: { id: true, name: true, description: true },
           take: 10,
         }),
+        prisma.playerCharacter.findMany({
+          where: { campaignId, deletedAt: null },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            status: true,
+            linkedUser: { select: { name: true, email: true } },
+          },
+        }),
         prisma.worldEvent.findMany({
           where: { campaignId },
           select: { title: true, description: true, createdAt: true },
@@ -80,9 +90,29 @@ export function createMcpServer(userId: string) {
       return {
         content: [{
           type: 'text',
-          text: JSON.stringify({ campaign, openThreads, recentSessions, activeNPCs, recentWorldEvents: recentEvents }, null, 2),
+          text: JSON.stringify({ campaign, openThreads, recentSessions, activeNPCs, playerCharacters, recentWorldEvents: recentEvents }, null, 2),
         }],
       }
+    }
+  )
+
+  server.tool(
+    'list_player_characters',
+    'List all player characters in a campaign with their linked player info',
+    { campaignId: z.string() },
+    async ({ campaignId }) => {
+      const membership = await prisma.campaignMembership.findFirst({ where: { campaignId, userId } })
+      if (!membership) return { content: [{ type: 'text', text: 'Access denied' }] }
+
+      const pcs = await prisma.playerCharacter.findMany({
+        where: { campaignId, deletedAt: null },
+        include: {
+          linkedUser: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { name: 'asc' },
+      })
+
+      return { content: [{ type: 'text', text: JSON.stringify(pcs, null, 2) }] }
     }
   )
 

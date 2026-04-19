@@ -20,6 +20,7 @@ import invites from './routes/invites.js'
 import inviteAccept from './routes/invite-accept.js'
 import reveals from './routes/reveals.js'
 import apiKeys from './routes/api-keys.js'
+import playerCharacters from './routes/player-characters.js'
 import { handleMcpRequest } from './mcp/handler.js'
 import oauth from './mcp/oauth-routes.js'
 
@@ -41,6 +42,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 
 app.route('/campaigns', campaigns)
 app.route('/campaigns/:campaignId/npcs', npcs)
+app.route('/campaigns/:campaignId/player-characters', playerCharacters)
 app.route('/campaigns/:campaignId/locations', locations)
 app.route('/campaigns/:campaignId/factions', factions)
 app.route('/campaigns/:campaignId/threads', threads)
