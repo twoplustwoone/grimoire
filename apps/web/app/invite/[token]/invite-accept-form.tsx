@@ -96,7 +96,7 @@ export function InviteAcceptForm({ token, invite, isSignedIn, currentUserEmail }
           </div>
         ) : (
           <Button
-            className="w-full"
+            className={`w-full ${emailMismatch ? 'opacity-50' : ''}`}
             onClick={handleAccept}
             disabled={accepting || emailMismatch}
           >

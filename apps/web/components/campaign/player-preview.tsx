@@ -118,7 +118,7 @@ export function PlayerPreview({ campaignId, players }: Props) {
           <div className="absolute top-full right-0 mt-1 bg-card border rounded-lg shadow-lg z-10 min-w-[200px]">
             <div className="px-3 py-2 border-b">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Switch to
+                View as
               </p>
             </div>
             {players.map((player) => (

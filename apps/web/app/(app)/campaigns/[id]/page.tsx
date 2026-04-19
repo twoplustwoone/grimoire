@@ -64,23 +64,21 @@ export default async function CampaignPage({ params }: Props) {
     <div className="max-w-4xl mx-auto">
       {campaign.isDemo && <DemoBanner />}
       <div className="mb-8">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground mb-1">
-              <Link href="/campaigns" className="hover:underline">Campaigns</Link>
-              {' / '}
-              <span>{campaign.name}</span>
-            </p>
-            <CampaignEditableFields
-              campaignId={campaign.id}
-              name={campaign.name}
-              description={campaign.description}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full mt-2 ml-4">
-            {membership.role}
-          </span>
-        </div>
+        <p className="text-sm text-muted-foreground mb-1">
+          <Link href="/campaigns" className="hover:underline">Campaigns</Link>
+          {' / '}
+          <span>{campaign.name}</span>
+        </p>
+        <CampaignEditableFields
+          campaignId={campaign.id}
+          name={campaign.name}
+          description={campaign.description}
+          badge={
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+              {membership.role}
+            </span>
+          }
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

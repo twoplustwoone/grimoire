@@ -137,6 +137,12 @@ export function EntityRevealPanel({ campaignId, entityType, entityId, entityName
           </button>
         </div>
 
+        {members.length > 0 && (
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2 pb-1">
+            Individual players
+          </p>
+        )}
+
         {members.map((member) => {
           const reveal = playerReveals.get(member.userId)
           const isRevealed = !!reveal || !!allPlayersReveal

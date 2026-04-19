@@ -20,9 +20,9 @@ function getTypeConfig(light: boolean) {
     },
     PLAYER_CHARACTER: {
       icon: UserCircle,
-      bg: light ? 'bg-indigo-50/90' : 'bg-indigo-950/80',
-      border: 'border-indigo-400',
-      textColor: light ? 'text-indigo-700' : 'text-indigo-200',
+      bg: light ? 'bg-cyan-50/90' : 'bg-cyan-950/80',
+      border: 'border-cyan-400',
+      textColor: light ? 'text-cyan-700' : 'text-cyan-200',
     },
     LOCATION: {
       icon: MapPin,

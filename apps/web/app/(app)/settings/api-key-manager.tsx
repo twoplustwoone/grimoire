@@ -33,6 +33,13 @@ export function ApiKeyManager() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [mcpUrl, setMcpUrl] = useState('https://grimoire.twoplustwoone.dev/mcp')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setMcpUrl(`${window.location.origin}/mcp`)
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/api/v1/api-keys', { credentials: 'include' })
@@ -162,7 +169,7 @@ export function ApiKeyManager() {
                   <div>
                     <p className="text-sm font-medium">{key.name}</p>
                     <p className="text-xs text-muted-foreground font-mono">
-                      {key.keyPrefix}••••••••
+                      {key.keyPrefix}…
                       {key.lastUsedAt
                         ? ` · Last used ${new Date(key.lastUsedAt).toLocaleDateString()}`
                         : ' · Never used'}
@@ -216,7 +223,7 @@ export function ApiKeyManager() {
             <p>3. Enter:</p>
             <ul className="ml-4 space-y-1">
               <li>Name: <code className="text-xs bg-muted px-1 py-0.5 rounded">Grimoire</code></li>
-              <li>URL: <code className="text-xs bg-muted px-1 py-0.5 rounded">https://grimoire.twoplustwoone.dev/mcp</code></li>
+              <li>URL: <code className="text-xs bg-muted px-1 py-0.5 rounded">{mcpUrl}</code></li>
             </ul>
             <p>4. Click Add. Claude will open a browser window to authorize access.</p>
             <p>5. Click Allow to connect. Done!</p>

@@ -201,7 +201,7 @@ export function CampaignGraph({ campaignId }: Props) {
       <div className="absolute top-14 left-4 right-4 z-10 flex gap-3 flex-wrap md:hidden">
         {[
           { color: 'bg-blue-400', label: 'NPC' },
-          { color: 'bg-indigo-400', label: 'PC' },
+          { color: 'bg-cyan-400', label: 'PC' },
           { color: 'bg-green-400', label: 'Loc' },
           { color: 'bg-purple-400', label: 'Faction' },
           { color: 'bg-orange-400', label: 'Thread' },
@@ -245,7 +245,7 @@ export function CampaignGraph({ campaignId }: Props) {
             nodeColor={(node) => {
               const colors: Record<string, string> = {
                 NPC: '#60a5fa',
-                PLAYER_CHARACTER: '#818cf8',
+                PLAYER_CHARACTER: '#22d3ee',
                 LOCATION: '#34d399',
                 FACTION: '#a78bfa',
                 THREAD: '#fb923c',
@@ -261,7 +261,7 @@ export function CampaignGraph({ campaignId }: Props) {
         <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px] mb-2">Legend</p>
         {[
           { color: 'bg-blue-400', label: 'NPC' },
-          { color: 'bg-indigo-400', label: 'Player Character' },
+          { color: 'bg-cyan-400', label: 'Player Character' },
           { color: 'bg-green-400', label: 'Location' },
           { color: 'bg-purple-400', label: 'Faction' },
           { color: 'bg-orange-400', label: 'Thread' },

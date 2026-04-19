@@ -126,7 +126,7 @@ export function InvitePlayers({ campaignId, initialInvites, members }: Props) {
           <div className="p-3 bg-muted rounded-md space-y-2">
             <p className="text-xs text-muted-foreground">Share this link with your player:</p>
             <div className="flex gap-2">
-              <code className="text-xs flex-1 truncate">{newInviteUrl}</code>
+              <code className="text-xs flex-1 truncate" title={newInviteUrl}>{newInviteUrl}</code>
               <button
                 onClick={() => copyInviteUrl(newInviteUrl)}
                 className="text-muted-foreground hover:text-foreground shrink-0"

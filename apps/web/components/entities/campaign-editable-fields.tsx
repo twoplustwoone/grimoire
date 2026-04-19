@@ -7,9 +7,10 @@ interface Props {
   campaignId: string
   name: string
   description: string | null
+  badge?: React.ReactNode
 }
 
-export function CampaignEditableFields({ campaignId, name, description }: Props) {
+export function CampaignEditableFields({ campaignId, name, description, badge }: Props) {
   const router = useRouter()
 
   async function save(field: string, value: string) {
@@ -24,9 +25,12 @@ export function CampaignEditableFields({ campaignId, name, description }: Props)
 
   return (
     <>
-      <h1 className="text-3xl font-bold">
-        <EditableField value={name} onSave={(v) => save('name', v)} placeholder="Campaign name" />
-      </h1>
+      <div className="flex items-center gap-3 flex-wrap">
+        <h1 className="text-3xl font-bold">
+          <EditableField value={name} onSave={(v) => save('name', v)} placeholder="Campaign name" />
+        </h1>
+        {badge}
+      </div>
       <div className="mt-2">
         <EditableField
           value={description}
