@@ -3,6 +3,57 @@ import { hashPassword } from '@better-auth/utils/password'
 import { prisma } from './index'
 import { createDemoCampaign } from './demo-campaign'
 
+async function ensurePlayerAccount(email: string, name: string, password: string) {
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: { name },
+    create: { email, name, emailVerified: true },
+  })
+  const hash = await hashPassword(password)
+  await prisma.account.deleteMany({
+    where: { userId: user.id, providerId: 'credential' },
+  })
+  await prisma.account.create({
+    data: {
+      id: `seed-account-${user.id}`,
+      accountId: user.id,
+      providerId: 'credential',
+      userId: user.id,
+      password: hash,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  })
+  return user
+}
+
+async function ensureAllPlayersReveal(
+  campaignId: string,
+  entityType: 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE',
+  entityId: string
+) {
+  const existing = await prisma.entityReveal.findFirst({
+    where: { campaignId, entityType, entityId, userId: null },
+  })
+  if (existing) return existing
+  return prisma.entityReveal.create({
+    data: { campaignId, entityType, entityId, userId: null },
+  })
+}
+
+async function ensurePlayerReveal(
+  campaignId: string,
+  userId: string,
+  entityType: 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE',
+  entityId: string
+) {
+  return prisma.entityReveal.upsert({
+    where: { entityType_entityId_userId: { entityType, entityId, userId } },
+    update: {},
+    create: { campaignId, entityType, entityId, userId },
+  })
+}
+
 async function main() {
   console.log('🌱 Seeding Grimoire with Dragon Heist campaign...')
 
@@ -126,7 +177,7 @@ async function main() {
 
   console.log('✅ Created threads')
 
-  await Promise.all([
+  const [, , stoneOfGolorrClue] = await Promise.all([
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Zhentarim Safe House', description: 'A Zhentarim agent let slip that they have a safe house somewhere in the Dock Ward.' } }),
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'Xanathar\'s Paranoia', description: 'Xanathar trusts almost no one. Anyone wanting an audience must bring a gift — ideally information.' } }),
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Stone of Golorr', description: 'Rumors of an aboleth-created artifact that holds the location of the hidden vault.' } }),
@@ -172,6 +223,35 @@ async function main() {
 
   console.log('✅ Created sessions')
 
+  const serafine = await ensurePlayerAccount('serafine@grimoire.dev', 'Serafine Ashveil', 'password')
+  const rook = await ensurePlayerAccount('rook@grimoire.dev', 'Rook Valdris', 'password')
+  const maren = await ensurePlayerAccount('maren@grimoire.dev', 'Maren Solis', 'password')
+  console.log('✅ Created player users (serafine, rook, maren)')
+
+  await Promise.all([serafine, rook, maren].map(p =>
+    prisma.campaignMembership.upsert({
+      where: { campaignId_userId: { campaignId: campaign.id, userId: p.id } },
+      update: {},
+      create: { campaignId: campaign.id, userId: p.id, role: 'PLAYER' },
+    })
+  ))
+  console.log('✅ Added 3 players to Dragon Heist')
+
+  await Promise.all([
+    ensureAllPlayersReveal(campaign.id, 'NPC', xanathar.id),
+    ensureAllPlayersReveal(campaign.id, 'LOCATION', yawningPortal.id),
+    ensureAllPlayersReveal(campaign.id, 'FACTION', xanatharFaction.id),
+    ensureAllPlayersReveal(campaign.id, 'THREAD', goldThread.id),
+  ])
+
+  await Promise.all([
+    ensurePlayerReveal(campaign.id, serafine.id, 'FACTION', zhentarim.id),
+    ensurePlayerReveal(campaign.id, serafine.id, 'NPC', volo.id),
+    ensurePlayerReveal(campaign.id, rook.id, 'CLUE', stoneOfGolorrClue.id),
+    ensurePlayerReveal(campaign.id, maren.id, 'LOCATION', trollskull.id),
+  ])
+  console.log('✅ Pre-seeded entity reveals for Dragon Heist players')
+
   const demoUser = await prisma.user.upsert({
     where: { email: 'demo@grimoire.dev' },
     update: {},
@@ -185,8 +265,15 @@ async function main() {
     await prisma.campaign.delete({ where: { id: existingDemo.id } })
   }
 
-  await createDemoCampaign(prisma, demoUser.id)
+  const conclave = await createDemoCampaign(prisma, demoUser.id)
   console.log('✅ Created demo campaign (The Shattered Conclave)')
+
+  await prisma.campaignMembership.upsert({
+    where: { campaignId_userId: { campaignId: conclave.id, userId: serafine.id } },
+    update: {},
+    create: { campaignId: conclave.id, userId: serafine.id, role: 'PLAYER' },
+  })
+  console.log('✅ Added serafine@grimoire.dev to The Shattered Conclave')
 
   const demoPlayer = await prisma.user.findUniqueOrThrow({
     where: { email: 'player@grimoire.dev' },
@@ -213,7 +300,8 @@ async function main() {
   console.log('🎲 Seed complete!')
   console.log(`   Campaign: ${campaign.name}`)
   console.log(`   GM login: gm@grimoire.dev / gm@grimoire.dev`)
-  console.log(`   Player login: player@grimoire.dev / player@grimoire.dev`)
+  console.log(`   Demo player: player@grimoire.dev / player@grimoire.dev`)
+  console.log(`   Dragon Heist players: serafine@grimoire.dev / rook@grimoire.dev / maren@grimoire.dev (password: password)`)
   console.log(`   6 NPCs, 5 locations, 3 factions, 3 threads, 3 clues`)
   console.log(`   1 completed session with notes and AI recap`)
   console.log(`   1 planned session`)
