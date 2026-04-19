@@ -115,7 +115,7 @@ Available tools include: `list_campaigns`, `get_campaign_summary`, `list_npcs`, 
 
 Grimoire is actively developed and used. It's stable enough to run a real campaign on. Expect rough edges on new features as they ship; expect the roadmap to shift as the product finds its shape.
 
-See [VISION.md](./VISION.md) for the philosophy and the roadmap, and [docs/](./docs/) for architecture and decision records (coming soon).
+See [VISION.md](./VISION.md) for the philosophy and the roadmap, [docs/architecture.md](./docs/architecture.md) for the technical overview, and [docs/](./docs/) for architecture and decision records (coming soon).
 
 ---
 
