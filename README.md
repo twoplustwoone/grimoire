@@ -1,156 +1,130 @@
 # Grimoire
 
-> A GM companion platform for running rich, stateful tabletop campaigns.
+**A workstation for tabletop RPG campaigns.**
 
-Grimoire helps game masters build and manage living campaign worlds — tracking NPCs, locations, factions, threads, and clues across sessions. At the end of each session, an AI recap engine reads your actual campaign state and generates a structured summary that knows your world.
+Grimoire is an opinionated note-taking and knowledge-management tool for long-running TTRPG campaigns. It's for GMs drowning in context — dozens of NPCs, shifting factions, threads that mature over months — and for players who want structured, queryable personal notes. It does one thing: help you remember your campaign and see how it connects.
 
-[Add a screenshot or demo gif here once available]
+It is not a character sheet manager, a virtual tabletop, or a dice roller. Read [VISION.md](./VISION.md) for the full philosophy.
 
----
-
-## Features
-
-- **Campaign management** — Create and manage campaigns with full entity graphs: NPCs, locations, factions, plot threads, and clues
-- **Living world model** — Every entity has status, relationships, faction memberships, and a structured changelog tracking how it evolved across sessions
-- **Session tracking** — Log notes mid-session, tag which entities were involved, write GM summaries
-- **AI recap generation** — After each session, Claude reads your tagged entities, notes, and campaign context to generate a structured recap that reflects your specific world
-- **Inline editing** — Every entity field is editable in place with optimistic UI and audit trail
-- **Three themes** — Dark atmospheric (Grimoire), clean (Minimal), and whimsical (Fey) — persisted per user
-- **Mobile-first session mode** — Fast entity lookup and note logging during play
+🌐 **Hosted version:** [grimoire.twoplustwoone.dev](https://grimoire.twoplustwoone.dev)
 
 ---
 
-## Architecture
+## What's in the box
 
-Grimoire is a TypeScript monorepo built with Turborepo, structured as two applications sharing a common database package.
+- **Campaigns** with NPCs, locations, factions, threads, clues, and player characters
+- **Notes** on every entity, with @-mentions that create live links across your campaign
+- **Sessions** with live note-taking, entity tagging, and AI-generated recaps
+- **A relationship graph** that shows your campaign's topology — force-directed layout, hover highlighting, click-to-navigate
+- **Per-player information visibility** — reveal entities to specific players, with optional aliases ("the grey-cloaked figure" vs. the NPC's real name)
+- **A player portal** where each player sees only what their character knows
+- **Invite system** — GMs invite players by email with shareable links
+- **Command palette** (⌘K) for fast navigation across any campaign
+- **MCP server** — connect Claude (and eventually other AI clients) to your campaign via OAuth. Ask "what does Serafine know about the Merchant Guild?" in Claude and get a real answer from your data.
+- **Demo campaign** — every new account gets *The Shattered Conclave* pre-seeded so there's never an empty state
+
+---
+
+## Tech stack
+
+TypeScript monorepo (Turborepo) with:
+
+- **Web:** Next.js 16 (App Router), Tailwind CSS, shadcn/ui, React Flow + d3-force for the relationship graph, Tiptap for rich text and @-mentions
+- **API:** Hono on Node 22
+- **Database:** PostgreSQL + Prisma
+- **Auth:** Better Auth (sessions for the web app, OAuth 2.1 + PKCE for the MCP server)
+- **AI:** Vercel AI SDK + Anthropic Claude for recap generation
+- **MCP:** `@modelcontextprotocol/sdk`, HTTP transport with dynamic client registration
+- **Hosting:** Railway (API + Web + Postgres)
+
+Monorepo structure:
 
 ```
 grimoire/
 ├── apps/
-│   ├── web/          # Next.js 16 — UI, server components, auth-gated routes
-│   └── api/          # Hono — REST API, business logic, AI pipeline
+│   ├── web/          # Next.js frontend
+│   └── api/          # Hono API + MCP server
 ├── packages/
-│   ├── db/           # Prisma schema, client singleton, migrations
-│   ├── types/        # Shared TypeScript types
-│   ├── ai/           # AI pipeline utilities (planned)
-│   └── realtime/     # Real-time layer (planned)
+│   ├── db/           # Prisma schema, client, migrations, seed
+│   ├── types/
+│   ├── ai/
+│   └── realtime/
+├── docker-compose.yml
+└── VISION.md
 ```
-
-### Stack
-
-| Layer | Technology | Why |
-|---|---|---|
-| Frontend | Next.js 16 (App Router) | Server components for data fetching, client components for interactivity |
-| API | Hono | Lightweight, TypeScript-native, excellent monorepo fit |
-| Database | PostgreSQL + Prisma | Relational model fits interconnected campaign data |
-| Auth | Better Auth | Best self-hosted TypeScript auth library, Prisma adapter |
-| AI | Vercel AI SDK + Anthropic | Model-agnostic SDK, claude-sonnet-4 for recap generation |
-| Styling | Tailwind CSS + shadcn/ui | Owned components, CSS variable theming |
-| Hosting | Railway | Postgres + API + web in one platform |
-
-### Data model highlights
-
-The schema uses a **polymorphic entity pattern** — cross-cutting concerns (notes, changelog entries, relationships, session tags) reference any entity type via `entityType + entityId` pairs rather than separate join tables per entity. This keeps the schema extensible without an explosion of tables.
-
-Key design decisions:
-- **GameSession vs Session** — the campaign session model is named `GameSession` in Prisma to avoid collision with Better Auth's `Session` model
-- **Soft deletes** — all entities have `deletedAt` for safe removal without losing historical references
-- **Changelog over event sourcing** — every field mutation writes a structured changelog entry, giving the AI pipeline historical context without the complexity of full event sourcing
-- **Custom field definitions** — campaigns can define typed custom fields (text, number, progress, select) per entity type, enabling module-specific tracking like Dragon Heist faction reputation
-
-### AI pipeline
-
-The recap generator in `apps/api/src/lib/recap.ts` builds a structured context payload from:
-- Session notes (chronological)
-- Tagged entity details (NPCs with descriptions and status, locations, factions with agendas, threads with urgency, clues)
-- Campaign settings (system, world, tone)
-- GM's own summary notes
-
-This context is passed to Claude with a system prompt instructing it to write a concise, evocative recap in 3-5 paragraphs using only information present in the notes. The result is stored as `aiSummary` on the session, distinct from the GM's own `gmSummary`.
 
 ---
 
-## Getting started
+## Running it locally
 
-### Prerequisites
+**Prerequisites:**
 
-- Node.js 22+
-- pnpm 10+
+- Node 22
+- pnpm
 - Docker (for local Postgres)
 
-### Installation
+**Setup:**
 
 ```bash
-git clone https://github.com/twoplustwoone/grimoire.git
-cd grimoire
+# Install dependencies
 pnpm install
-```
 
-### Local development
+# Start Postgres
+docker compose up -d
 
-```bash
-# Start local Postgres
-pnpm db:up
+# Run migrations and seed
+pnpm --filter @grimoire/db exec prisma migrate deploy
+pnpm --filter @grimoire/db exec prisma db seed
 
-# Apply migrations
-pnpm db:migrate
-
-# Seed with a full Dragon Heist campaign
-pnpm seed
-# Login: gm@grimoire.dev / grimoire123
-
-# Start both servers
+# Start both apps
 pnpm dev
-# Web: http://localhost:3000
-# API: http://localhost:3005
 ```
 
-### Environment variables
+Web runs on [http://localhost:3000](http://localhost:3000), API on [http://localhost:3005](http://localhost:3005).
 
-**`apps/api/.env`**
-```
-DATABASE_URL=postgresql://grimoire:grimoire@localhost:5432/grimoire
-BETTER_AUTH_SECRET=your-secret-here
-BETTER_AUTH_URL=http://localhost:3005
-WEB_URL=http://localhost:3000
-ANTHROPIC_API_KEY=your-anthropic-key-here
-PORT=3005
-```
+**Seeded accounts (local only):**
 
-**`apps/web/.env.local`**
-```
-DATABASE_URL=postgresql://grimoire:grimoire@localhost:5432/grimoire
-BETTER_AUTH_SECRET=your-secret-here
-BETTER_AUTH_URL=http://localhost:3005
-NEXT_PUBLIC_API_URL=http://localhost:3005
-API_INTERNAL_URL=http://localhost:3005
-```
+| Role | Email | Password |
+|---|---|---|
+| GM | `gm@grimoire.dev` | `password` |
+| Player (Serafine) | `serafine@grimoire.dev` | `password` |
+| Player (Rook) | `rook@grimoire.dev` | `password` |
+| Player (Maren) | `maren@grimoire.dev` | `password` |
 
-### Useful commands
-
-```bash
-pnpm db:up        # Start Postgres container
-pnpm db:down      # Stop Postgres container
-pnpm db:migrate   # Apply pending migrations
-pnpm db:reset     # Wipe DB, reapply migrations, reseed
-pnpm seed         # Seed Dragon Heist campaign data
-pnpm dev          # Start API + web dev servers
-pnpm build        # Build all packages
-```
+Signing in as the GM shows the full editorial view. Signing in as a player shows the player portal perspective with only revealed entities.
 
 ---
 
-## Roadmap
+## Connecting Claude Desktop
 
-See [SCOPE.md](./SCOPE.md) for the full backlog. Near-term priorities:
+Grimoire exposes an MCP server so Claude can query your campaign data directly.
 
-- [ ] MCP server — expose campaign data to Claude and other MCP clients
-- [ ] Player portal — controlled information reveal per player
-- [ ] Relationship visualization — graph view of entity connections
-- [ ] Plugin system — shareable campaign module configurations
+1. Open Claude Desktop → Settings → Connectors → **Add custom connector**
+2. Name: `Grimoire`
+3. URL: `https://grimoire.twoplustwoone.dev/mcp` (or your local/self-hosted URL)
+4. Claude opens a browser to authorize. Sign in and click Allow.
+5. Ask Claude something like *"What are the open threads in my Shattered Conclave campaign?"*
+
+The OAuth flow handles the whole thing — no API keys to copy, no config file to edit. Once authorized, Claude has read-only access to your campaigns.
+
+Available tools include: `list_campaigns`, `get_campaign_summary`, `list_npcs`, `get_npc`, `list_open_threads`, `list_sessions`, `get_session_recap`, `search_entities`, `list_player_characters`, `get_player_knowledge`.
+
+---
+
+## Status
+
+Grimoire is actively developed and used. It's stable enough to run a real campaign on. Expect rough edges on new features as they ship; expect the roadmap to shift as the product finds its shape.
+
+See [VISION.md](./VISION.md) for the philosophy and the roadmap, and [docs/](./docs/) for architecture and decision records (coming soon).
 
 ---
 
 ## License
 
-MIT
+MIT. See [LICENSE](./LICENSE).
+
+---
+
+## Acknowledgments
+
+Built because I wanted to run Dragon Heist and realized no existing tool fit how I actually think about running a long campaign. If you find it useful, let me know — I'd love to hear what you're using it for.
