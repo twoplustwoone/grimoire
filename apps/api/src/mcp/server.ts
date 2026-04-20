@@ -23,7 +23,7 @@ export function createMcpServer(userId: string) {
               description: true,
               createdAt: true,
               _count: {
-                select: { npcs: true, locations: true, factions: true, threads: true, sessions: true },
+                select: { npcs: true, playerCharacters: true, locations: true, factions: true, threads: true, clues: true, sessions: true },
               },
             },
           },
@@ -51,7 +51,14 @@ export function createMcpServer(userId: string) {
       const [campaign, openThreads, recentSessions, activeNPCs, playerCharacters, recentEvents] = await Promise.all([
         prisma.campaign.findUnique({
           where: { id: campaignId },
-          select: { name: true, description: true, settings: true },
+          select: {
+            name: true,
+            description: true,
+            settings: true,
+            _count: {
+              select: { npcs: true, playerCharacters: true, locations: true, factions: true, threads: true, clues: true, sessions: true },
+            },
+          },
         }),
         prisma.thread.findMany({
           where: { campaignId, deletedAt: null, status: { in: ['OPEN', 'DORMANT'] } },
@@ -240,15 +247,16 @@ export function createMcpServer(userId: string) {
         [field]: { contains: query, mode: 'insensitive' as const },
       })
 
-      const [npcs, locations, factions, threads, clues] = await Promise.all([
+      const [npcs, playerCharacters, locations, factions, threads, clues] = await Promise.all([
         prisma.nPC.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
+        prisma.playerCharacter.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
         prisma.location.findMany({ where: where('name'), select: { id: true, name: true }, take: 5 }),
         prisma.faction.findMany({ where: where('name'), select: { id: true, name: true }, take: 5 }),
         prisma.thread.findMany({ where: { campaignId, deletedAt: null, title: { contains: query, mode: 'insensitive' } }, select: { id: true, title: true, status: true }, take: 5 }),
         prisma.clue.findMany({ where: { campaignId, deletedAt: null, title: { contains: query, mode: 'insensitive' } }, select: { id: true, title: true }, take: 5 }),
       ])
 
-      return { content: [{ type: 'text', text: JSON.stringify({ npcs, locations, factions, threads, clues }, null, 2) }] }
+      return { content: [{ type: 'text', text: JSON.stringify({ npcs, playerCharacters, locations, factions, threads, clues }, null, 2) }] }
     }
   )
 
@@ -277,6 +285,44 @@ export function createMcpServer(userId: string) {
         },
       })
 
+      // Group reveal ids by entity type so we can resolve current name/description
+      // in one query per type and omit any reveals pointing at soft-deleted entities.
+      const idsByType: Record<string, string[]> = {}
+      for (const r of reveals) (idsByType[r.entityType] ??= []).push(r.entityId)
+
+      const [npcRows, pcRows, locRows, facRows, thrRows, clueRows] = await Promise.all([
+        prisma.nPC.findMany({ where: { id: { in: idsByType.NPC ?? [] }, deletedAt: null }, select: { id: true, name: true, description: true } }),
+        prisma.playerCharacter.findMany({ where: { id: { in: idsByType.PLAYER_CHARACTER ?? [] }, deletedAt: null }, select: { id: true, name: true, description: true } }),
+        prisma.location.findMany({ where: { id: { in: idsByType.LOCATION ?? [] }, deletedAt: null }, select: { id: true, name: true, description: true } }),
+        prisma.faction.findMany({ where: { id: { in: idsByType.FACTION ?? [] }, deletedAt: null }, select: { id: true, name: true, description: true } }),
+        prisma.thread.findMany({ where: { id: { in: idsByType.THREAD ?? [] }, deletedAt: null }, select: { id: true, title: true, description: true } }),
+        prisma.clue.findMany({ where: { id: { in: idsByType.CLUE ?? [] }, deletedAt: null }, select: { id: true, title: true, description: true } }),
+      ])
+
+      const lookup = new Map<string, { name: string; description: string | null }>()
+      for (const e of npcRows) lookup.set(`NPC:${e.id}`, { name: e.name, description: e.description })
+      for (const e of pcRows) lookup.set(`PLAYER_CHARACTER:${e.id}`, { name: e.name, description: e.description })
+      for (const e of locRows) lookup.set(`LOCATION:${e.id}`, { name: e.name, description: e.description })
+      for (const e of facRows) lookup.set(`FACTION:${e.id}`, { name: e.name, description: e.description })
+      for (const e of thrRows) lookup.set(`THREAD:${e.id}`, { name: e.title, description: e.description })
+      for (const e of clueRows) lookup.set(`CLUE:${e.id}`, { name: e.title, description: e.description })
+
+      // Alias override precedence: reveal.displayName beats entity.name when present,
+      // same for description. Reveals pointing at soft-deleted entities are dropped.
+      const enrichedEntities = reveals.flatMap(r => {
+        const base = lookup.get(`${r.entityType}:${r.entityId}`)
+        if (!base) return []
+        return [{
+          entityType: r.entityType,
+          entityId: r.entityId,
+          displayName: r.displayName,
+          displayDescription: r.displayDescription,
+          isAlias: !!r.displayName,
+          name: r.displayName ?? base.name,
+          description: r.displayDescription ?? base.description,
+        }]
+      })
+
       const allNodes = await prisma.informationNode.findMany({ where: { campaignId } })
       const specificRevealIds = await prisma.informationNodeReveal.findMany({
         where: { membership: { userId: player.id, campaignId } },
@@ -292,14 +338,8 @@ export function createMcpServer(userId: string) {
 
       const summary = {
         player: { name: player.name, email: player.email },
-        revealedEntities: reveals.length,
-        entities: reveals.map(r => ({
-          entityType: r.entityType,
-          entityId: r.entityId,
-          displayName: r.displayName,
-          displayDescription: r.displayDescription,
-          isAlias: !!r.displayName,
-        })),
+        revealedEntities: enrichedEntities.length,
+        entities: enrichedEntities,
         visibleInformationNodes: visibleNodes.map(n => ({
           title: n.title,
           content: n.content,
