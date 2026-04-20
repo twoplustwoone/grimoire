@@ -16,6 +16,9 @@ COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY apps/web/package.json ./apps/web/
 
+# Copy prisma schema so @grimoire/db's postinstall (prisma generate) succeeds
+COPY packages/db/prisma/ ./packages/db/prisma/
+
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
