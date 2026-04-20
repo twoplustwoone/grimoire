@@ -187,14 +187,7 @@ pnpm db:reset
 pnpm dev
 ```
 
-`pnpm dev` runs Turbo's `dev` task, which starts the web (port 3000) and API (port 3001) in parallel with hot reload.
-
-**⚠️ The local port mismatch:** The API defaults to port 3001. The web app's rewrites default to `http://localhost:3005`. If you run both with default settings, every API call from the web will fail. To fix this, either:
-
-1. Run the API with `PORT=3005 pnpm --filter @grimoire/api dev`
-2. Set `API_INTERNAL_URL=http://localhost:3001` in `apps/web/.env`
-
-This inconsistency is known and should probably be cleaned up.
+`pnpm dev` runs Turbo's `dev` task, which starts the web (port 3000) and API (port 3005) in parallel with hot reload. The web's `API_INTERNAL_URL` rewrites default to `http://localhost:3005`, so no env overrides are needed.
 
 ### Local database commands
 
@@ -271,7 +264,6 @@ These are known issues documented so they're not rediscovered later:
 - **Web runtime silently tolerates missing env vars.** If `BETTER_AUTH_SECRET` is missing at runtime, the app boots with an empty string. No startup validation. A health check that exercises the auth layer would catch this.
 - **Dead env vars:** `NEXT_PUBLIC_API_URL` is a web Dockerfile build arg but isn't referenced anywhere in the codebase. Keep or remove deliberately.
 - **Web health check is just `/`.** If the landing page errors, health fails. A dedicated `/api/health` route on the web would be more reliable.
-- **Local port mismatch** between API default (3001) and web rewrites default (3005). Pick one and align both.
 - **No staging environment.** Deploys go straight to production. For a personal project this is fine; if this becomes a real product, a staging environment with its own Postgres would be standard.
 - **No backup strategy documented.** Railway Postgres has its own snapshots, but a documented restore procedure doesn't exist.
 

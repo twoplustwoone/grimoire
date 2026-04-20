@@ -38,6 +38,6 @@ WORKDIR /app/apps/api
 COPY apps/api/entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh
 
-EXPOSE 3001
+EXPOSE 3005
 
 CMD ["sh", "entrypoint.sh"]

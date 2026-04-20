@@ -66,7 +66,7 @@ app.route('/', oauth)
 app.all('/mcp', handleMcpRequest)
 app.all('/mcp/*', handleMcpRequest)
 
-const port = Number(process.env.PORT ?? 3001)
+const port = Number(process.env.PORT ?? 3005)
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`API running on http://localhost:${port}`)

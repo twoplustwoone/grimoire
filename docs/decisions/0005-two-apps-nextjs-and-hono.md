@@ -34,7 +34,7 @@ The split is functional, not strictly layered. Neither service is "the backend" 
 **Negative:**
 
 - **Some duplication.** Both apps import `@grimoire/db`. Both need environment variables configured. Both need Docker images built. The duplication is contained — most of it lives in deployment config, not application code.
-- **Local dev requires both running.** `pnpm dev` starts both via Turbo, but a developer must understand that the web app proxies to the API and misconfiguration breaks silently. The port mismatch (API defaults to 3001, web expects 3005) has caught developers more than once.
+- **Local dev requires both running.** `pnpm dev` starts both via Turbo, but a developer must understand that the web app proxies to the API and misconfiguration breaks silently. A port mismatch (API defaulted to 3001, web expected 3005) previously caught developers more than once; resolved by aligning both defaults to 3005.
 - **Two sets of health checks, two sets of logs, two sets of error monitoring.** Manageable, but worth acknowledging.
 - **The rewrites in `next.config.ts` are a non-trivial piece of configuration.** They encode the routing contract between the two services. Changes require coordination.
 

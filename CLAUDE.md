@@ -89,15 +89,6 @@ Most API routes run `authMiddleware` then check `CampaignMembership` for authori
 
 `apps/web/AGENTS.md` says it plainly: APIs, conventions, and file structure may differ. Before writing Next-specific code (route handlers, server actions, caching, params, metadata), read the relevant file in `apps/web/node_modules/next/dist/docs/` and heed any deprecation notices you encounter. Don't pattern-match from memory.
 
-### Local port mismatch
-
-The API defaults to port **3001** (`PORT ?? 3001` in `apps/api/src/index.ts`). The web app's rewrite destinations and Better Auth URL default to **3005** (`API_INTERNAL_URL ?? 'http://localhost:3005'`). Running both with defaults means every API call fails.
-
-Fix locally by either:
-
-- `PORT=3005 pnpm --filter @grimoire/api dev`, or
-- Set `API_INTERNAL_URL=http://localhost:3001` in an `apps/web/.env`
-
 ### Turbopack dev server caches the Prisma client
 
 After a schema change + `db:reset`, the `apps/web` dev server may keep serving a stale Prisma client and crash with "Unknown field X for include statement on model Y." Restart `pnpm dev` (or just the web filter) to clear it. The API side rebuilds correctly because Turbo triggers a real Prisma regen there.

@@ -234,7 +234,7 @@ Authorization rules live in route handlers. Most routes check a `CampaignMembers
 
 Both services deploy to Railway. Postgres is a Railway-managed service.
 
-- **API** uses a single-stage Dockerfile, runs migrations via `entrypoint.sh` before starting, and serves on port 3001 (mapped to whatever Railway assigns).
+- **API** uses a single-stage Dockerfile, runs migrations via `entrypoint.sh` before starting, and serves on port 3005 (mapped to whatever Railway assigns).
 - **Web** uses a two-stage Dockerfile producing Next.js standalone output. Build-time args include `DATABASE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `API_INTERNAL_URL` — Railway injects these at build time.
 - **Custom domain:** `grimoire.twoplustwoone.dev` points at the web service.
 
@@ -255,8 +255,6 @@ Full deployment details live in [deployment.md](./deployment.md).
 | `ANTHROPIC_API_KEY` | api | Claude recap generation |
 | `PORT` | api | Port the API listens on |
 | `NODE_ENV` | all | Development vs production mode |
-
-**Local dev gotcha:** The API's default port is 3001, but the web app's rewrites default to `http://localhost:3005`. To run both locally without setting env vars, start the API with `PORT=3005`. Or set `API_INTERNAL_URL` to match the port the API is actually on. This inconsistency is known and documented.
 
 ---
 
