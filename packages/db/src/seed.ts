@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { hashPassword } from '@better-auth/utils/password'
-import { prisma } from './index'
-import { createDemoCampaign } from './demo-campaign'
+import { prisma } from './index.js'
+import { createDemoCampaign } from './demo-campaign.js'
 
 async function ensurePlayerAccount(email: string, name: string, password: string) {
   const user = await prisma.user.upsert({

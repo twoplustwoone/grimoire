@@ -10,7 +10,8 @@
   "scripts": {
     "generate": "prisma generate --schema=./prisma/schema.prisma",
     "migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@better-auth/utils": "^0.4.0",
@@ -19,6 +20,7 @@
     "pg": "latest"
   },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "@types/pg": "latest",
     "dotenv": "latest",
     "prisma": "latest",
