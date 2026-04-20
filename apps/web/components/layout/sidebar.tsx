@@ -3,40 +3,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import {
-  BookOpen,
-  Users,
-  UserCircle,
-  MapPin,
-  Shield,
-  GitBranch,
-  Search,
-  Calendar,
-  Settings,
-} from 'lucide-react'
+import { ArrowLeft, Search, Settings } from 'lucide-react'
 import { ThemeSwitcher } from '@/components/layout/theme-switcher'
+import {
+  campaignNavigation,
+  getCampaignIdFromPath,
+  topLevelNavigation,
+  type NavItem,
+} from '@/lib/navigation'
 
 interface SidebarProps {
   user: { name?: string | null; email: string; image?: string | null }
 }
 
-const navigation = [
-  { name: 'Campaigns', href: '/campaigns', icon: BookOpen },
-]
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired up in session 3 (audit finding #14)
-const campaignNavigation = [
-  { name: 'Sessions', href: 'sessions', icon: Calendar },
-  { name: 'Player Characters', href: 'player-characters', icon: UserCircle },
-  { name: 'NPCs', href: 'npcs', icon: Users },
-  { name: 'Locations', href: 'locations', icon: MapPin },
-  { name: 'Factions', href: 'factions', icon: Shield },
-  { name: 'Threads', href: 'threads', icon: GitBranch },
-  { name: 'Clues', href: 'clues', icon: Search },
-]
-
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
+  const campaignId = getCampaignIdFromPath(pathname)
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-sidebar">
@@ -45,26 +27,27 @@ export function Sidebar({ user }: SidebarProps) {
         <p className="text-xs text-muted-foreground mt-1 truncate">{user.email}</p>
       </div>
       <nav className="flex-1 p-4 space-y-1">
-        {navigation.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-          return (
+        {campaignId ? (
+          <>
             <Link
-              key={item.name}
-              href={item.href}
-              aria-current={isActive ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              )}
+              href="/campaigns"
+              className="flex items-center gap-3 px-3 py-2 mb-2 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
-              <Icon className="h-4 w-4" />
-              {item.name}
+              <ArrowLeft className="h-3.5 w-3.5" />
+              All campaigns
             </Link>
-          )
-        })}
+            {campaignNavigation.map((item) => {
+              const href = `/campaigns/${campaignId}/${item.href}`
+              return (
+                <NavLink key={item.href} item={item} href={href} pathname={pathname} />
+              )
+            })}
+          </>
+        ) : (
+          topLevelNavigation.map((item) => (
+            <NavLink key={item.href} item={item} href={item.href} pathname={pathname} />
+          ))
+        )}
       </nav>
       <div className="p-4 border-t space-y-1">
         <button
@@ -92,5 +75,25 @@ export function Sidebar({ user }: SidebarProps) {
         </Link>
       </div>
     </aside>
+  )
+}
+
+function NavLink({ item, href, pathname }: { item: NavItem; href: string; pathname: string }) {
+  const Icon = item.icon
+  const isActive = pathname === href || pathname.startsWith(href + '/')
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? 'page' : undefined}
+      className={cn(
+        'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+        isActive
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {item.name}
+    </Link>
   )
 }
