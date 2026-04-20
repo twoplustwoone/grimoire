@@ -105,16 +105,34 @@ locations.patch('/:locationId', async (c) => {
 locations.patch('/:locationId/notes/:noteId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
+  const locationId = c.req.param('locationId')!
   const noteId = c.req.param('noteId')!
 
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
+  const existing = await prisma.note.findUnique({ where: { id: noteId } })
+  if (!existing) return c.json({ error: 'Not found' }, 404)
+
   const body = await c.req.json()
   if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
 
+  const trimmed = body.content.trim()
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: body.content.trim() },
+    data: { content: trimmed },
+  })
+
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'LOCATION',
+      entityId: locationId,
+      campaignId,
+      authorId: user.id,
+      field: 'note',
+      oldValue: existing.content,
+      newValue: trimmed,
+      note: 'Note edited',
+    },
   })
 
   return c.json(note)
@@ -141,13 +159,27 @@ locations.post('/:locationId/notes', async (c) => {
   const body = await c.req.json()
   if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
 
+  const trimmed = body.content.trim()
   const note = await prisma.note.create({
     data: {
       entityType: 'LOCATION',
       entityId: locationId,
       campaignId,
       authorId: user.id,
-      content: body.content.trim(),
+      content: trimmed,
+    },
+  })
+
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'LOCATION',
+      entityId: locationId,
+      campaignId,
+      authorId: user.id,
+      field: 'note',
+      oldValue: null,
+      newValue: trimmed,
+      note: 'Note added',
     },
   })
 
