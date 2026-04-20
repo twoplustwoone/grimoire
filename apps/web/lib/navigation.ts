@@ -10,6 +10,7 @@ import {
   Globe,
   Network,
   Settings,
+  LayoutDashboard,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -17,6 +18,10 @@ export interface NavItem {
   name: string
   href: string
   icon: LucideIcon
+  /** When true, the item is only active on exact pathname match — not on any
+   *  child path. Used by the campaign Overview item, whose href is the
+   *  campaign root and would otherwise match every sub-route. */
+  exact?: boolean
 }
 
 export const topLevelNavigation: NavItem[] = [
@@ -24,6 +29,7 @@ export const topLevelNavigation: NavItem[] = [
 ]
 
 export const campaignNavigation: NavItem[] = [
+  { name: 'Overview', href: '', icon: LayoutDashboard, exact: true },
   { name: 'Sessions', href: 'sessions', icon: Calendar },
   { name: 'Player Characters', href: 'player-characters', icon: UserCircle },
   { name: 'NPCs', href: 'npcs', icon: Users },

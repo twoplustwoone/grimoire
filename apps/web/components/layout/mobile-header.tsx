@@ -69,7 +69,9 @@ export function MobileHeader({ user }: MobileHeaderProps) {
                     All campaigns
                   </Link>
                   {campaignNavigation.map((item) => {
-                    const href = `/campaigns/${campaignId}/${item.href}`
+                    const href = item.href
+                      ? `/campaigns/${campaignId}/${item.href}`
+                      : `/campaigns/${campaignId}`
                     return (
                       <MobileNavLink
                         key={item.href}
@@ -121,7 +123,9 @@ function MobileNavLink({
   onSelect: () => void
 }) {
   const Icon = item.icon
-  const isActive = pathname === href || pathname.startsWith(href + '/')
+  const isActive = item.exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(href + '/')
   return (
     <Link
       href={href}

@@ -37,7 +37,9 @@ export function Sidebar({ user }: SidebarProps) {
               All campaigns
             </Link>
             {campaignNavigation.map((item) => {
-              const href = `/campaigns/${campaignId}/${item.href}`
+              const href = item.href
+                ? `/campaigns/${campaignId}/${item.href}`
+                : `/campaigns/${campaignId}`
               return (
                 <NavLink key={item.href} item={item} href={href} pathname={pathname} />
               )
@@ -80,7 +82,9 @@ export function Sidebar({ user }: SidebarProps) {
 
 function NavLink({ item, href, pathname }: { item: NavItem; href: string; pathname: string }) {
   const Icon = item.icon
-  const isActive = pathname === href || pathname.startsWith(href + '/')
+  const isActive = item.exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(href + '/')
   return (
     <Link
       href={href}
