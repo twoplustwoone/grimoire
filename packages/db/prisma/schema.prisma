@@ -326,6 +326,7 @@ enum EntityType {
   CLUE
   WORLD_EVENT
   SESSION
+  MEMBERSHIP
 }
 
 // ==================== CROSS-CUTTING ====================

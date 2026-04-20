@@ -1,5 +1,3 @@
-import { getEntityChipClasses } from './entity-display'
-
 export interface Mention {
   entityType: string
   entityId: string
@@ -27,10 +25,6 @@ export function mentionTokenToText(content: string): string {
 export function buildMentionToken(name: string, entityType: string, entityId: string): string {
   return `@[${name}](${entityType.toLowerCase()}:${entityId})`
 }
-
-// Kept for backwards compatibility with existing callers; prefer
-// getEntityChipClasses from '@/lib/entity-display' in new code.
-export const getMentionColor = getEntityChipClasses
 
 export function parseContentForDisplay(
   content: string

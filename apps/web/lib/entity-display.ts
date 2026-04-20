@@ -182,11 +182,6 @@ export function getEntityChipClasses(type: string): string {
   return t ? ENTITY_CHIP_CLASSES[t] : 'bg-muted text-muted-foreground'
 }
 
-export function getEntityIcon(type: string): LucideIcon | null {
-  const t = asEntityType(type)
-  return t ? ENTITY_ICON[t] : null
-}
-
 export function getEntityRoutePath(type: string): string | null {
   const t = asEntityType(type)
   return t ? ENTITY_ROUTE_PATH[t] : null

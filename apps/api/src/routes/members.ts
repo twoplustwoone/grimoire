@@ -21,6 +21,7 @@ members.delete('/:userId', async (c) => {
 
   const targetMembership = await prisma.campaignMembership.findFirst({
     where: { campaignId, userId: targetUserId },
+    include: { user: { select: { name: true, email: true } } },
   })
   if (!targetMembership) return c.json({ error: 'Membership not found' }, 404)
 
@@ -88,6 +89,18 @@ members.delete('/:userId', async (c) => {
 
     await tx.campaignMembership.delete({
       where: { id: targetMembership.id },
+    })
+
+    await tx.changelogEntry.create({
+      data: {
+        entityType: 'MEMBERSHIP',
+        entityId: targetUserId,
+        campaignId,
+        authorId: user.id,
+        field: 'removed',
+        oldValue: targetMembership.user.name ?? targetMembership.user.email,
+        newValue: null,
+      },
     })
 
     return { retired }
