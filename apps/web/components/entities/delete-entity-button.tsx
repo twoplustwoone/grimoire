@@ -43,7 +43,7 @@ export function DeleteEntityButton({ entityName, deleteEndpoint, redirectTo, war
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+        <Button variant="outline" size="sm" className="h-11 md:h-7 text-destructive border-destructive/30 hover:bg-destructive/10">
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
         </Button>

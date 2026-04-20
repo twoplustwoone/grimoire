@@ -1,6 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui/dropdown-menu'
 
 export type EntityStatusOption = string
 
@@ -34,24 +42,37 @@ interface EntityStatusSelectProps {
 
 export function EntityStatusSelect({ status, entityType, onSave }: EntityStatusSelectProps) {
   const [saving, setSaving] = useState(false)
+  const [open, setOpen] = useState(false)
   const options = statusOptionsByType[entityType] ?? statusOptionsByType.DEFAULT
+  const colorClass = statusColors[status] ?? 'bg-muted text-muted-foreground'
 
-  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  async function handleChange(next: string) {
+    if (next === status) return
     setSaving(true)
-    await onSave(e.target.value)
+    await onSave(next)
     setSaving(false)
+    setOpen(false)
   }
 
   return (
-    <select
-      value={status}
-      onChange={handleChange}
-      disabled={saving}
-      className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer focus:outline-none ${statusColors[status] ?? 'bg-muted text-muted-foreground'}`}
-    >
-      {options.map((s) => (
-        <option key={s} value={s}>{s}</option>
-      ))}
-    </select>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        disabled={saving}
+        className={`inline-flex items-center gap-1 text-xs px-3 h-11 md:h-auto md:py-1 rounded-full font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${colorClass} ${saving ? 'opacity-60' : ''}`}
+        aria-label={`Status: ${status}. Tap to change.`}
+      >
+        {status}
+        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[8rem]">
+        <DropdownMenuRadioGroup value={status} onValueChange={handleChange}>
+          {options.map((s) => (
+            <DropdownMenuRadioItem key={s} value={s}>
+              {s}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

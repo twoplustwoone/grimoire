@@ -126,7 +126,7 @@ export function EntityRevealPanel({ campaignId, entityType, entityId, entityName
           </div>
           <button
             onClick={toggleAllPlayers}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-md transition-colors ${
               allPlayersReveal
                 ? 'text-green-500 bg-green-500/10 hover:bg-green-500/20'
                 : 'text-muted-foreground hover:bg-muted'
@@ -170,14 +170,14 @@ export function EntityRevealPanel({ campaignId, entityType, entityId, entityName
                         setDisplayName(reveal?.displayName ?? '')
                         setDisplayDescription(reveal?.displayDescription ?? '')
                       }}
-                      className="text-xs text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded hover:bg-muted transition-colors"
+                      className="text-xs text-muted-foreground hover:text-foreground h-11 md:h-7 px-3 rounded hover:bg-muted transition-colors"
                     >
                       alias
                     </button>
                   )}
                   <button
                     onClick={() => togglePlayerReveal(member.userId)}
-                    className={`p-1.5 rounded-md transition-colors ${
+                    className={`flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-md transition-colors ${
                       reveal
                         ? 'text-green-500 bg-green-500/10 hover:bg-green-500/20'
                         : allPlayersReveal

@@ -13,9 +13,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { BookOpen, Eye, EyeOff, Trash2, Pencil, Check, X } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { BookOpen, Eye, EyeOff, MoreHorizontal, Trash2, Pencil, Check, X } from 'lucide-react'
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface InfoNode {
@@ -137,53 +143,20 @@ export function InformationNodes({ nodes: initialNodes, campaignId }: Props) {
                   <>
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-medium">{node.title}</p>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => handleVisibilityToggle(node)}
-                          className={`p-0.5 transition-colors ${visConfig.color} hover:opacity-70`}
+                          className={`flex h-11 w-11 md:h-8 md:w-8 items-center justify-center rounded-md transition-colors ${visConfig.color} hover:opacity-70`}
                           title={`Visibility: ${visConfig.label} — click to toggle`}
                           aria-label={`Visibility: ${visConfig.label} — click to toggle`}
                         >
-                          <VisIcon className="h-3.5 w-3.5" />
+                          <VisIcon className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={() => {
-                            setEditingId(node.id)
-                            setEditTitle(node.title)
-                            setEditContent(node.content)
-                          }}
-                          className="text-muted-foreground hover:text-foreground p-0.5 transition-colors"
-                          aria-label="Edit information node"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <button
-                              className="text-muted-foreground hover:text-destructive p-0.5 transition-colors"
-                              aria-label="Delete information node"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this information node?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This information node will be permanently deleted.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(node.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <InfoNodeActions
+                          node={node}
+                          onStartEdit={(id, t, c) => { setEditingId(id); setEditTitle(t); setEditContent(c) }}
+                          onDelete={handleDelete}
+                        />
                       </div>
                     </div>
                     <MentionRenderer content={node.content} campaignId={campaignId} />
@@ -198,5 +171,63 @@ export function InformationNodes({ nodes: initialNodes, campaignId }: Props) {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function InfoNodeActions({
+  node,
+  onStartEdit,
+  onDelete,
+}: {
+  node: InfoNode
+  onStartEdit: (id: string, title: string, content: string) => void
+  onDelete: (id: string) => void
+}) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="flex h-11 w-11 md:h-8 md:w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Information node actions"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onSelect={() => onStartEdit(node.id, node.title, node.content)}>
+            <Pencil className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onSelect={() => setDeleteDialogOpen(true)}>
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this information node?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This information node will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete(node.id)
+                setDeleteDialogOpen(false)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
