@@ -4,7 +4,6 @@ import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus, UserCircle } from 'lucide-react'
@@ -76,12 +75,10 @@ export default async function PlayerCharactersPage({ params }: Props) {
               No player characters yet. Create one to track a party member.
             </p>
             {isGM && (
-              <Button asChild>
-                <Link href={`/campaigns/${campaignId}/player-characters/new`}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New PC
-                </Link>
-              </Button>
+              <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}>
+                <Plus className="h-4 w-4 mr-2" />
+                New PC
+              </PageHeaderAction>
             )}
           </CardContent>
         </Card>

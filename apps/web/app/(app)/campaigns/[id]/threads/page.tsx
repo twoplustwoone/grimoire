@@ -4,7 +4,6 @@ import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus } from 'lucide-react'
@@ -57,7 +56,7 @@ export default async function ThreadsPage({ params }: Props) {
       </div>
 
       {list.length === 0 ? (
-        <Card className="text-center py-16"><CardContent><p className="text-muted-foreground mb-4">No threads yet.</p><Button asChild><Link href={`/campaigns/${campaignId}/threads/new`}><Plus className="h-4 w-4 mr-2" />New Thread</Link></Button></CardContent></Card>
+        <Card className="text-center py-16"><CardContent><p className="text-muted-foreground mb-4">No threads yet.</p><PageHeaderAction href={`/campaigns/${campaignId}/threads/new`}><Plus className="h-4 w-4 mr-2" />New Thread</PageHeaderAction></CardContent></Card>
       ) : (
         <div className="grid gap-3">
           {list.map((t) => (

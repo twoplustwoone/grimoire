@@ -20,12 +20,16 @@ type PageHeaderActionProps =
       disabled?: boolean
     })
 
-// Page-level primary CTA (e.g., "New NPC") that sits in the header of an
-// entity index page. Handles responsive placement:
-//   - below sm: full width, stacked under the title (consumer uses
-//     `flex-col sm:flex-row` on the header row)
+// Primary CTA with responsive sizing:
+//   - below sm: full width (fills its container, stacks under any sibling)
 //   - sm..md: inline, auto width, still 44px tall for touch
 //   - md+: inline, auto width, 32px (Shadcn default)
+//
+// Primary use: the "New X" button in an entity index page header, where
+// the header row is `flex-col sm:flex-row`. Also reused for the CTA in
+// each index page's "No X yet" empty-state card — the full-width-below-sm
+// behavior reads as a dominant call-to-action inside a centered card,
+// which is the intent of that surface.
 //
 // Discriminates on `href`: with it, renders Button-styled Link; without,
 // renders a Button with onClick.
