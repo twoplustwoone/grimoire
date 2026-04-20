@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SidebarInset, SidebarProvider, useSidebar } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/layout/app-sidebar'
@@ -48,52 +48,48 @@ function DesktopResizeHandle({
   onWidthChange: (w: number) => void
 }) {
   const { state, isMobile } = useSidebar()
-  const draggingRef = useRef(false)
   const startXRef = useRef(0)
   const startWidthRef = useRef(0)
   const latestWidthRef = useRef(width)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     latestWidthRef.current = width
   }, [width])
 
-  const onMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!draggingRef.current) return
-      const delta = e.clientX - startXRef.current
-      const next = clamp(startWidthRef.current + delta, MIN_WIDTH, MAX_WIDTH)
-      latestWidthRef.current = next
-      onWidthChange(next)
-    },
-    [onWidthChange]
-  )
-
-  const onMouseUp = useCallback(() => {
-    if (!draggingRef.current) return
-    draggingRef.current = false
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-    window.removeEventListener('mousemove', onMouseMove)
-    window.removeEventListener('mouseup', onMouseUp)
-    document.cookie = `sidebar_width=${latestWidthRef.current}; path=/; max-age=${COOKIE_MAX_AGE}`
-  }, [onMouseMove])
+  useEffect(() => {
+    return () => {
+      cleanupRef.current?.()
+    }
+  }, [])
 
   function onMouseDown(e: React.MouseEvent) {
-    draggingRef.current = true
     startXRef.current = e.clientX
     startWidthRef.current = width
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-  }
 
-  useEffect(() => {
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
+    function onMove(ev: MouseEvent) {
+      const delta = ev.clientX - startXRef.current
+      const next = clamp(startWidthRef.current + delta, MIN_WIDTH, MAX_WIDTH)
+      latestWidthRef.current = next
+      onWidthChange(next)
     }
-  }, [onMouseMove, onMouseUp])
+    function onUp() {
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      cleanupRef.current = null
+      document.cookie = `sidebar_width=${latestWidthRef.current}; path=/; max-age=${COOKIE_MAX_AGE}`
+    }
+    cleanupRef.current = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
 
   if (isMobile || state === 'collapsed') return null
 
