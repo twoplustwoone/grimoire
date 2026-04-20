@@ -21,6 +21,7 @@ import inviteAccept from './routes/invite-accept.js'
 import reveals from './routes/reveals.js'
 import apiKeys from './routes/api-keys.js'
 import playerCharacters from './routes/player-characters.js'
+import members from './routes/members.js'
 import { handleMcpRequest } from './mcp/handler.js'
 import oauth from './mcp/oauth-routes.js'
 
@@ -53,6 +54,7 @@ app.route('/campaigns/:campaignId/world-events', worldEvents)
 app.route('/campaigns/:campaignId/notes', notes)
 app.route('/campaigns/:campaignId/information-nodes', infoNodes)
 app.route('/campaigns/:campaignId/invites', invites)
+app.route('/campaigns/:campaignId/members', members)
 app.route('/campaigns/:campaignId/reveals', reveals)
 app.route('/invites', inviteAccept)
 app.route('/api-keys', apiKeys)
