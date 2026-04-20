@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
-import { Sidebar } from '@/components/layout/sidebar'
-import { MobileHeader } from '@/components/layout/mobile-header'
+import { AppShell } from '@/components/layout/app-shell'
 import { CommandPalette } from '@/components/layout/command-palette'
 
 export default async function AppLayout({
@@ -18,18 +17,18 @@ export default async function AppLayout({
     redirect('/sign-in')
   }
 
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false'
+  const widthCookie = cookieStore.get('sidebar_width')?.value
+  const parsedWidth = widthCookie ? parseInt(widthCookie, 10) : NaN
+  const defaultWidth = Number.isFinite(parsedWidth) ? parsedWidth : 240
+
   return (
     <>
       <CommandPalette />
-      <div className="flex h-screen bg-background">
-        <Sidebar user={session.user} />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <MobileHeader user={session.user} />
-          <main className="flex-1 overflow-y-auto p-6">
-            {children}
-          </main>
-        </div>
-      </div>
+      <AppShell user={session.user} defaultOpen={defaultOpen} defaultWidth={defaultWidth}>
+        {children}
+      </AppShell>
     </>
   )
 }

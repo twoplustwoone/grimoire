@@ -49,3 +49,9 @@ export function getCampaignIdFromPath(pathname: string): string | null {
   if (id === 'new') return null
   return id
 }
+
+export function isNavItemActive(item: NavItem, href: string, pathname: string): boolean {
+  return item.exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(href + '/')
+}
