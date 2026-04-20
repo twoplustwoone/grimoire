@@ -182,7 +182,7 @@ export function createMcpServer(userId: string) {
       const threads = await prisma.thread.findMany({
         where: { campaignId, deletedAt: null, status: { in: ['OPEN', 'DORMANT'] } },
         include: { entityTags: true },
-        orderBy: [{ urgency: 'asc' }, { updatedAt: 'desc' }],
+        orderBy: [{ urgency: 'desc' }, { updatedAt: 'desc' }],
       })
 
       return { content: [{ type: 'text', text: JSON.stringify(threads, null, 2) }] }
