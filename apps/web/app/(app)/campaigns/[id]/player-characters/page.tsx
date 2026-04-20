@@ -8,9 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus, UserCircle } from 'lucide-react'
 
-interface Props {
-  params: Promise<{ id: string }>
-}
+interface Props { params: Promise<{ id: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
@@ -50,38 +48,16 @@ export default async function PlayerCharactersPage({ params }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">
-            <Link href="/campaigns" className="hover:underline">Campaigns</Link>
-            {' / '}
-            <Link href={`/campaigns/${campaignId}`} className="hover:underline">
-              {membership.campaign.name}
-            </Link>
-            {' / '}
-            Player Characters
+            <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
+            <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}Player Characters
           </p>
           <h1 className="text-3xl font-bold">Player Characters</h1>
         </div>
-        {isGM && (
-          <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}>
-            <Plus className="h-4 w-4 mr-2" />
-            New PC
-          </PageHeaderAction>
-        )}
+        {isGM && <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}><Plus className="h-4 w-4 mr-2" />New PC</PageHeaderAction>}
       </div>
 
       {pcs.length === 0 ? (
-        <Card className="text-center py-16">
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              No player characters yet. Create one to track a party member.
-            </p>
-            {isGM && (
-              <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}>
-                <Plus className="h-4 w-4 mr-2" />
-                New PC
-              </PageHeaderAction>
-            )}
-          </CardContent>
-        </Card>
+        <Card className="text-center py-16"><CardContent><p className="text-muted-foreground mb-4">No player characters yet. Create one to track a party member.</p>{isGM && <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}><Plus className="h-4 w-4 mr-2" />New PC</PageHeaderAction>}</CardContent></Card>
       ) : (
         <div className="grid gap-3">
           {pcs.map((pc) => (

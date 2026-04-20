@@ -13,9 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from '@/components/ui/sidebar'
-import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 import {
   campaignNavigation,
   getCampaignIdFromPath,
@@ -32,8 +30,6 @@ interface Props {
 export function AppSidebar({ user }: Props) {
   const pathname = usePathname()
   const campaignId = getCampaignIdFromPath(pathname)
-  const { state } = useSidebar()
-  const isCollapsed = state === 'collapsed'
 
   return (
     <Sidebar collapsible="icon">
@@ -121,12 +117,6 @@ export function AppSidebar({ user }: Props) {
               </kbd>
             </SidebarMenuButton>
           </SidebarMenuItem>
-
-          {!isCollapsed && (
-            <SidebarMenuItem>
-              <ThemeSwitcher />
-            </SidebarMenuItem>
-          )}
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Account">
