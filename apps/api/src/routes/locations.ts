@@ -164,6 +164,17 @@ locations.delete('/:locationId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.location.update({ where: { id: locationId }, data: { deletedAt: new Date() } })
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'LOCATION',
+      entityId: locationId,
+      campaignId,
+      authorId: user.id,
+      field: 'deleted',
+      oldValue: existing.name,
+      newValue: null,
+    },
+  })
   return c.json({ success: true })
 })
 

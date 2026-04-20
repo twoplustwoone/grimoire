@@ -48,6 +48,18 @@ sessions.post('/', async (c) => {
     },
   })
 
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'SESSION',
+      entityId: session.id,
+      campaignId,
+      sessionId: session.id,
+      authorId: user.id,
+      field: 'created',
+      newValue: session.title ?? `Session ${session.number}`,
+    },
+  })
+
   return c.json(session, 201)
 })
 

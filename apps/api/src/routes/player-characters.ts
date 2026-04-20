@@ -188,6 +188,18 @@ playerCharacters.delete('/:pcId', async (c) => {
     data: { deletedAt: new Date() },
   })
 
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'PLAYER_CHARACTER',
+      entityId: pcId,
+      campaignId,
+      authorId: user.id,
+      field: 'deleted',
+      oldValue: existing.name,
+      newValue: null,
+    },
+  })
+
   return c.json({ success: true })
 })
 

@@ -158,6 +158,17 @@ threads.delete('/:threadId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.thread.update({ where: { id: threadId }, data: { deletedAt: new Date() } })
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'THREAD',
+      entityId: threadId,
+      campaignId,
+      authorId: user.id,
+      field: 'deleted',
+      oldValue: existing.title,
+      newValue: null,
+    },
+  })
   return c.json({ success: true })
 })
 

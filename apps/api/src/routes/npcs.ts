@@ -266,6 +266,18 @@ npcs.delete('/:npcId', async (c) => {
     data: { deletedAt: new Date() },
   })
 
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'NPC',
+      entityId: npcId,
+      campaignId,
+      authorId: user.id,
+      field: 'deleted',
+      oldValue: existing.name,
+      newValue: null,
+    },
+  })
+
   return c.json({ success: true })
 })
 

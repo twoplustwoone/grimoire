@@ -51,6 +51,18 @@ worldEvents.post('/', async (c) => {
     },
   })
 
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'WORLD_EVENT',
+      entityId: event.id,
+      campaignId,
+      sessionId: event.sessionId,
+      authorId: user.id,
+      field: 'created',
+      newValue: event.title,
+    },
+  })
+
   return c.json(event, 201)
 })
 

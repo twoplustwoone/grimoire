@@ -160,6 +160,17 @@ clues.delete('/:clueId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.clue.update({ where: { id: clueId }, data: { deletedAt: new Date() } })
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'CLUE',
+      entityId: clueId,
+      campaignId,
+      authorId: user.id,
+      field: 'deleted',
+      oldValue: existing.title,
+      newValue: null,
+    },
+  })
   return c.json({ success: true })
 })
 
