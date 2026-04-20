@@ -420,5 +420,71 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     }),
   ])
 
+  // Seed a few realistic ChangelogEntry rows so the dashboard's
+  // activity feed is non-empty on first login. Spaced several days
+  // apart so the feed reads like genuine campaign work, not a
+  // freshly-seeded artifact.
+  const now = Date.now()
+  const day = 24 * 60 * 60 * 1000
+  await Promise.all([
+    prisma.changelogEntry.create({
+      data: {
+        entityType: 'NPC',
+        entityId: mira.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        field: 'created',
+        newValue: mira.name,
+        createdAt: new Date(now - 9 * day),
+      },
+    }),
+    prisma.changelogEntry.create({
+      data: {
+        entityType: 'FACTION',
+        entityId: ashNetwork.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        field: 'created',
+        newValue: ashNetwork.name,
+        createdAt: new Date(now - 7 * day),
+      },
+    }),
+    prisma.changelogEntry.create({
+      data: {
+        entityType: 'THREAD',
+        entityId: whoThread.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        field: 'urgency',
+        oldValue: 'HIGH',
+        newValue: 'CRITICAL',
+        createdAt: new Date(now - 4 * day),
+      },
+    }),
+    prisma.changelogEntry.create({
+      data: {
+        entityType: 'NPC',
+        entityId: aldric.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        field: 'description',
+        oldValue: 'The youngest apprentice. Shy.',
+        newValue: aldric.description ?? aldric.name,
+        createdAt: new Date(now - 2 * day),
+      },
+    }),
+    prisma.changelogEntry.create({
+      data: {
+        entityType: 'CLUE',
+        entityId: simultaneousClue.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        field: 'created',
+        newValue: simultaneousClue.title,
+        createdAt: new Date(now - 1 * day),
+      },
+    }),
+  ])
+
   return campaign
 }
