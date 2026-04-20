@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, Search, Settings } from 'lucide-react'
+import { ArrowLeft, Search, UserCircle } from 'lucide-react'
 import { ThemeSwitcher } from '@/components/layout/theme-switcher'
 import {
   campaignNavigation,
@@ -70,8 +70,8 @@ export function Sidebar({ user }: SidebarProps) {
           href="/settings"
           className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
-          <Settings className="h-4 w-4" />
-          Settings
+          <UserCircle className="h-4 w-4" />
+          Account
         </Link>
       </div>
     </aside>

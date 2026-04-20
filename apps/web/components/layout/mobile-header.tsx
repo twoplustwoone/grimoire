@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, Menu, Settings, X } from 'lucide-react'
+import { ArrowLeft, Menu, UserCircle, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -99,8 +99,8 @@ export function MobileHeader({ user }: MobileHeaderProps) {
               onClick={close}
               className="flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
-              <Settings className="h-4 w-4" />
-              Settings
+              <UserCircle className="h-4 w-4" />
+              Account
             </Link>
           </nav>
         </div>
