@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
-import { prisma } from '@grimoire/db'
+import { prisma, CampaignStatus } from '@grimoire/db'
 import { authMiddleware } from '../lib/auth-middleware.js'
+
+const CAMPAIGN_STATUSES = Object.values(CampaignStatus) as CampaignStatus[]
 
 const campaigns = new Hono()
 
@@ -71,11 +73,17 @@ campaigns.patch('/:id', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
+
+  if (body.status !== undefined && !CAMPAIGN_STATUSES.includes(body.status)) {
+    return c.json({ error: 'Invalid status', allowed: CAMPAIGN_STATUSES }, 400)
+  }
+
   const updated = await prisma.campaign.update({
     where: { id },
     data: {
       name: body.name?.trim() ?? membership.campaign.name,
       description: body.description !== undefined ? body.description?.trim() ?? null : membership.campaign.description,
+      status: body.status ?? membership.campaign.status,
     },
   })
 
