@@ -12,10 +12,6 @@ COPY turbo.json ./
 
 # Copy package.json files for all packages
 COPY packages/db/package.json ./packages/db/
-COPY packages/types/package.json ./packages/types/
-COPY packages/ai/package.json ./packages/ai/
-COPY packages/realtime/package.json ./packages/realtime/
-COPY packages/config/package.json ./packages/config/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY apps/api/package.json ./apps/api/
