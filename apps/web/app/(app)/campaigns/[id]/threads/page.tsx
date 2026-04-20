@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus } from 'lucide-react'
 
 interface Props { params: Promise<{ id: string }> }
@@ -44,7 +45,7 @@ export default async function ThreadsPage({ params }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">
             <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
@@ -52,7 +53,7 @@ export default async function ThreadsPage({ params }: Props) {
           </p>
           <h1 className="text-3xl font-bold">Threads</h1>
         </div>
-        <Button asChild><Link href={`/campaigns/${campaignId}/threads/new`}><Plus className="h-4 w-4 mr-2" />New Thread</Link></Button>
+        <PageHeaderAction href={`/campaigns/${campaignId}/threads/new`}><Plus className="h-4 w-4 mr-2" />New Thread</PageHeaderAction>
       </div>
 
       {list.length === 0 ? (

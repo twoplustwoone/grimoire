@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus, UserCircle } from 'lucide-react'
 
 interface Props {
@@ -47,7 +48,7 @@ export default async function PlayerCharactersPage({ params }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">
             <Link href="/campaigns" className="hover:underline">Campaigns</Link>
@@ -61,12 +62,10 @@ export default async function PlayerCharactersPage({ params }: Props) {
           <h1 className="text-3xl font-bold">Player Characters</h1>
         </div>
         {isGM && (
-          <Button asChild>
-            <Link href={`/campaigns/${campaignId}/player-characters/new`}>
-              <Plus className="h-4 w-4 mr-2" />
-              New PC
-            </Link>
-          </Button>
+          <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}>
+            <Plus className="h-4 w-4 mr-2" />
+            New PC
+          </PageHeaderAction>
         )}
       </div>
 

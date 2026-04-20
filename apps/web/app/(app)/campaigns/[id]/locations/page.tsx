@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus, MapPin, Users } from 'lucide-react'
 import { pluralize } from '@/lib/utils'
 
@@ -39,7 +40,7 @@ export default async function LocationsPage({ params }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">
             <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
@@ -47,7 +48,7 @@ export default async function LocationsPage({ params }: Props) {
           </p>
           <h1 className="text-3xl font-bold">Locations</h1>
         </div>
-        <Button asChild><Link href={`/campaigns/${campaignId}/locations/new`}><Plus className="h-4 w-4 mr-2" />New Location</Link></Button>
+        <PageHeaderAction href={`/campaigns/${campaignId}/locations/new`}><Plus className="h-4 w-4 mr-2" />New Location</PageHeaderAction>
       </div>
 
       {list.length === 0 ? (
