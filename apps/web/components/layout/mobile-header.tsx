@@ -34,6 +34,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
         <Button
           variant="ghost"
           size="icon"
+          className="h-11 w-11"
           onClick={() => setOpen(!open)}
           aria-label={open ? 'Close navigation menu' : 'Open navigation menu'}
         >
@@ -48,6 +49,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-11 w-11"
                 onClick={close}
                 aria-label="Close navigation menu"
               >
@@ -61,7 +63,7 @@ export function MobileHeader({ user }: MobileHeaderProps) {
                   <Link
                     href="/campaigns"
                     onClick={close}
-                    className="flex items-center gap-3 px-3 py-3 mb-2 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    className="flex items-center gap-3 px-3 py-3.5 mb-2 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     All campaigns
