@@ -36,7 +36,7 @@ Claude Desktop connects via the standard MCP HTTP discovery flow:
 
 The user adds Grimoire as a custom connector in Claude Desktop with just a URL. The OAuth flow handles the rest.
 
-The old stdio package (`apps/mcp`) remains in the repo for historical reference but is deprecated and should not be used.
+The old stdio package (`apps/mcp`) has been removed from the repository; see git history for its prior implementation.
 
 ## Consequences
 

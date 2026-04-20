@@ -179,7 +179,7 @@ The MCP server lives inside the API process (`apps/api/src/mcp/`). It is not a s
 
 All tools are read-only. Grimoire deliberately does not let MCP clients modify data — the tool should answer questions, not run the campaign.
 
-**Legacy stdio MCP:** `apps/mcp/` exists for historical reasons. It ran locally and required config file editing. It is deprecated in favor of the HTTP+OAuth approach, which works for anyone with no local setup.
+**Legacy stdio MCP:** an `apps/mcp/` package previously shipped a stdio-transport MCP server. It was removed (see ADR-0002 and git history) — the HTTP+OAuth approach supersedes it and works for anyone with no local setup.
 
 ---
 
