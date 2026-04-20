@@ -239,6 +239,37 @@ async function main() {
   console.log('✅ Added 3 players to Dragon Heist')
 
   await Promise.all([
+    prisma.playerCharacter.create({
+      data: {
+        campaignId: campaign.id,
+        linkedUserId: serafine.id,
+        name: 'Serafine Ashveil',
+        description: 'A hedge-wizard from the Dock Ward who freelances as a spellbook restorer. Knows more about Waterdeep\'s back alleys than she lets on.',
+        status: 'ACTIVE',
+      },
+    }),
+    prisma.playerCharacter.create({
+      data: {
+        campaignId: campaign.id,
+        linkedUserId: rook.id,
+        name: 'Rook Valdris',
+        description: 'A half-elf rogue with a Zhentarim past he\'s actively trying to bury. Sharp tongue, sharper knives.',
+        status: 'ACTIVE',
+      },
+    }),
+    prisma.playerCharacter.create({
+      data: {
+        campaignId: campaign.id,
+        linkedUserId: maren.id,
+        name: 'Maren Solis',
+        description: 'A paladin of Tyr who joined the party after a failed investigation into Xanathar Guild corruption in the Watch.',
+        status: 'ACTIVE',
+      },
+    }),
+  ])
+  console.log('✅ Created Dragon Heist PCs for the 3 players')
+
+  await Promise.all([
     ensureAllPlayersReveal(campaign.id, 'NPC', xanathar.id),
     ensureAllPlayersReveal(campaign.id, 'LOCATION', yawningPortal.id),
     ensureAllPlayersReveal(campaign.id, 'FACTION', xanatharFaction.id),
