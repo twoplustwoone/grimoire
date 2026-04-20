@@ -1,21 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { parseContentForDisplay, getMentionColor } from '@/lib/mentions'
+import { parseContentForDisplay } from '@/lib/mentions'
+import { getEntityChipClasses, getEntityRoutePath } from '@/lib/entity-display'
 
 interface Props {
   content: string
   campaignId?: string
-}
-
-const entityTypePaths: Record<string, string> = {
-  NPC: 'npcs',
-  PLAYER_CHARACTER: 'player-characters',
-  LOCATION: 'locations',
-  FACTION: 'factions',
-  THREAD: 'threads',
-  CLUE: 'clues',
-  SESSION: 'sessions',
 }
 
 export function MentionRenderer({ content, campaignId }: Props) {
@@ -29,8 +20,8 @@ export function MentionRenderer({ content, campaignId }: Props) {
         }
 
         const { mention } = part
-        const path = entityTypePaths[mention.entityType]
-        const colorClass = getMentionColor(mention.entityType)
+        const path = getEntityRoutePath(mention.entityType)
+        const colorClass = getEntityChipClasses(mention.entityType)
 
         if (campaignId && path) {
           return (

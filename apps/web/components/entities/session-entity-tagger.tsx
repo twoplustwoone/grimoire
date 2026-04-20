@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { X, Plus, Tag } from 'lucide-react'
+import { getEntityChipClasses, getEntityLabel } from '@/lib/entity-display'
 
 interface EntityTag {
   id: string
@@ -25,14 +26,6 @@ interface Props {
   sessionId: string
   initialTags: EntityTag[]
   availableEntities: AvailableEntity[]
-}
-
-const entityTypeColors: Record<string, string> = {
-  NPC: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  LOCATION: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  FACTION: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  THREAD: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  CLUE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
 }
 
 export function SessionEntityTagger({
@@ -100,9 +93,9 @@ export function SessionEntityTagger({
             {tags.map((tag) => (
               <span
                 key={tag.id}
-                className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${entityTypeColors[tag.entityType] ?? 'bg-muted'}`}
+                className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium ${getEntityChipClasses(tag.entityType)}`}
               >
-                <span className="opacity-60">{tag.entityType}</span>
+                <span className="opacity-60">{getEntityLabel(tag.entityType)}</span>
                 <span>{tag.entityName ?? tag.entityId.slice(0, 8)}</span>
                 <button
                   onClick={() => removeTag(tag.id)}
@@ -140,8 +133,8 @@ export function SessionEntityTagger({
                       onClick={() => addTag(entity)}
                       className="w-full text-left px-3 py-2 hover:bg-accent transition-colors flex items-center gap-2"
                     >
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${entityTypeColors[entity.type] ?? 'bg-muted'}`}>
-                        {entity.type}
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${getEntityChipClasses(entity.type)}`}>
+                        {getEntityLabel(entity.type)}
                       </span>
                       <span className="text-sm">{entity.name}</span>
                     </button>

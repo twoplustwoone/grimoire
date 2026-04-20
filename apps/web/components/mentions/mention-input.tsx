@@ -7,7 +7,8 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { useParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { createMentionSuggestion } from '@/lib/tiptap-mention-suggestion'
-import { getMentionColor, buildMentionToken } from '@/lib/mentions'
+import { buildMentionToken } from '@/lib/mentions'
+import { getEntityChipClasses } from '@/lib/entity-display'
 
 interface Props {
   value: string
@@ -117,7 +118,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
           class: 'mention-chip',
         },
         renderHTML({ node }) {
-          const colorClass = getMentionColor(node.attrs.type ?? 'NPC')
+          const colorClass = getEntityChipClasses(node.attrs.type ?? 'NPC')
           return [
             'span',
             {

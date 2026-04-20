@@ -2,53 +2,17 @@
 
 import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { Users, UserCircle, MapPin, Shield, GitBranch, Search, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
+import {
+  ENTITY_GRAPH_NODE_THEME,
+  ENTITY_ICON,
+  type EntityType,
+} from '@/lib/entity-display'
 
 function isLightTheme(): boolean {
   if (typeof document === 'undefined') return false
   const root = document.documentElement
   return root.classList.contains('theme-minimal') || root.classList.contains('theme-fey')
-}
-
-function getTypeConfig(light: boolean) {
-  return {
-    NPC: {
-      icon: Users,
-      bg: light ? 'bg-blue-50/90' : 'bg-blue-950/80',
-      border: 'border-blue-400',
-      textColor: light ? 'text-blue-700' : 'text-blue-200',
-    },
-    PLAYER_CHARACTER: {
-      icon: UserCircle,
-      bg: light ? 'bg-cyan-50/90' : 'bg-cyan-950/80',
-      border: 'border-cyan-400',
-      textColor: light ? 'text-cyan-700' : 'text-cyan-200',
-    },
-    LOCATION: {
-      icon: MapPin,
-      bg: light ? 'bg-green-50/90' : 'bg-green-950/80',
-      border: 'border-green-400',
-      textColor: light ? 'text-green-700' : 'text-green-200',
-    },
-    FACTION: {
-      icon: Shield,
-      bg: light ? 'bg-purple-50/90' : 'bg-purple-950/80',
-      border: 'border-purple-400',
-      textColor: light ? 'text-purple-700' : 'text-purple-200',
-    },
-    THREAD: {
-      icon: GitBranch,
-      bg: light ? 'bg-orange-50/90' : 'bg-orange-950/80',
-      border: 'border-orange-400',
-      textColor: light ? 'text-orange-700' : 'text-orange-200',
-    },
-    CLUE: {
-      icon: Search,
-      bg: light ? 'bg-yellow-50/90' : 'bg-yellow-950/80',
-      border: 'border-yellow-400',
-      textColor: light ? 'text-yellow-700' : 'text-yellow-200',
-    },
-  } as const
 }
 
 const urgencyColors = {
@@ -61,15 +25,18 @@ const urgencyColors = {
 export const EntityNode = memo(({ data, selected }: NodeProps) => {
   const nodeData = data as { label: string; type: string; status: string; urgency?: string; campaignId?: string; entityId?: string; dimmed?: boolean; highlighted?: boolean }
   const light = isLightTheme()
-  const typeConfig = getTypeConfig(light)
-  const config = typeConfig[nodeData.type as keyof typeof typeConfig] ?? typeConfig.NPC
-  const Icon = config.icon
+  const type = (nodeData.type as EntityType)
+  const theme = ENTITY_GRAPH_NODE_THEME[type] ?? ENTITY_GRAPH_NODE_THEME.NPC
+  const Icon = ENTITY_ICON[type] ?? ENTITY_ICON.NPC
+
+  const bgClass = light ? theme.bgLight : theme.bgDark
+  const textClass = light ? theme.textLight : theme.textDark
 
   const isInactive = nodeData.status === 'INACTIVE' || nodeData.status === 'DEAD' || nodeData.status === 'DESTROYED' || nodeData.status === 'RETIRED' || nodeData.status === 'RESOLVED'
 
   const borderClass = nodeData.type === 'THREAD' && nodeData.urgency && urgencyColors[nodeData.urgency as keyof typeof urgencyColors]
     ? urgencyColors[nodeData.urgency as keyof typeof urgencyColors]
-    : config.border
+    : theme.border
 
   const mutedTextColor = light ? 'text-foreground/50' : 'text-white/40'
   const isDimmed = nodeData.dimmed === true
@@ -83,7 +50,7 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
           group relative px-3 py-2 rounded-lg border-2 backdrop-blur-sm
           min-w-[120px] max-w-[180px] cursor-pointer
           transition-all duration-150
-          ${config.bg} ${borderClass}
+          ${bgClass} ${borderClass}
           ${isHighlighted ? 'ring-2 ring-white/60 scale-110 shadow-lg' : ''}
           ${isDimmed ? 'opacity-20 scale-95' : ''}
           ${!isDimmed && !isHighlighted && selected ? 'ring-2 ring-white/50 scale-105' : ''}
@@ -91,8 +58,8 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
         `}
       >
         <div className="flex items-center gap-2">
-          <Icon className={`h-3 w-3 shrink-0 ${config.textColor}`} />
-          <span title={nodeData.label} className={`text-xs font-medium truncate ${config.textColor}`}>
+          <Icon className={`h-3 w-3 shrink-0 ${textClass}`} />
+          <span title={nodeData.label} className={`text-xs font-medium truncate ${textClass}`}>
             {nodeData.label}
           </span>
         </div>

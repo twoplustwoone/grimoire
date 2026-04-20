@@ -1,7 +1,7 @@
 'use client'
 
 import { forwardRef, useImperativeHandle, useState } from 'react'
-import { getMentionColor } from '@/lib/mentions'
+import { getEntityChipClasses, getEntityLabel } from '@/lib/entity-display'
 
 interface MentionItem {
   id: string
@@ -78,8 +78,8 @@ export const MentionList = forwardRef<{ onKeyDown: (props: { event: KeyboardEven
                   : 'hover:bg-muted/50'
               }`}
             >
-              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${getMentionColor(item.type)}`}>
-                {item.type}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${getEntityChipClasses(item.type)}`}>
+                {getEntityLabel(item.type)}
               </span>
               <span className="flex-1 truncate">{item.name}</span>
             </button>

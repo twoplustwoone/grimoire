@@ -16,6 +16,11 @@ import '@xyflow/react/dist/style.css'
 import { EntityNode } from './entity-node'
 import { buildGraphLayout, buildColumnLayout, type RawNode, type RawEdge } from '@/lib/graph-layout'
 import { useRouter } from 'next/navigation'
+import {
+  ENTITY_DOT_CLASS,
+  ENTITY_LABEL_SENTENCE,
+  getEntityMinimapColor,
+} from '@/lib/entity-display'
 
 const nodeTypes = { entityNode: EntityNode }
 
@@ -199,16 +204,18 @@ export function CampaignGraph({ campaignId }: Props) {
       )}
 
       <div className="absolute top-14 left-4 right-4 z-10 flex gap-3 flex-wrap md:hidden">
-        {[
-          { color: 'bg-blue-400', label: 'NPC' },
-          { color: 'bg-cyan-400', label: 'PC' },
-          { color: 'bg-green-400', label: 'Loc' },
-          { color: 'bg-purple-400', label: 'Faction' },
-          { color: 'bg-orange-400', label: 'Thread' },
-          { color: 'bg-yellow-400', label: 'Clue' },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${color}`} />
+        {(
+          [
+            ['NPC', 'NPC'],
+            ['PLAYER_CHARACTER', 'PC'],
+            ['LOCATION', 'Loc'],
+            ['FACTION', 'Faction'],
+            ['THREAD', 'Thread'],
+            ['CLUE', 'Clue'],
+          ] as const
+        ).map(([type, label]) => (
+          <div key={type} className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${ENTITY_DOT_CLASS[type]}`} />
             <span className="text-[10px] text-muted-foreground">{label}</span>
           </div>
         ))}
@@ -242,34 +249,17 @@ export function CampaignGraph({ campaignId }: Props) {
         <div className="hidden md:block">
           <MiniMap
             className="!bg-card !border-border"
-            nodeColor={(node) => {
-              const colors: Record<string, string> = {
-                NPC: '#60a5fa',
-                PLAYER_CHARACTER: '#22d3ee',
-                LOCATION: '#34d399',
-                FACTION: '#a78bfa',
-                THREAD: '#fb923c',
-                CLUE: '#fbbf24',
-              }
-              return colors[(node.data as { type: string }).type] ?? '#6b7280'
-            }}
+            nodeColor={(node) => getEntityMinimapColor((node.data as { type: string }).type)}
           />
         </div>
       </ReactFlow>
 
       <div className="absolute top-16 right-4 z-10 bg-card border rounded-lg p-3 text-xs space-y-1.5 hidden md:block">
         <p className="font-semibold text-foreground/60 uppercase tracking-wider text-[10px] mb-2">Legend</p>
-        {[
-          { color: 'bg-blue-400', label: 'NPC' },
-          { color: 'bg-cyan-400', label: 'Player Character' },
-          { color: 'bg-green-400', label: 'Location' },
-          { color: 'bg-purple-400', label: 'Faction' },
-          { color: 'bg-orange-400', label: 'Thread' },
-          { color: 'bg-yellow-400', label: 'Clue' },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${color}`} />
-            <span className="text-muted-foreground">{label}</span>
+        {(['NPC', 'PLAYER_CHARACTER', 'LOCATION', 'FACTION', 'THREAD', 'CLUE'] as const).map(type => (
+          <div key={type} className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${ENTITY_DOT_CLASS[type]}`} />
+            <span className="text-muted-foreground">{ENTITY_LABEL_SENTENCE[type]}</span>
           </div>
         ))}
         <div className="border-t mt-2 pt-2 space-y-1">

@@ -11,6 +11,7 @@ import { EntityNotes } from '@/components/entities/entity-notes'
 import { InformationNodes } from '@/components/entities/information-nodes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
+import { getEntityChipClasses, getEntityLabel } from '@/lib/entity-display'
 
 interface Props { params: Promise<{ id: string; threadId: string }> }
 
@@ -21,13 +22,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
   ])
   return { title: `${thread?.title ?? 'Thread'} — ${campaign?.name ?? 'Campaign'}` }
-}
-
-const entityTypeColors: Record<string, string> = {
-  NPC: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  LOCATION: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  FACTION: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  CLUE: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
 }
 
 export default async function ThreadDetailPage({ params }: Props) {
@@ -112,9 +106,9 @@ export default async function ThreadDetailPage({ params }: Props) {
                 <Link
                   key={tag.id}
                   href={tag.href ?? '#'}
-                  className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium hover:opacity-80 transition-opacity ${entityTypeColors[tag.entityType] ?? 'bg-muted'}`}
+                  className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium hover:opacity-80 transition-opacity ${getEntityChipClasses(tag.entityType)}`}
                 >
-                  <span className="opacity-60">{tag.entityType}</span>
+                  <span className="opacity-60">{getEntityLabel(tag.entityType)}</span>
                   <span>{tag.name}</span>
                 </Link>
               ))}
