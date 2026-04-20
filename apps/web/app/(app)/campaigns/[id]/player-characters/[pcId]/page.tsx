@@ -4,13 +4,12 @@ import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Clock } from 'lucide-react'
 import { PcEditableFields } from '@/components/entities/pc-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityNotes } from '@/components/entities/entity-notes'
 import { InformationNodes } from '@/components/entities/information-nodes'
 import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
+import { ChangelogList } from '@/components/entities/changelog-list'
 
 interface Props {
   params: Promise<{ id: string; pcId: string }>
@@ -135,33 +134,7 @@ export default async function PlayerCharacterDetailPage({ params }: Props) {
         />
       </div>
 
-      {changelog.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" />History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {changelog.map((entry) => (
-                <div key={entry.id} className="flex items-start justify-between text-sm">
-                  <div>
-                    <span className="font-medium">{entry.field}</span>
-                    {entry.oldValue && entry.newValue && (
-                      <span className="text-muted-foreground"> changed from <span className="line-through">{entry.oldValue}</span> to {entry.newValue}</span>
-                    )}
-                    {!entry.oldValue && entry.newValue && (
-                      <span className="text-muted-foreground"> set to {entry.newValue}</span>
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground ml-4 shrink-0">{new Date(entry.createdAt).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <ChangelogList entries={changelog} />
 
       {isGM && (
         <div className="mt-8 pt-6 border-t border-destructive/20">

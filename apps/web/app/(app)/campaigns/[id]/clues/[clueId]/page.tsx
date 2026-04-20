@@ -5,12 +5,13 @@ import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Clock } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { ClueEditableFields } from '@/components/entities/clue-editable-fields'
 import { EntityNotes } from '@/components/entities/entity-notes'
 import { InformationNodes } from '@/components/entities/information-nodes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
+import { ChangelogList } from '@/components/entities/changelog-list'
 
 interface Props { params: Promise<{ id: string; clueId: string }> }
 
@@ -102,29 +103,7 @@ export default async function ClueDetailPage({ params }: Props) {
         />
       </div>
 
-      {changelog.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" />History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {changelog.map((e) => (
-                <div key={e.id} className="flex items-start justify-between text-sm">
-                  <div>
-                    <span className="font-medium">{e.field}</span>
-                    {e.oldValue && e.newValue && <span className="text-muted-foreground"> changed from <span className="line-through">{e.oldValue}</span> to {e.newValue}</span>}
-                    {!e.oldValue && e.newValue && <span className="text-muted-foreground"> set to {e.newValue}</span>}
-                  </div>
-                  <span className="text-xs text-muted-foreground ml-4 shrink-0">{new Date(e.createdAt).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <ChangelogList entries={changelog} />
 
       <div className="mt-8 pt-6 border-t border-destructive/20">
         <p className="text-sm text-muted-foreground mb-3">Danger zone</p>
