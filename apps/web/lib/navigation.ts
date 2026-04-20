@@ -7,6 +7,8 @@ import {
   GitBranch,
   Search,
   Calendar,
+  Globe,
+  Network,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -28,6 +30,8 @@ export const campaignNavigation: NavItem[] = [
   { name: 'Factions', href: 'factions', icon: Shield },
   { name: 'Threads', href: 'threads', icon: GitBranch },
   { name: 'Clues', href: 'clues', icon: Search },
+  { name: 'World Events', href: 'world-events', icon: Globe },
+  { name: 'Graph', href: 'graph', icon: Network },
 ]
 
 export function getCampaignIdFromPath(pathname: string): string | null {
