@@ -38,7 +38,14 @@ export default async function GraphPage({ params }: Props) {
         </p>
       </div>
 
-      {/* Desktop: full-bleed canvas. */}
+      {/* Desktop: full-bleed canvas.
+          -m-6 escapes the `p-6` on <main> in apps/web/app/(app)/layout.tsx so
+          the graph sits edge-to-edge with a sticky breadcrumb header. This is
+          the only full-bleed page in the app today; if a second one appears,
+          promote this pattern into a shared wrapper and drop the negative
+          margin. Option A (layout slot) and Option B (move padding onto every
+          page) were considered — with one consumer, Option C (localized hack
+          + explicit comment) is cleaner than either. */}
       <div className="hidden md:flex flex-col h-full -m-6">
         <div className="flex items-center gap-2 px-6 py-4 border-b bg-card shrink-0">
           <p className="text-sm text-muted-foreground">
