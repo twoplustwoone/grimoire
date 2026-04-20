@@ -223,10 +223,13 @@ async function main() {
 
   console.log('✅ Created sessions')
 
-  const serafine = await ensurePlayerAccount('serafine@grimoire.dev', 'Serafine Ashveil', 'password')
-  const rook = await ensurePlayerAccount('rook@grimoire.dev', 'Rook Valdris', 'password')
-  const maren = await ensurePlayerAccount('maren@grimoire.dev', 'Maren Solis', 'password')
-  await ensurePlayerAccount('kael@grimoire.dev', 'Kael Vireth', 'password')
+  // User.name is the player's real-world handle; PlayerCharacter.name below
+  // is the in-fiction character they play. These are intentionally distinct
+  // so UI that lists "Player · Character" doesn't render as a tautology.
+  const serafine = await ensurePlayerAccount('serafine@grimoire.dev', 'Jordan Reyes', 'password')
+  const rook = await ensurePlayerAccount('rook@grimoire.dev', 'Sam Okafor', 'password')
+  const maren = await ensurePlayerAccount('maren@grimoire.dev', 'Alex Park', 'password')
+  await ensurePlayerAccount('kael@grimoire.dev', 'Morgan Chen', 'password')
   console.log('✅ Created player users (serafine, rook, maren, kael)')
 
   await Promise.all([serafine, rook, maren].map(p =>
