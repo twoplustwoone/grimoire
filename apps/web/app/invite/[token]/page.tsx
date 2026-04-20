@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import Link from 'next/link'
 import { auth } from '@/lib/auth-server'
 import { InviteAcceptForm } from './invite-accept-form'
 
@@ -29,9 +30,9 @@ export default async function InvitePage({ params }: Props) {
               ? 'This invite has already been used.'
               : 'This invite link is invalid or has been revoked.'}
           </p>
-          <a href="/campaigns" className="text-primary hover:underline text-sm">
+          <Link href="/campaigns" className="text-primary hover:underline text-sm">
             Go to your campaigns
-          </a>
+          </Link>
         </div>
       </div>
     )

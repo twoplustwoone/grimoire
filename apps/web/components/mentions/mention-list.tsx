@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import { getMentionColor } from '@/lib/mentions'
 
 interface MentionItem {
@@ -18,8 +18,11 @@ interface Props {
 export const MentionList = forwardRef<{ onKeyDown: (props: { event: KeyboardEvent }) => boolean }, Props>(
   ({ items, command }, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0)
-
-    useEffect(() => setSelectedIndex(0), [items])
+    const [prevItems, setPrevItems] = useState(items)
+    if (items !== prevItems) {
+      setPrevItems(items)
+      setSelectedIndex(0)
+    }
 
     function selectItem(index: number) {
       const item = items[index]

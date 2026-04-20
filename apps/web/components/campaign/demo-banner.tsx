@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Info } from 'lucide-react'
 
 export function DemoBanner() {
@@ -6,9 +7,9 @@ export function DemoBanner() {
       <Info className="h-4 w-4 text-primary shrink-0" />
       <p className="text-muted-foreground">
         This is a demo campaign to help you explore Grimoire.{' '}
-        <a href="/campaigns/new" className="text-primary hover:underline font-medium">
+        <Link href="/campaigns/new" className="text-primary hover:underline font-medium">
           Create your own campaign
-        </a>{' '}
+        </Link>{' '}
         to get started.
       </p>
     </div>

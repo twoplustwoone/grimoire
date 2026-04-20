@@ -108,7 +108,7 @@ export default async function CampaignPage({ params }: Props) {
             href={`/portal/${campaignId}`}
             className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
           >
-            View your character's knowledge →
+            View your character&apos;s knowledge →
           </Link>
         </div>
       )}

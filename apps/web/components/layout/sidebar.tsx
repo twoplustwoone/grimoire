@@ -24,6 +24,7 @@ const navigation = [
   { name: 'Campaigns', href: '/campaigns', icon: BookOpen },
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired up in session 3 (audit finding #14)
 const campaignNavigation = [
   { name: 'Sessions', href: 'sessions', icon: Calendar },
   { name: 'Player Characters', href: 'player-characters', icon: UserCircle },

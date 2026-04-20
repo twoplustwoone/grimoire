@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +25,10 @@ interface ApiKey {
   createdAt: string
 }
 
+function subscribeNoop() {
+  return () => {}
+}
+
 export function ApiKeyManager() {
   const [keys, setKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,13 +37,11 @@ export function ApiKeyManager() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newKeyValue, setNewKeyValue] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const [mcpUrl, setMcpUrl] = useState('https://grimoire.twoplustwoone.dev/mcp')
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setMcpUrl(`${window.location.origin}/mcp`)
-    }
-  }, [])
+  const mcpUrl = useSyncExternalStore(
+    subscribeNoop,
+    () => `${window.location.origin}/mcp`,
+    () => 'https://grimoire.twoplustwoone.dev/mcp'
+  )
 
   useEffect(() => {
     fetch('/api/v1/api-keys', { credentials: 'include' })

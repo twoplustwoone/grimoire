@@ -79,7 +79,7 @@ export function SignInForm({ inviteToken }: SignInFormProps = {}) {
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <a
             href={inviteToken ? `/sign-up?invite=${inviteToken}` : '/sign-up'}
             className="underline underline-offset-4 hover:text-primary"

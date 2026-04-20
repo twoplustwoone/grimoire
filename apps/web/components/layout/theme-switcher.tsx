@@ -1,19 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 import { themes, applyTheme, getStoredTheme, type Theme } from '@/lib/theme'
 import { Palette } from 'lucide-react'
 
-export function ThemeSwitcher() {
-  const [current, setCurrent] = useState<Theme>('grimoire')
+function subscribeToStorage(onStoreChange: () => void) {
+  window.addEventListener('storage', onStoreChange)
+  return () => window.removeEventListener('storage', onStoreChange)
+}
 
-  useEffect(() => {
-    setCurrent(getStoredTheme())
-  }, [])
+function getServerSnapshot(): Theme {
+  return 'grimoire'
+}
+
+export function ThemeSwitcher() {
+  const current = useSyncExternalStore(subscribeToStorage, getStoredTheme, getServerSnapshot)
 
   function handleChange(theme: Theme) {
     applyTheme(theme)
-    setCurrent(theme)
+    window.dispatchEvent(new StorageEvent('storage', { key: 'grimoire-theme' }))
   }
 
   return (
