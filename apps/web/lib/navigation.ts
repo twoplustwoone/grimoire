@@ -9,6 +9,7 @@ import {
   Calendar,
   Globe,
   Network,
+  Settings,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -32,6 +33,7 @@ export const campaignNavigation: NavItem[] = [
   { name: 'Clues', href: 'clues', icon: Search },
   { name: 'World Events', href: 'world-events', icon: Globe },
   { name: 'Graph', href: 'graph', icon: Network },
+  { name: 'Settings', href: 'settings', icon: Settings },
 ]
 
 export function getCampaignIdFromPath(pathname: string): string | null {
