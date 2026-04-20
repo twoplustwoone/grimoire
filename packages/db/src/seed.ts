@@ -226,7 +226,8 @@ async function main() {
   const serafine = await ensurePlayerAccount('serafine@grimoire.dev', 'Serafine Ashveil', 'password')
   const rook = await ensurePlayerAccount('rook@grimoire.dev', 'Rook Valdris', 'password')
   const maren = await ensurePlayerAccount('maren@grimoire.dev', 'Maren Solis', 'password')
-  console.log('✅ Created player users (serafine, rook, maren)')
+  await ensurePlayerAccount('kael@grimoire.dev', 'Kael Vireth', 'password')
+  console.log('✅ Created player users (serafine, rook, maren, kael)')
 
   await Promise.all([serafine, rook, maren].map(p =>
     prisma.campaignMembership.upsert({
@@ -265,43 +266,16 @@ async function main() {
     await prisma.campaign.delete({ where: { id: existingDemo.id } })
   }
 
-  const conclave = await createDemoCampaign(prisma, demoUser.id)
+  await createDemoCampaign(prisma, demoUser.id)
   console.log('✅ Created demo campaign (The Shattered Conclave)')
-
-  await prisma.campaignMembership.upsert({
-    where: { campaignId_userId: { campaignId: conclave.id, userId: serafine.id } },
-    update: {},
-    create: { campaignId: conclave.id, userId: serafine.id, role: 'PLAYER' },
-  })
-  console.log('✅ Added serafine@grimoire.dev to The Shattered Conclave')
-
-  const demoPlayer = await prisma.user.findUniqueOrThrow({
-    where: { email: 'player@grimoire.dev' },
-  })
-  const demoPlayerPasswordHash = await hashPassword('player@grimoire.dev')
-  await prisma.account.deleteMany({
-    where: { userId: demoPlayer.id, providerId: 'credential' },
-  })
-  await prisma.account.create({
-    data: {
-      id: `seed-account-${demoPlayer.id}`,
-      accountId: demoPlayer.id,
-      providerId: 'credential',
-      userId: demoPlayer.id,
-      password: demoPlayerPasswordHash,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  })
-  console.log('✅ Created demo player: player@grimoire.dev')
   console.log('✅ Pre-seeded entity reveals for player portal')
 
   console.log('')
   console.log('🎲 Seed complete!')
   console.log(`   Campaign: ${campaign.name}`)
   console.log(`   GM login: gm@grimoire.dev / gm@grimoire.dev`)
-  console.log(`   Demo player: player@grimoire.dev / player@grimoire.dev`)
   console.log(`   Dragon Heist players: serafine@grimoire.dev / rook@grimoire.dev / maren@grimoire.dev (password: password)`)
+  console.log(`   Demo campaign players: serafine@grimoire.dev / kael@grimoire.dev (password: password)`)
   console.log(`   6 NPCs, 5 locations, 3 factions, 3 threads, 3 clues`)
   console.log(`   1 completed session with notes and AI recap`)
   console.log(`   1 planned session`)

@@ -3,7 +3,6 @@ import { prisma } from './index.js'
 import { createDemoCampaign } from './demo-campaign.js'
 
 const SKIP_EMAILS = new Set([
-  'player@grimoire.dev',
   'test@grimoire.dev',
   'gm2@grimoire.dev',
   'gm3@grimoire.dev',

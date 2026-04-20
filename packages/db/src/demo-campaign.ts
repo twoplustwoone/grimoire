@@ -87,7 +87,7 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     prisma.threadEntityTag.create({ data: { threadId: templeThread.id, entityType: 'NPC', entityId: lena.id } }),
   ])
 
-  const [simultaneousClue] = await Promise.all([
+  const [simultaneousClue, , , vaultRecordsClue] = await Promise.all([
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Simultaneous Strike', description: 'All five mages died within minutes of each other across different locations. This required either extraordinary coordination or magic capable of reaching multiple targets at once. The Conclave itself had such magic — but it was supposedly locked in the central vault.' } }),
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'Aldric\'s Burnt Hands', description: 'Aldric\'s hands show old burn scarring consistent with a failed warding spell. The burns are three months old. He claims they are from a cooking accident.' } }),
     prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Ash Network Knew First', description: 'A contact revealed that Voss was offering information about "a coming change in the city\'s leadership" two weeks before the assassination. Someone told them it was coming.' } }),
@@ -148,28 +148,121 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     prisma.informationNode.create({ data: { campaignId: campaign.id, entityType: 'FACTION', entityId: merchantGuild.id, title: 'Pre-drafted Legislation', content: 'The Aurelius tariff removal paperwork was filed within days of the assassination. It was clearly drafted in advance. Someone in the company knew this was coming.', visibility: 'GM_ONLY' } }),
   ])
 
-  const demoPlayer = await prisma.user.upsert({
-    where: { email: 'player@grimoire.dev' },
+  // ---------------------------------------------------------------
+  // Two seeded demo players demonstrate information asymmetry.
+  //
+  // Serafine (arcane lens): sees Aldric by name, knows the Ash Network
+  //   only by alias ("An Unknown Network"), has the Simultaneous Strike
+  //   clue, and holds the SPECIFIC_PLAYERS "He Was There" node on Aldric.
+  //
+  // Kael (noble/bureaucratic lens): sees Commander Thrace, the Temple
+  //   of Silence, and Sister Lena (by alias "The Temple Envoy"), has
+  //   the Missing Vault Records clue, and holds a SPECIFIC_PLAYERS
+  //   "A Family Friend" node on the Aurelius Trading Company.
+  //
+  // Shared baseline is the ensureAllPlayersReveal set below. Toggling
+  // "View as player" between them should produce visibly different
+  // portals without either feeling empty.
+  // ---------------------------------------------------------------
+
+  const serafinePlayer = await prisma.user.upsert({
+    where: { email: 'serafine@grimoire.dev' },
     update: {},
     create: {
-      email: 'player@grimoire.dev',
+      email: 'serafine@grimoire.dev',
       name: 'Serafine Ashveil',
       emailVerified: true,
     },
   })
 
-  const demoPlayerMembership = await prisma.campaignMembership.upsert({
-    where: { campaignId_userId: { campaignId: campaign.id, userId: demoPlayer.id } },
+  const kaelPlayer = await prisma.user.upsert({
+    where: { email: 'kael@grimoire.dev' },
     update: {},
     create: {
-      campaignId: campaign.id,
-      userId: demoPlayer.id,
-      role: 'PLAYER',
+      email: 'kael@grimoire.dev',
+      name: 'Kael Vireth',
+      emailVerified: true,
     },
   })
 
+  const [serafineMembership, kaelMembership] = await Promise.all([
+    prisma.campaignMembership.upsert({
+      where: { campaignId_userId: { campaignId: campaign.id, userId: serafinePlayer.id } },
+      update: {},
+      create: { campaignId: campaign.id, userId: serafinePlayer.id, role: 'PLAYER' },
+    }),
+    prisma.campaignMembership.upsert({
+      where: { campaignId_userId: { campaignId: campaign.id, userId: kaelPlayer.id } },
+      update: {},
+      create: { campaignId: campaign.id, userId: kaelPlayer.id, role: 'PLAYER' },
+    }),
+  ])
+
+  const [serafinePC, kaelPC] = await Promise.all([
+    prisma.playerCharacter.create({
+      data: {
+        campaignId: campaign.id,
+        linkedUserId: serafinePlayer.id,
+        name: 'Serafine Ashveil',
+        description: 'A hedge-arcanist raised in the shadow of the Tower of Ashes. Serafine apprenticed briefly under one of Sorell\'s junior scribes before being turned away — too curious, too stubborn. She returned to Verath the week after the assassination, officially for the funerals. She is here to find out which of her former teachers was lying about why.',
+        status: 'ACTIVE',
+      },
+    }),
+    prisma.playerCharacter.create({
+      data: {
+        campaignId: campaign.id,
+        linkedUserId: kaelPlayer.id,
+        name: 'Kael Vireth',
+        description: 'A minor scion of House Vireth — a noble family whose fortunes have been knotted into the Conclave\'s affairs for three generations. Kael is the fifth of five siblings and the only one who reads the court gazette. They returned to Verath to find out which of their aunts is lying about why they left the city the night the mages died.',
+        status: 'ACTIVE',
+      },
+    }),
+  ])
+
+  await Promise.all([
+    prisma.note.create({
+      data: {
+        entityType: 'PLAYER_CHARACTER',
+        entityId: serafinePC.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        content: `Keeps a grudge against @[Mira Sorell](npc:${mira.id}) — they apprenticed in the same cohort and she remembers being outshone. Useful friction.`,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        entityType: 'PLAYER_CHARACTER',
+        entityId: kaelPC.id,
+        campaignId: campaign.id,
+        authorId: userId,
+        content: `Treats mysteries like estate paperwork — bureaucratically, patiently, with an eye for the missing signature. Has a standing lunch with @[Commander Thrace](npc:${thrace.id}) going back years.`,
+      },
+    }),
+  ])
+
+  await Promise.all([
+    prisma.relationship.create({
+      data: {
+        campaignId: campaign.id,
+        entityTypeA: 'PLAYER_CHARACTER', entityIdA: serafinePC.id,
+        entityTypeB: 'NPC', entityIdB: mira.id,
+        label: 'former classmate of',
+        description: 'Serafine and Mira apprenticed in the same cohort under Sorell\'s scribes. Mira was the star. Serafine was dismissed.',
+      },
+    }),
+    prisma.relationship.create({
+      data: {
+        campaignId: campaign.id,
+        entityTypeA: 'PLAYER_CHARACTER', entityIdA: kaelPC.id,
+        entityTypeB: 'NPC', entityIdB: thrace.id,
+        label: 'old friend of',
+        description: 'The Vireth family and Commander Thrace go back a generation. Kael\'s aunt sponsored his promotion.',
+      },
+    }),
+  ])
+
   async function ensureAllPlayersReveal(
-    entityType: 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE',
+    entityType: 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE' | 'PLAYER_CHARACTER',
     entityId: string,
     overrides?: { displayName?: string; displayDescription?: string }
   ) {
@@ -202,34 +295,66 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     ensureAllPlayersReveal('FACTION', merchantGuild.id),
     ensureAllPlayersReveal('THREAD', whoThread.id),
     ensureAllPlayersReveal('THREAD', tidebornThread.id),
+    ensureAllPlayersReveal('PLAYER_CHARACTER', serafinePC.id),
+    ensureAllPlayersReveal('PLAYER_CHARACTER', kaelPC.id),
   ])
 
   await Promise.all([
     prisma.entityReveal.upsert({
-      where: { entityType_entityId_userId: { entityType: 'NPC', entityId: aldric.id, userId: demoPlayer.id } },
-      create: { campaignId: campaign.id, entityType: 'NPC', entityId: aldric.id, userId: demoPlayer.id },
+      where: { entityType_entityId_userId: { entityType: 'NPC', entityId: aldric.id, userId: serafinePlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'NPC', entityId: aldric.id, userId: serafinePlayer.id },
       update: {},
     }),
     prisma.entityReveal.upsert({
-      where: { entityType_entityId_userId: { entityType: 'FACTION', entityId: ashNetwork.id, userId: demoPlayer.id } },
+      where: { entityType_entityId_userId: { entityType: 'FACTION', entityId: ashNetwork.id, userId: serafinePlayer.id } },
       create: {
         campaignId: campaign.id,
         entityType: 'FACTION',
         entityId: ashNetwork.id,
-        userId: demoPlayer.id,
+        userId: serafinePlayer.id,
         displayName: 'An Unknown Network',
         displayDescription: 'A contact hinted at an information brokerage operating somewhere in the city. No name. No face. Just a rumor.',
       },
       update: {},
     }),
     prisma.entityReveal.upsert({
-      where: { entityType_entityId_userId: { entityType: 'CLUE', entityId: simultaneousClue.id, userId: demoPlayer.id } },
-      create: { campaignId: campaign.id, entityType: 'CLUE', entityId: simultaneousClue.id, userId: demoPlayer.id },
+      where: { entityType_entityId_userId: { entityType: 'CLUE', entityId: simultaneousClue.id, userId: serafinePlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'CLUE', entityId: simultaneousClue.id, userId: serafinePlayer.id },
       update: {},
     }),
   ])
 
-  const [, , , aldricRevealedNode] = await Promise.all([
+  await Promise.all([
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'NPC', entityId: thrace.id, userId: kaelPlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'NPC', entityId: thrace.id, userId: kaelPlayer.id },
+      update: {},
+    }),
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'NPC', entityId: lena.id, userId: kaelPlayer.id } },
+      create: {
+        campaignId: campaign.id,
+        entityType: 'NPC',
+        entityId: lena.id,
+        userId: kaelPlayer.id,
+        displayName: 'The Temple Envoy',
+        displayDescription: 'A soft-spoken Temple representative who has been visiting your family\'s estate since the assassination. Never gives a name. Never asks for one.',
+      },
+      update: {},
+    }),
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'LOCATION', entityId: templeOfSilence.id, userId: kaelPlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'LOCATION', entityId: templeOfSilence.id, userId: kaelPlayer.id },
+      update: {},
+    }),
+    prisma.entityReveal.upsert({
+      where: { entityType_entityId_userId: { entityType: 'CLUE', entityId: vaultRecordsClue.id, userId: kaelPlayer.id } },
+      create: { campaignId: campaign.id, entityType: 'CLUE', entityId: vaultRecordsClue.id, userId: kaelPlayer.id },
+      update: {},
+    }),
+  ])
+
+  const [, , , aldricRevealedNode, aureliusKaelNode] = await Promise.all([
     prisma.informationNode.create({
       data: {
         campaignId: campaign.id,
@@ -270,13 +395,30 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
         visibility: 'SPECIFIC_PLAYERS',
       },
     }),
+    prisma.informationNode.create({
+      data: {
+        campaignId: campaign.id,
+        entityType: 'FACTION',
+        entityId: merchantGuild.id,
+        title: 'A Family Friend',
+        content: 'Castor Vel has been a guest at Vireth family dinners for years. He plays cards terribly and drinks his host\'s wine. Your aunt swears he is harmless. Your aunt is also the one who drafted the tariff legislation.',
+        visibility: 'SPECIFIC_PLAYERS',
+      },
+    }),
   ])
 
-  await prisma.informationNodeReveal.upsert({
-    where: { informationNodeId_membershipId: { informationNodeId: aldricRevealedNode.id, membershipId: demoPlayerMembership.id } },
-    create: { informationNodeId: aldricRevealedNode.id, membershipId: demoPlayerMembership.id },
-    update: {},
-  })
+  await Promise.all([
+    prisma.informationNodeReveal.upsert({
+      where: { informationNodeId_membershipId: { informationNodeId: aldricRevealedNode.id, membershipId: serafineMembership.id } },
+      create: { informationNodeId: aldricRevealedNode.id, membershipId: serafineMembership.id },
+      update: {},
+    }),
+    prisma.informationNodeReveal.upsert({
+      where: { informationNodeId_membershipId: { informationNodeId: aureliusKaelNode.id, membershipId: kaelMembership.id } },
+      create: { informationNodeId: aureliusKaelNode.id, membershipId: kaelMembership.id },
+      update: {},
+    }),
+  ])
 
   return campaign
 }
