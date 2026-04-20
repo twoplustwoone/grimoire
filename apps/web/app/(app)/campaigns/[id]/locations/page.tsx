@@ -42,16 +42,32 @@ export default async function LocationsPage({ params }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">
-            <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
-            <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}Locations
+            <Link href="/campaigns" className="hover:underline">Campaigns</Link>
+            {' / '}
+            <Link href={`/campaigns/${campaignId}`} className="hover:underline">
+              {membership.campaign.name}
+            </Link>
+            {' / '}
+            Locations
           </p>
           <h1 className="text-3xl font-bold">Locations</h1>
         </div>
-        <PageHeaderAction href={`/campaigns/${campaignId}/locations/new`}><Plus className="h-4 w-4 mr-2" />New Location</PageHeaderAction>
+        <PageHeaderAction href={`/campaigns/${campaignId}/locations/new`}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Location
+        </PageHeaderAction>
       </div>
 
       {list.length === 0 ? (
-        <Card className="text-center py-16"><CardContent><p className="text-muted-foreground mb-4">No locations yet.</p><PageHeaderAction href={`/campaigns/${campaignId}/locations/new`}><Plus className="h-4 w-4 mr-2" />New Location</PageHeaderAction></CardContent></Card>
+        <Card className="text-center py-16">
+          <CardContent>
+            <p className="text-muted-foreground mb-4">No locations yet.</p>
+            <PageHeaderAction href={`/campaigns/${campaignId}/locations/new`}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Location
+            </PageHeaderAction>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3">
           {list.map((loc) => (

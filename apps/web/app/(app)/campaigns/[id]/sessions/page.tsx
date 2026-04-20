@@ -45,16 +45,32 @@ export default async function SessionsPage({ params }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">
-            <Link href="/campaigns" className="hover:underline">Campaigns</Link>{' / '}
-            <Link href={`/campaigns/${campaignId}`} className="hover:underline">{membership.campaign.name}</Link>{' / '}Sessions
+            <Link href="/campaigns" className="hover:underline">Campaigns</Link>
+            {' / '}
+            <Link href={`/campaigns/${campaignId}`} className="hover:underline">
+              {membership.campaign.name}
+            </Link>
+            {' / '}
+            Sessions
           </p>
           <h1 className="text-3xl font-bold">Sessions</h1>
         </div>
-        <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}><Plus className="h-4 w-4 mr-2" />New Session</PageHeaderAction>
+        <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Session
+        </PageHeaderAction>
       </div>
 
       {gameSessions.length === 0 ? (
-        <Card className="text-center py-16"><CardContent><p className="text-muted-foreground mb-4">No sessions yet. Log your first session.</p><PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}><Plus className="h-4 w-4 mr-2" />New Session</PageHeaderAction></CardContent></Card>
+        <Card className="text-center py-16">
+          <CardContent>
+            <p className="text-muted-foreground mb-4">No sessions yet. Log your first session.</p>
+            <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Session
+            </PageHeaderAction>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3">
           {gameSessions.map((gs) => (
