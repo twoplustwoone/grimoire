@@ -13,6 +13,9 @@ import { handler as getSessionRecap } from './tools/get-session-recap.js'
 import { handler as searchEntities } from './tools/search-entities.js'
 import { handler as getPlayerKnowledge } from './tools/get-player-knowledge.js'
 import { handler as updateNote } from './tools/update-note.js'
+import { handler as updateStatus } from './tools/update-status.js'
+import { handler as updateDescription } from './tools/update-description.js'
+import { handler as revealEntity } from './tools/reveal-entity.js'
 
 export function createMcpServer(userId: string) {
   const server = new McpServer({
@@ -101,6 +104,44 @@ export function createMcpServer(userId: string) {
       content: z.string().describe('Note content (plain text or markdown)'),
     },
     async (args) => updateNote(args, userId, prisma)
+  )
+
+  server.tool(
+    'update_status',
+    'Update the status of an entity (GM/CO_GM only). Allowed entity types: NPC, PLAYER_CHARACTER, LOCATION, FACTION, THREAD. Valid status values depend on the entity type — see error message on invalid input.',
+    {
+      campaignId: z.string().describe('The campaign ID'),
+      entityType: z.enum(['NPC', 'PLAYER_CHARACTER', 'LOCATION', 'FACTION', 'THREAD']).describe('Entity type'),
+      entityId: z.string().describe('The entity ID'),
+      status: z.string().describe('New status value; validated against the entity type\'s enum'),
+    },
+    async (args) => updateStatus(args, userId, prisma)
+  )
+
+  server.tool(
+    'update_description',
+    'Update the description of an entity (GM/CO_GM only). Pass an empty string to clear. Allowed entity types: NPC, PLAYER_CHARACTER, LOCATION, FACTION, THREAD, CLUE.',
+    {
+      campaignId: z.string().describe('The campaign ID'),
+      entityType: z.enum(['NPC', 'PLAYER_CHARACTER', 'LOCATION', 'FACTION', 'THREAD', 'CLUE']).describe('Entity type'),
+      entityId: z.string().describe('The entity ID'),
+      description: z.string().describe('New description. Empty string clears it.'),
+    },
+    async (args) => updateDescription(args, userId, prisma)
+  )
+
+  server.tool(
+    'reveal_entity',
+    'Reveal an entity to one or more player users, with optional alias overrides (GM/CO_GM only). Upserts per-player EntityReveal rows. Cannot target GMs.',
+    {
+      campaignId: z.string().describe('The campaign ID'),
+      entityType: z.nativeEnum(EntityType).describe('Entity type to reveal'),
+      entityId: z.string().describe('The entity ID'),
+      playerUserIds: z.array(z.string()).describe('One or more player user IDs to reveal to'),
+      displayName: z.string().nullable().describe('Optional alias name shown to players; null uses the entity\'s real name'),
+      displayDescription: z.string().nullable().describe('Optional alias description shown to players; null uses the entity\'s real description'),
+    },
+    async (args) => revealEntity(args, userId, prisma)
   )
 
   return server
