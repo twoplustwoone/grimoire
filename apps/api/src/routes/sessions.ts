@@ -119,6 +119,7 @@ sessions.post('/:sessionId/notes', async (c) => {
   const body = await c.req.json()
   if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
 
+  const trimmed = body.content.trim()
   const note = await prisma.note.create({
     data: {
       entityType: 'SESSION',
@@ -126,7 +127,21 @@ sessions.post('/:sessionId/notes', async (c) => {
       campaignId,
       sessionId,
       authorId: user.id,
-      content: body.content.trim(),
+      content: trimmed,
+    },
+  })
+
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'SESSION',
+      entityId: sessionId,
+      campaignId,
+      sessionId,
+      authorId: user.id,
+      field: 'note',
+      oldValue: null,
+      newValue: trimmed,
+      note: 'Note added',
     },
   })
 
@@ -136,16 +151,35 @@ sessions.post('/:sessionId/notes', async (c) => {
 sessions.patch('/:sessionId/notes/:noteId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
+  const sessionId = c.req.param('sessionId')!
   const noteId = c.req.param('noteId')!
 
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
+  const existingNote = await prisma.note.findUnique({ where: { id: noteId } })
+  if (!existingNote) return c.json({ error: 'Not found' }, 404)
+
   const body = await c.req.json()
   if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
 
+  const trimmed = body.content.trim()
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: body.content.trim() },
+    data: { content: trimmed },
+  })
+
+  await prisma.changelogEntry.create({
+    data: {
+      entityType: 'SESSION',
+      entityId: sessionId,
+      campaignId,
+      sessionId,
+      authorId: user.id,
+      field: 'note',
+      oldValue: existingNote.content,
+      newValue: trimmed,
+      note: 'Note edited',
+    },
   })
 
   return c.json(note)
