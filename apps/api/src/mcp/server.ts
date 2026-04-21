@@ -132,12 +132,13 @@ export function createMcpServer(userId: string) {
 
   server.tool(
     'reveal_entity',
-    'Reveal an entity to one or more player users, with optional alias overrides (GM/CO_GM only). Upserts per-player EntityReveal rows. Cannot target GMs.',
+    'Reveal an entity to one or more player users, with optional alias overrides (GM/CO_GM only). Upserts per-player EntityReveal rows, or a single global reveal when allPlayers=true. Cannot target GMs.',
     {
       campaignId: z.string().describe('The campaign ID'),
       entityType: z.nativeEnum(EntityType).describe('Entity type to reveal'),
       entityId: z.string().describe('The entity ID'),
-      playerUserIds: z.array(z.string()).describe('One or more player user IDs to reveal to'),
+      playerUserIds: z.array(z.string()).optional().describe('One or more player user IDs to reveal to. Omit when allPlayers=true.'),
+      allPlayers: z.boolean().optional().describe('When true, upserts a single global EntityReveal (userId=null) visible to all non-GM members. Cannot be combined with playerUserIds.'),
       displayName: z.string().nullable().describe('Optional alias name shown to players; null uses the entity\'s real name'),
       displayDescription: z.string().nullable().describe('Optional alias description shown to players; null uses the entity\'s real description'),
     },

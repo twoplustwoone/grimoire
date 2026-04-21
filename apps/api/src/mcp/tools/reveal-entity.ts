@@ -9,7 +9,8 @@ const inputSchema = z.object({
   campaignId: z.string().min(1),
   entityType: z.nativeEnum(EntityType),
   entityId: z.string().min(1),
-  playerUserIds: z.array(z.string().min(1)).min(1, 'at least one playerUserId is required'),
+  playerUserIds: z.array(z.string().min(1)).optional(),
+  allPlayers: z.boolean().optional(),
   displayName: z.string().nullable(),
   displayDescription: z.string().nullable(),
 })
@@ -19,9 +20,30 @@ export async function handler(
   userId: string,
   db: PrismaClient
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  const { campaignId, entityType, entityId, playerUserIds, displayName, displayDescription } =
-    validateInput(inputSchema, args)
+  const {
+    campaignId,
+    entityType,
+    entityId,
+    playerUserIds,
+    allPlayers,
+    displayName,
+    displayDescription,
+  } = validateInput(inputSchema, args)
   await requireGM(userId, campaignId, db)
+
+  const userIds = playerUserIds ?? []
+  if (allPlayers && userIds.length > 0) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      'Provide either allPlayers or playerUserIds, not both.'
+    )
+  }
+  if (!allPlayers && userIds.length === 0) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      'At least one playerUserId is required when allPlayers is not set.'
+    )
+  }
 
   const entity = await findEntity(db, entityType, entityId, campaignId)
   if (!entity) {
@@ -31,7 +53,60 @@ export async function handler(
     )
   }
 
-  const uniqueUserIds = Array.from(new Set(playerUserIds))
+  if (allPlayers) {
+    const result = await db.$transaction(async (tx) => {
+      const existing = await tx.entityReveal.findFirst({
+        where: { campaignId, entityType, entityId, userId: null },
+      })
+      const reveal = existing
+        ? await tx.entityReveal.update({
+            where: { id: existing.id },
+            data: { displayName, displayDescription },
+          })
+        : await tx.entityReveal.create({
+            data: {
+              campaignId,
+              entityType,
+              entityId,
+              userId: null,
+              displayName,
+              displayDescription,
+            },
+          })
+
+      await tx.changelogEntry.create({
+        data: {
+          entityType,
+          entityId,
+          campaignId,
+          authorId: userId,
+          field: 'revealed',
+          oldValue: null,
+          newValue: 'All players',
+          note: 'Entity revealed via MCP',
+        },
+      })
+
+      return reveal
+    })
+
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          entityId,
+          entityType,
+          reveals: [{
+            userId: null,
+            displayName: result.displayName,
+            displayDescription: result.displayDescription,
+          }],
+        }, null, 2),
+      }],
+    }
+  }
+
+  const uniqueUserIds = Array.from(new Set(userIds))
 
   const memberships = await db.campaignMembership.findMany({
     where: { campaignId, userId: { in: uniqueUserIds } },
