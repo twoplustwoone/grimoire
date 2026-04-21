@@ -10,8 +10,10 @@ export async function handler(
   const query = args.query as string
   await requireMember(userId, campaignId, db)
 
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   const where = (field: string) => ({
-    campaignId, deletedAt: null,
+    ...ownedBy,
+    deletedAt: null,
     [field]: { contains: query, mode: 'insensitive' as const },
   })
 
@@ -20,8 +22,8 @@ export async function handler(
     db.playerCharacter.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     db.location.findMany({ where: where('name'), select: { id: true, name: true }, take: 5 }),
     db.faction.findMany({ where: where('name'), select: { id: true, name: true }, take: 5 }),
-    db.thread.findMany({ where: { campaignId, deletedAt: null, title: { contains: query, mode: 'insensitive' } }, select: { id: true, title: true, status: true }, take: 5 }),
-    db.clue.findMany({ where: { campaignId, deletedAt: null, title: { contains: query, mode: 'insensitive' } }, select: { id: true, title: true }, take: 5 }),
+    db.thread.findMany({ where: { ...ownedBy, deletedAt: null, title: { contains: query, mode: 'insensitive' } }, select: { id: true, title: true, status: true }, take: 5 }),
+    db.clue.findMany({ where: { ...ownedBy, deletedAt: null, title: { contains: query, mode: 'insensitive' } }, select: { id: true, title: true }, take: 5 }),
   ])
 
   return { content: [{ type: 'text', text: JSON.stringify({ npcs, playerCharacters, locations, factions, threads, clues }, null, 2) }] }

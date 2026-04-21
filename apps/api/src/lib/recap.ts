@@ -1,6 +1,7 @@
 import { generateText } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { prisma } from '@grimoire/db'
+import { docToPlainText } from '@grimoire/db/prosemirror'
 
 interface RecapContext {
   campaignId: string
@@ -13,7 +14,7 @@ export async function generateSessionRecap({ campaignId, sessionId }: RecapConte
   })
 
   const session = await prisma.gameSession.findFirst({
-    where: { id: sessionId, campaignId },
+    where: { id: sessionId, ownerType: 'CAMPAIGN', ownerId: campaignId },
     include: { entityTags: true },
   })
   if (!session) throw new Error('Session not found')
@@ -82,7 +83,7 @@ export async function generateSessionRecap({ campaignId, sessionId }: RecapConte
 
   if (notes.length > 0) {
     contextParts.push(`\nSESSION NOTES (in chronological order):`)
-    notes.forEach((n, i) => contextParts.push(`${i + 1}. ${n.content}`))
+    notes.forEach((n, i) => contextParts.push(`${i + 1}. ${docToPlainText(n.content)}`))
   }
 
   if (npcs.length > 0) {

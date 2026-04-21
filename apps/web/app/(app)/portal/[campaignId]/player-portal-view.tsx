@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, UserCircle, MapPin, Shield, GitBranch, Search } from 'lucide-react'
-import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface InfoNode {
   id: string
@@ -75,7 +74,7 @@ export function PlayerPortalView({ data }: { data: PortalData }) {
                   {data.yourCharacter.nodes.map((node) => (
                     <div key={node.id} className="text-sm border-l-2 border-primary/30 pl-3">
                       <p className="font-medium text-xs text-muted-foreground mb-0.5">{node.title}</p>
-                      <MentionRenderer content={node.content} />
+                      <p className="text-sm whitespace-pre-wrap">{node.content}</p>
                     </div>
                   ))}
                 </div>
@@ -117,7 +116,7 @@ export function PlayerPortalView({ data }: { data: PortalData }) {
                         {entity.nodes.map((node) => (
                           <div key={node.id} className="text-sm border-l-2 border-primary/30 pl-3">
                             <p className="font-medium text-xs text-muted-foreground mb-0.5">{node.title}</p>
-                            <MentionRenderer content={node.content} />
+                            <p className="text-sm whitespace-pre-wrap">{node.content}</p>
                           </div>
                         ))}
                       </div>

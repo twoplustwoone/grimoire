@@ -194,23 +194,24 @@ async function findEntity(
   entityId: string,
   campaignId: string
 ): Promise<{ id: string } | null> {
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   switch (entityType) {
     case 'NPC':
-      return db.nPC.findFirst({ where: { id: entityId, campaignId, deletedAt: null }, select: { id: true } })
+      return db.nPC.findFirst({ where: { id: entityId, ...ownedBy, deletedAt: null }, select: { id: true } })
     case 'PLAYER_CHARACTER':
-      return db.playerCharacter.findFirst({ where: { id: entityId, campaignId, deletedAt: null }, select: { id: true } })
+      return db.playerCharacter.findFirst({ where: { id: entityId, ...ownedBy, deletedAt: null }, select: { id: true } })
     case 'LOCATION':
-      return db.location.findFirst({ where: { id: entityId, campaignId, deletedAt: null }, select: { id: true } })
+      return db.location.findFirst({ where: { id: entityId, ...ownedBy, deletedAt: null }, select: { id: true } })
     case 'FACTION':
-      return db.faction.findFirst({ where: { id: entityId, campaignId, deletedAt: null }, select: { id: true } })
+      return db.faction.findFirst({ where: { id: entityId, ...ownedBy, deletedAt: null }, select: { id: true } })
     case 'THREAD':
-      return db.thread.findFirst({ where: { id: entityId, campaignId, deletedAt: null }, select: { id: true } })
+      return db.thread.findFirst({ where: { id: entityId, ...ownedBy, deletedAt: null }, select: { id: true } })
     case 'CLUE':
-      return db.clue.findFirst({ where: { id: entityId, campaignId, deletedAt: null }, select: { id: true } })
+      return db.clue.findFirst({ where: { id: entityId, ...ownedBy, deletedAt: null }, select: { id: true } })
     case 'WORLD_EVENT':
-      return db.worldEvent.findFirst({ where: { id: entityId, campaignId }, select: { id: true } })
+      return db.worldEvent.findFirst({ where: { id: entityId, ...ownedBy }, select: { id: true } })
     case 'SESSION':
-      return db.gameSession.findFirst({ where: { id: entityId, campaignId }, select: { id: true } })
+      return db.gameSession.findFirst({ where: { id: entityId, ...ownedBy }, select: { id: true } })
     case 'MEMBERSHIP':
       throw new McpError(ErrorCode.InvalidParams, 'MEMBERSHIP is not a revealable entity type')
   }

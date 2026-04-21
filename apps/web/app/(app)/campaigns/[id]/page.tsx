@@ -61,15 +61,16 @@ export default async function CampaignPage({ params }: Props) {
   const campaignId = id
   const isGM = membership.role === 'GM'
 
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   const [lastSession, openThreads, party, recentActivity, recentWorldEvents, totalSessionCount] =
     await Promise.all([
       prisma.gameSession.findFirst({
-        where: { campaignId },
+        where: ownedBy,
         orderBy: { createdAt: 'desc' },
         select: { id: true, number: true, title: true, playedOn: true, status: true },
       }),
       prisma.thread.findMany({
-        where: { campaignId, status: 'OPEN', deletedAt: null },
+        where: { ...ownedBy, status: 'OPEN', deletedAt: null },
         orderBy: [{ urgency: 'desc' }, { updatedAt: 'desc' }],
         take: 3,
         select: { id: true, title: true, urgency: true, status: true },
@@ -83,7 +84,7 @@ export default async function CampaignPage({ params }: Props) {
               name: true,
               email: true,
               playerCharacters: {
-                where: { campaignId, deletedAt: null, status: 'ACTIVE' },
+                where: { ...ownedBy, deletedAt: null, status: 'ACTIVE' },
                 select: { id: true, name: true, status: true },
                 orderBy: { name: 'asc' },
               },
@@ -99,7 +100,7 @@ export default async function CampaignPage({ params }: Props) {
         include: { author: { select: { name: true } } },
       }),
       prisma.worldEvent.findMany({
-        where: { campaignId },
+        where: ownedBy,
         orderBy: { createdAt: 'desc' },
         take: 3,
         select: {
@@ -110,7 +111,7 @@ export default async function CampaignPage({ params }: Props) {
           session: { select: { number: true, title: true } },
         },
       }),
-      prisma.gameSession.count({ where: { campaignId } }),
+      prisma.gameSession.count({ where: ownedBy }),
     ])
 
   // Resolve entity names for the activity feed. Fetch each entity type once

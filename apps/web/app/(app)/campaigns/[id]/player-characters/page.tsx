@@ -36,7 +36,7 @@ export default async function PlayerCharactersPage({ params }: Props) {
   const isGM = membership.role === 'GM' || membership.role === 'CO_GM'
 
   const pcs = await prisma.playerCharacter.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       linkedUser: { select: { id: true, name: true, email: true } },
     },

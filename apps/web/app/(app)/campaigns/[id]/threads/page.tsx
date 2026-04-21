@@ -38,7 +38,7 @@ export default async function ThreadsPage({ params }: Props) {
   if (!membership) notFound()
 
   const list = await prisma.thread.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     orderBy: [{ urgency: 'desc' }, { createdAt: 'desc' }],
   })
 

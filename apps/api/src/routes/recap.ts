@@ -18,7 +18,7 @@ recap.post('/:sessionId/recap', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const session = await prisma.gameSession.findFirst({
-    where: { id: sessionId, campaignId },
+    where: { id: sessionId, ownerType: 'CAMPAIGN', ownerId: campaignId },
   })
   if (!session) return c.json({ error: 'Session not found' }, 404)
 

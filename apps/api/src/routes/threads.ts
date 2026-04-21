@@ -1,5 +1,10 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const threads = new Hono()
@@ -15,7 +20,7 @@ threads.get('/', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const list = await prisma.thread.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: { entityTags: true },
     orderBy: [{ urgency: 'desc' }, { createdAt: 'desc' }],
   })
@@ -32,7 +37,8 @@ threads.post('/', async (c) => {
 
   const thread = await prisma.thread.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       title: body.title.trim(),
       description: body.description?.trim() ?? null,
       urgency: body.urgency ?? 'MEDIUM',
@@ -53,7 +59,7 @@ threads.get('/:threadId', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const thread = await prisma.thread.findFirst({
-    where: { id: threadId, campaignId, deletedAt: null },
+    where: { id: threadId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: { entityTags: true },
   })
   if (!thread) return c.json({ error: 'Not found' }, 404)
@@ -70,7 +76,7 @@ threads.patch('/:threadId', async (c) => {
   const threadId = c.req.param('threadId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.thread.findFirst({ where: { id: threadId, campaignId, deletedAt: null } })
+  const existing = await prisma.thread.findFirst({ where: { id: threadId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
@@ -108,12 +114,16 @@ threads.patch('/:threadId/notes/:noteId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -123,8 +133,8 @@ threads.patch('/:threadId/notes/:noteId', async (c) => {
       campaignId,
       authorId: user.id,
       field: 'note',
-      oldValue: existing.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existing.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })
@@ -151,16 +161,21 @@ threads.post('/:threadId/notes', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'THREAD',
       entityId: threadId,
       campaignId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -172,7 +187,7 @@ threads.post('/:threadId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -186,7 +201,7 @@ threads.delete('/:threadId', async (c) => {
   const threadId = c.req.param('threadId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.thread.findFirst({ where: { id: threadId, campaignId, deletedAt: null } })
+  const existing = await prisma.thread.findFirst({ where: { id: threadId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.thread.update({ where: { id: threadId }, data: { deletedAt: new Date() } })

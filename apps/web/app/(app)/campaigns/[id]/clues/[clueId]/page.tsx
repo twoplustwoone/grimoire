@@ -33,7 +33,7 @@ export default async function ClueDetailPage({ params }: Props) {
   if (!membership) notFound()
 
   const clue = await prisma.clue.findFirst({
-    where: { id: clueId, campaignId, deletedAt: null },
+    where: { id: clueId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: { discoveredInSession: { select: { id: true, number: true, title: true } } },
   })
   if (!clue) notFound()

@@ -1,4 +1,31 @@
 import type { PrismaClient } from '@prisma/client'
+import {
+  extractMentionsFromDoc,
+  plainTextToDoc,
+  type ProseMirrorDoc,
+  type ProseMirrorNode,
+} from './prosemirror.js'
+
+function mentionNode(name: string, entityType: string, entityId: string): ProseMirrorNode {
+  return {
+    type: 'mention',
+    attrs: { id: entityId, name, label: name, type: entityType.toUpperCase() },
+  }
+}
+
+function paragraphWithMentions(
+  parts: Array<string | ProseMirrorNode>
+): ProseMirrorNode {
+  const content: ProseMirrorNode[] = parts.map((p) =>
+    typeof p === 'string' ? { type: 'text', text: p } : p
+  )
+  return { type: 'paragraph', content }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function docOfParagraph(children: Array<string | ProseMirrorNode>): any {
+  return { type: 'doc', content: [paragraphWithMentions(children)] }
+}
 
 export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   const campaign = await prisma.campaign.create({
@@ -22,33 +49,33 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   })
 
   const [cityOfVerath, towerOfAshes, merchantQuarter, templeOfSilence, undercity] = await Promise.all([
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'Verath', description: 'A city of spires built on the ruins of an older civilization. Five towers once dominated the skyline — one for each Conclave mage. Three now stand dark and cold.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'The Tower of Ashes', description: 'The tower that belonged to Archmage Sorell, the most powerful of the five. It burned on the night of the assassination. Locals say they still see lights in the upper windows.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'The Merchant Quarter', description: 'The beating commercial heart of Verath. The Aurelius Trading Company controls most of the trade flowing through the city gates.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'The Temple of Silence', description: 'A religious order devoted to a god of secrets and endings. They claim neutrality but have been suspiciously well-informed since the assassination.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'The Undercity', description: 'A labyrinth of tunnels, collapsed aqueducts, and forgotten vaults beneath Verath. The Ash Network operates from somewhere down here.' } }),
+    prisma.location.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Verath', description: 'A city of spires built on the ruins of an older civilization. Five towers once dominated the skyline — one for each Conclave mage. Three now stand dark and cold.' } }),
+    prisma.location.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Tower of Ashes', description: 'The tower that belonged to Archmage Sorell, the most powerful of the five. It burned on the night of the assassination. Locals say they still see lights in the upper windows.' } }),
+    prisma.location.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Merchant Quarter', description: 'The beating commercial heart of Verath. The Aurelius Trading Company controls most of the trade flowing through the city gates.' } }),
+    prisma.location.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Temple of Silence', description: 'A religious order devoted to a god of secrets and endings. They claim neutrality but have been suspiciously well-informed since the assassination.' } }),
+    prisma.location.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Undercity', description: 'A labyrinth of tunnels, collapsed aqueducts, and forgotten vaults beneath Verath. The Ash Network operates from somewhere down here.' } }),
   ])
 
   void undercity
 
   const [apprentices, merchantGuild, cityGuard, ashNetwork, templeOrder] = await Promise.all([
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'The Surviving Apprentices', description: 'Three of the five Conclave mages had apprentices who survived the assassination night. They have banded together out of necessity but trust each other poorly.', agenda: 'Rebuild the Conclave under their own leadership — and find out which of them might be next.' } }),
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'Aurelius Trading Company', description: 'The wealthiest merchant house in Verath. The Conclave taxed their trade heavily and regulated their use of enchanted goods. Their motive is obvious.', agenda: 'Fill the power vacuum with commerce. A city without a Conclave is a city they can own.' } }),
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'The City Watch', description: 'Nominally responsible for investigating the assassination, but Commander Thrace has made very little progress in three months. Either incompetent or compromised.', agenda: 'Maintain order and protect their own. Someone powerful is pulling their strings.' } }),
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'The Ash Network', description: 'A thieves and information brokerage operating out of the Undercity. They knew about the assassination before it happened — they just claim they were not involved.', agenda: 'Profit from chaos. Sell information to all sides and stay invisible.' } }),
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'The Temple of Silence', description: 'A secretive religious order that has quietly expanded its influence since the assassination. They speak of the Conclave\'s fall as inevitable — almost as if they expected it.', agenda: 'Unclear. But they are collecting the Conclave\'s scattered research and artifacts with unusual urgency.' } }),
+    prisma.faction.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Surviving Apprentices', description: 'Three of the five Conclave mages had apprentices who survived the assassination night. They have banded together out of necessity but trust each other poorly.', agenda: 'Rebuild the Conclave under their own leadership — and find out which of them might be next.' } }),
+    prisma.faction.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Aurelius Trading Company', description: 'The wealthiest merchant house in Verath. The Conclave taxed their trade heavily and regulated their use of enchanted goods. Their motive is obvious.', agenda: 'Fill the power vacuum with commerce. A city without a Conclave is a city they can own.' } }),
+    prisma.faction.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The City Watch', description: 'Nominally responsible for investigating the assassination, but Commander Thrace has made very little progress in three months. Either incompetent or compromised.', agenda: 'Maintain order and protect their own. Someone powerful is pulling their strings.' } }),
+    prisma.faction.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Ash Network', description: 'A thieves and information brokerage operating out of the Undercity. They knew about the assassination before it happened — they just claim they were not involved.', agenda: 'Profit from chaos. Sell information to all sides and stay invisible.' } }),
+    prisma.faction.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Temple of Silence', description: 'A secretive religious order that has quietly expanded its influence since the assassination. They speak of the Conclave\'s fall as inevitable — almost as if they expected it.', agenda: 'Unclear. But they are collecting the Conclave\'s scattered research and artifacts with unusual urgency.' } }),
   ])
 
   void cityGuard
 
   const [mira, castor, thrace, lena, voss, tideborn, aldric] = await Promise.all([
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Mira Sorell', description: 'Apprentice to the murdered Archmage Sorell and the most powerful of the surviving apprentices. Brilliant, ruthless, and visibly grieving — though it is hard to tell if she mourns her master or her lost future.', locationId: cityOfVerath.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Castor Vel', description: 'A jovial spice merchant who is almost certainly the public face of the Aurelius Trading Company\'s intelligence operations. Always has information. Always wants something in return.', locationId: merchantQuarter.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Commander Thrace', description: 'Head of the City Watch. A tired man who looks like he has not slept in three months. The party suspects he knows more than he admits.', locationId: cityOfVerath.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Sister Lena', description: 'A mid-ranking priest of the Temple of Silence who has been seen meeting with members of every faction in the city. Polite, soft-spoken, and deeply unsettling.', locationId: templeOfSilence.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Voss', description: 'The only known face of the Ash Network — a contact who appears in taverns, passes notes, and disappears. Nobody knows their real name or face.', status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'The Tideborn', description: 'An unknown figure who has appeared in witness accounts from the night of the assassination. Described only as "dressed in grey, moving against the crowd." No one knows who they are.', status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Aldric Mourne', description: 'The youngest surviving apprentice. Nineteen years old, clearly terrified, and hiding something. He was the only apprentice in the city when the Conclave was killed.', locationId: cityOfVerath.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Mira Sorell', description: 'Apprentice to the murdered Archmage Sorell and the most powerful of the surviving apprentices. Brilliant, ruthless, and visibly grieving — though it is hard to tell if she mourns her master or her lost future.', locationId: cityOfVerath.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Castor Vel', description: 'A jovial spice merchant who is almost certainly the public face of the Aurelius Trading Company\'s intelligence operations. Always has information. Always wants something in return.', locationId: merchantQuarter.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Commander Thrace', description: 'Head of the City Watch. A tired man who looks like he has not slept in three months. The party suspects he knows more than he admits.', locationId: cityOfVerath.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Sister Lena', description: 'A mid-ranking priest of the Temple of Silence who has been seen meeting with members of every faction in the city. Polite, soft-spoken, and deeply unsettling.', locationId: templeOfSilence.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Voss', description: 'The only known face of the Ash Network — a contact who appears in taverns, passes notes, and disappears. Nobody knows their real name or face.', status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'The Tideborn', description: 'An unknown figure who has appeared in witness accounts from the night of the assassination. Described only as "dressed in grey, moving against the crowd." No one knows who they are.', status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,name: 'Aldric Mourne', description: 'The youngest surviving apprentice. Nineteen years old, clearly terrified, and hiding something. He was the only apprentice in the city when the Conclave was killed.', locationId: cityOfVerath.id, status: 'ACTIVE' } }),
   ])
 
   await Promise.all([
@@ -70,10 +97,10 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   ])
 
   const [whoThread, tidebornThread, aldricThread, templeThread] = await Promise.all([
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'Who Killed the Conclave?', description: 'The central question. Five mages killed in a single night with no survivors and almost no witnesses. Every faction has motive. None of them are talking.', status: 'OPEN', urgency: 'CRITICAL' } }),
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'The Tideborn', description: 'A mysterious grey-cloaked figure seen moving through the crowds on assassination night. Multiple witnesses. No identity. Sister Lena seems to know who they are.', status: 'OPEN', urgency: 'HIGH' } }),
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'What Is Aldric Hiding?', description: 'The youngest apprentice was the only one in the city that night. He claims he saw nothing. He is clearly lying.', status: 'OPEN', urgency: 'HIGH' } }),
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'The Temple\'s Expanding Influence', description: 'The Temple of Silence has quietly acquired three properties in the city and two of the Conclave\'s research repositories since the assassination. This seems like preparation, not opportunism.', status: 'OPEN', urgency: 'MEDIUM' } }),
+    prisma.thread.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'Who Killed the Conclave?', description: 'The central question. Five mages killed in a single night with no survivors and almost no witnesses. Every faction has motive. None of them are talking.', status: 'OPEN', urgency: 'CRITICAL' } }),
+    prisma.thread.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'The Tideborn', description: 'A mysterious grey-cloaked figure seen moving through the crowds on assassination night. Multiple witnesses. No identity. Sister Lena seems to know who they are.', status: 'OPEN', urgency: 'HIGH' } }),
+    prisma.thread.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'What Is Aldric Hiding?', description: 'The youngest apprentice was the only one in the city that night. He claims he saw nothing. He is clearly lying.', status: 'OPEN', urgency: 'HIGH' } }),
+    prisma.thread.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'The Temple\'s Expanding Influence', description: 'The Temple of Silence has quietly acquired three properties in the city and two of the Conclave\'s research repositories since the assassination. This seems like preparation, not opportunism.', status: 'OPEN', urgency: 'MEDIUM' } }),
   ])
 
   await Promise.all([
@@ -88,21 +115,22 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   ])
 
   const [simultaneousClue, , , vaultRecordsClue] = await Promise.all([
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Simultaneous Strike', description: 'All five mages died within minutes of each other across different locations. This required either extraordinary coordination or magic capable of reaching multiple targets at once. The Conclave itself had such magic — but it was supposedly locked in the central vault.' } }),
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'Aldric\'s Burnt Hands', description: 'Aldric\'s hands show old burn scarring consistent with a failed warding spell. The burns are three months old. He claims they are from a cooking accident.' } }),
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Ash Network Knew First', description: 'A contact revealed that Voss was offering information about "a coming change in the city\'s leadership" two weeks before the assassination. Someone told them it was coming.' } }),
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'Missing Vault Records', description: 'The Conclave vault\'s access log for the week before the assassination has been removed. Commander Thrace claims it was lost in the fire. Mira says there was no fire near the vault.' } }),
+    prisma.clue.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'The Simultaneous Strike', description: 'All five mages died within minutes of each other across different locations. This required either extraordinary coordination or magic capable of reaching multiple targets at once. The Conclave itself had such magic — but it was supposedly locked in the central vault.' } }),
+    prisma.clue.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'Aldric\'s Burnt Hands', description: 'Aldric\'s hands show old burn scarring consistent with a failed warding spell. The burns are three months old. He claims they are from a cooking accident.' } }),
+    prisma.clue.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'The Ash Network Knew First', description: 'A contact revealed that Voss was offering information about "a coming change in the city\'s leadership" two weeks before the assassination. Someone told them it was coming.' } }),
+    prisma.clue.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'Missing Vault Records', description: 'The Conclave vault\'s access log for the week before the assassination has been removed. Commander Thrace claims it was lost in the fire. Mira says there was no fire near the vault.' } }),
   ])
 
   await Promise.all([
-    prisma.worldEvent.create({ data: { campaignId: campaign.id, title: 'The Night of Silence', description: 'All five Conclave mages are found dead before dawn. No alarm was raised. No witnesses have come forward. The city wakes to find its magical leadership gone.' } }),
-    prisma.worldEvent.create({ data: { campaignId: campaign.id, title: 'Aurelius Moves Fast', description: 'Within a week of the assassination, the Aurelius Trading Company files paperwork to eliminate the Conclave\'s trade tariffs. Someone had this drafted in advance.' } }),
-    prisma.worldEvent.create({ data: { campaignId: campaign.id, title: 'The Temple Expands', description: 'The Temple of Silence acquires the deed to two properties adjacent to a Conclave repository. The sale was registered the morning after the assassination.' } }),
+    prisma.worldEvent.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'The Night of Silence', description: 'All five Conclave mages are found dead before dawn. No alarm was raised. No witnesses have come forward. The city wakes to find its magical leadership gone.' } }),
+    prisma.worldEvent.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'Aurelius Moves Fast', description: 'Within a week of the assassination, the Aurelius Trading Company files paperwork to eliminate the Conclave\'s trade tariffs. Someone had this drafted in advance.' } }),
+    prisma.worldEvent.create({ data: { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id,title: 'The Temple Expands', description: 'The Temple of Silence acquires the deed to two properties adjacent to a Conclave repository. The sale was registered the morning after the assassination.' } }),
   ])
 
   const session1 = await prisma.gameSession.create({
     data: {
-      campaignId: campaign.id,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaign.id,
       number: 1,
       title: 'Smoke and Questions',
       playedOn: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -123,14 +151,15 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   ])
 
   await Promise.all([
-    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: userId, content: 'Mira flinched when asked about the vault — worth pressing on next session' } }),
-    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: userId, content: 'Players really engaged with Castor — consider making him a recurring info source with escalating prices' } }),
-    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: userId, content: 'Aldric lead landed well as session hook — he is scared of Mira specifically, not just generally' } }),
+    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: userId, content: plainTextToDoc('Mira flinched when asked about the vault — worth pressing on next session') } }),
+    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: userId, content: plainTextToDoc('Players really engaged with Castor — consider making him a recurring info source with escalating prices') } }),
+    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: userId, content: plainTextToDoc('Aldric lead landed well as session hook — he is scared of Mira specifically, not just generally') } }),
   ])
 
   await prisma.gameSession.create({
     data: {
-      campaignId: campaign.id,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaign.id,
       number: 2,
       title: 'The Youngest Apprentice',
       status: 'PLANNED',
@@ -138,9 +167,9 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   })
 
   await Promise.all([
-    prisma.note.create({ data: { entityType: 'NPC', entityId: mira.id, campaignId: campaign.id, authorId: userId, content: 'She knows what was in the vault. She is not saying.' } }),
-    prisma.note.create({ data: { entityType: 'NPC', entityId: aldric.id, campaignId: campaign.id, authorId: userId, content: 'The burn scars are three months old. Exactly three months.' } }),
-    prisma.note.create({ data: { entityType: 'NPC', entityId: thrace.id, campaignId: campaign.id, authorId: userId, content: 'Someone is protecting him. He would have been replaced by now otherwise.' } }),
+    prisma.note.create({ data: { entityType: 'NPC', entityId: mira.id, campaignId: campaign.id, authorId: userId, content: plainTextToDoc('She knows what was in the vault. She is not saying.') } }),
+    prisma.note.create({ data: { entityType: 'NPC', entityId: aldric.id, campaignId: campaign.id, authorId: userId, content: plainTextToDoc('The burn scars are three months old. Exactly three months.') } }),
+    prisma.note.create({ data: { entityType: 'NPC', entityId: thrace.id, campaignId: campaign.id, authorId: userId, content: plainTextToDoc('Someone is protecting him. He would have been replaced by now otherwise.') } }),
   ])
 
   await Promise.all([
@@ -201,7 +230,8 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   const [serafinePC, kaelPC] = await Promise.all([
     prisma.playerCharacter.create({
       data: {
-        campaignId: campaign.id,
+        ownerType: 'CAMPAIGN',
+        ownerId: campaign.id,
         linkedUserId: serafinePlayer.id,
         name: 'Serafine Ashveil',
         description: 'A hedge-arcanist raised in the shadow of the Tower of Ashes. Serafine apprenticed briefly under one of Sorell\'s junior scribes before being turned away — too curious, too stubborn. She returned to Verath the week after the assassination, officially for the funerals. She is here to find out which of her former teachers was lying about why.',
@@ -210,7 +240,8 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     }),
     prisma.playerCharacter.create({
       data: {
-        campaignId: campaign.id,
+        ownerType: 'CAMPAIGN',
+        ownerId: campaign.id,
         linkedUserId: kaelPlayer.id,
         name: 'Kael Vireth',
         description: 'A minor scion of House Vireth — a noble family whose fortunes have been knotted into the Conclave\'s affairs for three generations. Kael is the fifth of five siblings and the only one who reads the court gazette. They returned to Verath to find out which of their aunts is lying about why they left the city the night the mages died.',
@@ -220,24 +251,40 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
   ])
 
   await Promise.all([
-    prisma.note.create({
-      data: {
-        entityType: 'PLAYER_CHARACTER',
-        entityId: serafinePC.id,
-        campaignId: campaign.id,
-        authorId: userId,
-        content: `Keeps a grudge against @[Mira Sorell](npc:${mira.id}) — they apprenticed in the same cohort and she remembers being outshone. Useful friction.`,
-      },
-    }),
-    prisma.note.create({
-      data: {
-        entityType: 'PLAYER_CHARACTER',
-        entityId: kaelPC.id,
-        campaignId: campaign.id,
-        authorId: userId,
-        content: `Treats mysteries like estate paperwork — bureaucratically, patiently, with an eye for the missing signature. Has a standing lunch with @[Commander Thrace](npc:${thrace.id}) going back years.`,
-      },
-    }),
+    (() => {
+      const content = docOfParagraph([
+        'Keeps a grudge against ',
+        mentionNode('Mira Sorell', 'NPC', mira.id),
+        ' — they apprenticed in the same cohort and she remembers being outshone. Useful friction.',
+      ])
+      return prisma.note.create({
+        data: {
+          entityType: 'PLAYER_CHARACTER',
+          entityId: serafinePC.id,
+          campaignId: campaign.id,
+          authorId: userId,
+          content,
+          mentions: extractMentionsFromDoc(content),
+        },
+      })
+    })(),
+    (() => {
+      const content = docOfParagraph([
+        'Treats mysteries like estate paperwork — bureaucratically, patiently, with an eye for the missing signature. Has a standing lunch with ',
+        mentionNode('Commander Thrace', 'NPC', thrace.id),
+        ' going back years.',
+      ])
+      return prisma.note.create({
+        data: {
+          entityType: 'PLAYER_CHARACTER',
+          entityId: kaelPC.id,
+          campaignId: campaign.id,
+          authorId: userId,
+          content,
+          mentions: extractMentionsFromDoc(content),
+        },
+      })
+    })(),
   ])
 
   await Promise.all([

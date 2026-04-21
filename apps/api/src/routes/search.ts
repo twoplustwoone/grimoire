@@ -17,8 +17,9 @@ search.get('/', async (c) => {
   })
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   const where = (field: string) => ({
-    campaignId,
+    ...ownedBy,
     deletedAt: null,
     [field]: { contains: q, mode: 'insensitive' as const },
   })
@@ -36,9 +37,9 @@ search.get('/', async (c) => {
     prisma.playerCharacter.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     prisma.location.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     prisma.faction.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
-    prisma.thread.findMany({ where: { campaignId, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true, status: true, urgency: true }, take: 5 }),
-    prisma.clue.findMany({ where: { campaignId, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true }, take: 5 }),
-    prisma.gameSession.findMany({ where: { campaignId, OR: sessionOr }, select: { id: true, number: true, title: true, status: true }, take: 3 }),
+    prisma.thread.findMany({ where: { ...ownedBy, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true, status: true, urgency: true }, take: 5 }),
+    prisma.clue.findMany({ where: { ...ownedBy, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true }, take: 5 }),
+    prisma.gameSession.findMany({ where: { ...ownedBy, OR: sessionOr }, select: { id: true, number: true, title: true, status: true }, take: 3 }),
   ])
 
   const results = [

@@ -33,7 +33,7 @@ export default async function LocationDetailPage({ params }: Props) {
   if (!membership) notFound()
 
   const location = await prisma.location.findFirst({
-    where: { id: locationId, campaignId, deletedAt: null },
+    where: { id: locationId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       parent: { select: { id: true, name: true } },
       children: { where: { deletedAt: null }, select: { id: true, name: true } },

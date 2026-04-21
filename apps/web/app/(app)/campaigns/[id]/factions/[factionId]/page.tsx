@@ -33,7 +33,7 @@ export default async function FactionDetailPage({ params }: Props) {
   if (!membership) notFound()
 
   const faction = await prisma.faction.findFirst({
-    where: { id: factionId, campaignId, deletedAt: null },
+    where: { id: factionId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: { memberships: { include: { npc: { select: { id: true, name: true, status: true } } } } },
   })
   if (!faction) notFound()

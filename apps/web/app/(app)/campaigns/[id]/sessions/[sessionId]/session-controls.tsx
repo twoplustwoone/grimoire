@@ -8,10 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Sparkles, StickyNote, Pencil, X } from 'lucide-react'
 import { MentionInput } from '@/components/mentions/mention-input'
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
+import {
+  emptyDoc,
+  type ProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 
 interface Note {
   id: string
-  content: string
+  content: unknown
   createdAt: Date
 }
 
@@ -36,18 +40,18 @@ export function SessionControls({
   const [status, setStatus] = useState(initialStatus)
   const [gmSummary, setGmSummary] = useState(initialGmSummary)
   const [notes, setNotes] = useState<Note[]>(initialNotes)
-  const [newNote, setNewNote] = useState('')
+  const [newNote, setNewNote] = useState<ProseMirrorDoc>(emptyDoc())
   const [savingNote, setSavingNote] = useState(false)
   const [savingSummary, setSavingSummary] = useState(false)
   const [generatingRecap, setGeneratingRecap] = useState(false)
   const [recapError, setRecapError] = useState<string | null>(null)
   const [aiSummary, setAiSummary] = useState<string | null>(initialAiSummary ?? null)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
-  const [editingContent, setEditingContent] = useState('')
+  const [editingContent, setEditingContent] = useState<ProseMirrorDoc>(emptyDoc())
 
-  function startEditNote(id: string, content: string) {
+  function startEditNote(id: string, content: unknown) {
     setEditingNoteId(id)
-    setEditingContent(content)
+    setEditingContent(content as ProseMirrorDoc)
   }
 
   async function saveNoteEdit(noteId: string) {
@@ -80,7 +84,6 @@ export function SessionControls({
   }
 
   async function addNote() {
-    if (!newNote.trim()) return
     setSavingNote(true)
 
     const res = await fetch(
@@ -89,14 +92,14 @@ export function SessionControls({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ content: newNote.trim() }),
+        body: JSON.stringify({ content: newNote }),
       }
     )
 
     if (res.ok) {
       const note = await res.json()
       setNotes([...notes, note])
-      setNewNote('')
+      setNewNote(emptyDoc())
     }
     setSavingNote(false)
   }
@@ -171,11 +174,10 @@ export function SessionControls({
                 <div key={note.id} className="text-sm border-l-2 pl-3 py-1 group">
                   {editingNoteId === note.id ? (
                     <div className="space-y-1">
-                      <Textarea
+                      <MentionInput
                         value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
+                        onChange={setEditingContent}
                         rows={2}
-                        autoFocus
                       />
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => saveNoteEdit(note.id)}>Save</Button>
@@ -184,7 +186,7 @@ export function SessionControls({
                     </div>
                   ) : (
                     <>
-                      <p><MentionRenderer content={note.content} campaignId={campaignId} /></p>
+                      <MentionRenderer content={note.content as ProseMirrorDoc} campaignId={campaignId} />
                       <div className="flex items-center justify-between mt-1">
                         <p className="text-xs text-muted-foreground">
                           {new Date(note.createdAt).toLocaleDateString()}{' '}
@@ -221,7 +223,7 @@ export function SessionControls({
                 onSave={addNote}
               />
             </div>
-            <Button onClick={addNote} disabled={savingNote || !newNote.trim()} size="sm" className="self-end">
+            <Button onClick={addNote} disabled={savingNote} size="sm" className="self-end">
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -235,12 +237,11 @@ export function SessionControls({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <MentionInput
+            <Textarea
               value={gmSummary}
-              onChange={setGmSummary}
-              placeholder="What happened this session... (type @ to mention an entity)"
+              onChange={(e) => setGmSummary(e.target.value)}
+              placeholder="What happened this session..."
               rows={4}
-              onSave={saveSummary}
             />
             <div className="flex gap-2">
               <Button onClick={saveSummary} disabled={savingSummary} size="sm">

@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@grimoire/db'
+import { docToPlainText } from '@grimoire/db/prosemirror'
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js'
 import { requireMember } from '../auth.js'
 
@@ -12,7 +13,7 @@ export async function handler(
   await requireMember(userId, campaignId, db)
 
   const npc = await db.nPC.findFirst({
-    where: { id: npcId, campaignId, deletedAt: null },
+    where: { id: npcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       location: true,
       factionMemberships: { include: { faction: true } },
@@ -26,5 +27,12 @@ export async function handler(
     take: 20,
   })
 
-  return { content: [{ type: 'text', text: JSON.stringify({ ...npc, notes }, null, 2) }] }
+  const notesForModel = notes.map((n) => ({
+    id: n.id,
+    content: docToPlainText(n.content),
+    createdAt: n.createdAt,
+    updatedAt: n.updatedAt,
+  }))
+
+  return { content: [{ type: 'text', text: JSON.stringify({ ...npc, notes: notesForModel }, null, 2) }] }
 }

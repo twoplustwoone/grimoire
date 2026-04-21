@@ -15,7 +15,7 @@ worldEvents.get('/', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const events = await prisma.worldEvent.findMany({
-    where: { campaignId },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId },
     include: {
       session: { select: { id: true, number: true, title: true } },
       inWorldDate: { select: { id: true, label: true, sortOrder: true } },
@@ -39,7 +39,8 @@ worldEvents.post('/', async (c) => {
 
   const event = await prisma.worldEvent.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       title: body.title.trim(),
       description: body.description?.trim() ?? null,
       sessionId: body.sessionId ?? null,
@@ -72,7 +73,7 @@ worldEvents.patch('/:eventId', async (c) => {
   const eventId = c.req.param('eventId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.worldEvent.findFirst({ where: { id: eventId, campaignId } })
+  const existing = await prisma.worldEvent.findFirst({ where: { id: eventId, ownerType: 'CAMPAIGN', ownerId: campaignId } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
@@ -99,7 +100,7 @@ worldEvents.delete('/:eventId', async (c) => {
   const eventId = c.req.param('eventId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.worldEvent.findFirst({ where: { id: eventId, campaignId } })
+  const existing = await prisma.worldEvent.findFirst({ where: { id: eventId, ownerType: 'CAMPAIGN', ownerId: campaignId } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.worldEvent.delete({ where: { id: eventId } })

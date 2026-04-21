@@ -25,7 +25,7 @@ export default async function CluesPage({ params }: Props) {
   if (!membership) notFound()
 
   const list = await prisma.clue.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: { discoveredInSession: { select: { id: true, number: true, title: true } } },
     orderBy: { createdAt: 'desc' },
   })

@@ -84,7 +84,7 @@ export default async function PlayerPortalPage({ params }: Props) {
       ? prisma.clue.findMany({ where: { id: { in: revealedEntityIdsByType.CLUE }, deletedAt: null }, select: { id: true, title: true, description: true } })
       : [],
     prisma.playerCharacter.findFirst({
-      where: { campaignId, linkedUserId: session.user.id, deletedAt: null },
+      where: { ownerType: 'CAMPAIGN', ownerId: campaignId, linkedUserId: session.user.id, deletedAt: null },
       select: { id: true, name: true, description: true },
     }),
   ])

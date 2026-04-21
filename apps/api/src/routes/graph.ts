@@ -16,24 +16,25 @@ graph.get('/', async (c) => {
   })
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   const [npcs, pcs, locations, factions, threads, clues, relationships, factionMemberships, npcLocations, threadTags] = await Promise.all([
-    prisma.nPC.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true, locationId: true } }),
-    prisma.playerCharacter.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true } }),
-    prisma.location.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true } }),
-    prisma.faction.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true, status: true } }),
-    prisma.thread.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true, status: true, urgency: true } }),
-    prisma.clue.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true } }),
+    prisma.nPC.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true, status: true, locationId: true } }),
+    prisma.playerCharacter.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true, status: true } }),
+    prisma.location.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true, status: true } }),
+    prisma.faction.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true, status: true } }),
+    prisma.thread.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, title: true, status: true, urgency: true } }),
+    prisma.clue.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, title: true } }),
     prisma.relationship.findMany({ where: { campaignId } }),
     prisma.factionMembership.findMany({
-      where: { faction: { campaignId } },
+      where: { faction: { ...ownedBy } },
       select: { npcId: true, factionId: true, role: true },
     }),
     prisma.nPC.findMany({
-      where: { campaignId, deletedAt: null, locationId: { not: null } },
+      where: { ...ownedBy, deletedAt: null, locationId: { not: null } },
       select: { id: true, locationId: true },
     }),
     prisma.threadEntityTag.findMany({
-      where: { thread: { campaignId } },
+      where: { thread: { ...ownedBy } },
       select: { threadId: true, entityType: true, entityId: true },
     }),
   ])

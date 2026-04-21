@@ -26,9 +26,10 @@ export default async function WorldEventsPage({ params }: Props) {
   })
   if (!membership) notFound()
 
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   const [events, sessions] = await Promise.all([
     prisma.worldEvent.findMany({
-      where: { campaignId },
+      where: ownedBy,
       include: {
         session: { select: { id: true, number: true, title: true } },
         inWorldDate: { select: { id: true, label: true, sortOrder: true } },
@@ -39,7 +40,7 @@ export default async function WorldEventsPage({ params }: Props) {
       ],
     }),
     prisma.gameSession.findMany({
-      where: { campaignId },
+      where: ownedBy,
       select: { id: true, number: true, title: true },
       orderBy: { number: 'asc' },
     }),

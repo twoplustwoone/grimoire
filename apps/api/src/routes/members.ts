@@ -46,7 +46,7 @@ members.delete('/:userId', async (c) => {
 
   const result = await prisma.$transaction(async (tx) => {
     const pcs = await tx.playerCharacter.findMany({
-      where: { campaignId, linkedUserId: targetUserId, deletedAt: null },
+      where: { ownerType: 'CAMPAIGN', ownerId: campaignId, linkedUserId: targetUserId, deletedAt: null },
       select: { id: true, name: true, status: true, linkedUserId: true },
     })
 

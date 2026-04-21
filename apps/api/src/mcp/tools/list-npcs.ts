@@ -10,7 +10,7 @@ export async function handler(
   await requireMember(userId, campaignId, db)
 
   const npcs = await db.nPC.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       location: { select: { name: true } },
       factionMemberships: { include: { faction: { select: { name: true } } } },

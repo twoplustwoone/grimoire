@@ -7,10 +7,14 @@ import { Button } from '@/components/ui/button'
 import { StickyNote, Plus } from 'lucide-react'
 import { MentionInput } from '@/components/mentions/mention-input'
 import { PromotableNote } from '@/components/entities/promotable-note'
+import { emptyDoc, type ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
 interface Note {
   id: string
-  content: string
+  // Prisma's JsonValue type is wider than ProseMirrorDoc (includes null,
+  // arrays, primitives). Keep the boundary loose here and let the editor /
+  // renderer narrow it.
+  content: unknown
   createdAt: Date
 }
 
@@ -25,27 +29,26 @@ interface Props {
 export function EntityNotes({ notes: initialNotes, addNoteEndpoint, campaignId }: Props) {
   const router = useRouter()
   const [notes, setNotes] = useState<Note[]>(initialNotes)
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState<ProseMirrorDoc>(emptyDoc())
   const [saving, setSaving] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
-  const [editingContent, setEditingContent] = useState('')
+  const [editingContent, setEditingContent] = useState<ProseMirrorDoc>(emptyDoc())
 
   const noteEndpointFor = (noteId: string) =>
     addNoteEndpoint.replace(/\/notes$/, '') + `/notes/${noteId}`
 
   async function addNote() {
-    if (!content.trim()) return
     setSaving(true)
     const res = await fetch(addNoteEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ content: content.trim() }),
+      body: JSON.stringify({ content }),
     })
     if (res.ok) {
       const note = await res.json()
       setNotes([note, ...notes])
-      setContent('')
+      setContent(emptyDoc())
       router.refresh()
     }
     setSaving(false)
@@ -123,7 +126,7 @@ export function EntityNotes({ notes: initialNotes, addNoteEndpoint, campaignId }
           </div>
           <Button
             onClick={addNote}
-            disabled={saving || !content.trim()}
+            disabled={saving}
             size="sm"
             className="self-end"
           >

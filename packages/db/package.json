@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./demo-campaign": "./src/demo-campaign.ts"
+    "./demo-campaign": "./src/demo-campaign.ts",
+    "./prosemirror": "./src/prosemirror.ts"
   },
   "scripts": {
     "generate": "prisma generate --schema=./prisma/schema.prisma",

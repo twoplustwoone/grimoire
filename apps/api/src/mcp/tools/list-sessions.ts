@@ -10,7 +10,7 @@ export async function handler(
   await requireMember(userId, campaignId, db)
 
   const sessions = await db.gameSession.findMany({
-    where: { campaignId },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId },
     select: {
       id: true, number: true, title: true, status: true,
       playedOn: true, gmSummary: true, aiSummary: true,

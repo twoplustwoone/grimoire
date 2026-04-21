@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@grimoire/db'
+import { docToPlainText } from '@grimoire/db/prosemirror'
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js'
 import { requireMember } from '../auth.js'
 
@@ -12,7 +13,7 @@ export async function handler(
   await requireMember(userId, campaignId, db)
 
   const session = await db.gameSession.findFirst({
-    where: { id: sessionId, campaignId },
+    where: { id: sessionId, ownerType: 'CAMPAIGN', ownerId: campaignId },
     include: { entityTags: true },
   })
   if (!session) throw new McpError(ErrorCode.InvalidParams, 'Session not found in this campaign')
@@ -22,5 +23,11 @@ export async function handler(
     orderBy: { createdAt: 'asc' },
   })
 
-  return { content: [{ type: 'text', text: JSON.stringify({ ...session, notes }, null, 2) }] }
+  const notesForModel = notes.map((n) => ({
+    id: n.id,
+    content: docToPlainText(n.content),
+    createdAt: n.createdAt,
+  }))
+
+  return { content: [{ type: 'text', text: JSON.stringify({ ...session, notes: notesForModel }, null, 2) }] }
 }

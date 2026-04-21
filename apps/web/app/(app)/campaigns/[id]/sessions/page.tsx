@@ -33,7 +33,7 @@ export default async function SessionsPage({ params }: Props) {
   if (!membership) notFound()
 
   const gameSessions = await prisma.gameSession.findMany({
-    where: { campaignId },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId },
     include: {
       _count: { select: { entityTags: true } },
     },

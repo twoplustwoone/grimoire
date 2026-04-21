@@ -33,7 +33,7 @@ export default async function ThreadDetailPage({ params }: Props) {
   const membership = await prisma.campaignMembership.findFirst({ where: { campaignId, userId: session.user.id }, include: { campaign: { select: { name: true } } } })
   if (!membership) notFound()
 
-  const thread = await prisma.thread.findFirst({ where: { id: threadId, campaignId, deletedAt: null }, include: { entityTags: true } })
+  const thread = await prisma.thread.findFirst({ where: { id: threadId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null }, include: { entityTags: true } })
   if (!thread) notFound()
 
   const notes = await prisma.note.findMany({ where: { entityType: 'THREAD', entityId: threadId }, orderBy: { createdAt: 'desc' } })

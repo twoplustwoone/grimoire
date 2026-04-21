@@ -1,19 +1,22 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const npcs = new Hono()
 
 npcs.use('*', authMiddleware)
 
-// Verify campaign membership helper
 async function getCampaignMembership(userId: string, campaignId: string) {
   return prisma.campaignMembership.findFirst({
     where: { userId, campaignId },
   })
 }
 
-// List NPCs for a campaign
 npcs.get('/', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -22,7 +25,7 @@ npcs.get('/', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const npcList = await prisma.nPC.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       location: { select: { id: true, name: true } },
       factionMemberships: {
@@ -35,7 +38,6 @@ npcs.get('/', async (c) => {
   return c.json(npcList)
 })
 
-// Create an NPC
 npcs.post('/', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -51,7 +53,8 @@ npcs.post('/', async (c) => {
 
   const npc = await prisma.nPC.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       name: body.name.trim(),
       description: body.description?.trim() ?? null,
       locationId: body.locationId ?? null,
@@ -72,7 +75,6 @@ npcs.post('/', async (c) => {
   return c.json(npc, 201)
 })
 
-// Get a single NPC
 npcs.get('/:npcId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -82,7 +84,12 @@ npcs.get('/:npcId', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const npc = await prisma.nPC.findFirst({
-    where: { id: npcId, campaignId, deletedAt: null },
+    where: {
+      id: npcId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
+      deletedAt: null,
+    },
     include: {
       location: { select: { id: true, name: true } },
       factionMemberships: {
@@ -107,7 +114,6 @@ npcs.get('/:npcId', async (c) => {
   return c.json({ ...npc, notes, changelog })
 })
 
-// Update an NPC
 npcs.patch('/:npcId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -117,7 +123,12 @@ npcs.patch('/:npcId', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const existing = await prisma.nPC.findFirst({
-    where: { id: npcId, campaignId, deletedAt: null },
+    where: {
+      id: npcId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
+      deletedAt: null,
+    },
   })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
@@ -133,7 +144,6 @@ npcs.patch('/:npcId', async (c) => {
     },
   })
 
-  // Write changelog entries for changed fields
   const fieldsToTrack = ['name', 'description', 'status', 'locationId'] as const
   for (const field of fieldsToTrack) {
     if (body[field] !== undefined && body[field] !== (existing as Record<string, unknown>)[field]) {
@@ -154,7 +164,6 @@ npcs.patch('/:npcId', async (c) => {
   return c.json(updated)
 })
 
-// Update a note on an NPC
 npcs.patch('/:npcId/notes/:noteId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -167,12 +176,16 @@ npcs.patch('/:npcId/notes/:noteId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -182,8 +195,8 @@ npcs.patch('/:npcId/notes/:noteId', async (c) => {
       campaignId,
       authorId: user.id,
       field: 'note',
-      oldValue: existing.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existing.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })
@@ -191,7 +204,6 @@ npcs.patch('/:npcId/notes/:noteId', async (c) => {
   return c.json(note)
 })
 
-// Delete a note on an NPC
 npcs.delete('/:npcId/notes/:noteId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -203,7 +215,6 @@ npcs.delete('/:npcId/notes/:noteId', async (c) => {
   return c.json({ success: true })
 })
 
-// Add a note to an NPC
 npcs.post('/:npcId/notes', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -212,16 +223,21 @@ npcs.post('/:npcId/notes', async (c) => {
   if (!await getCampaignMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'NPC',
       entityId: npcId,
       campaignId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -233,7 +249,7 @@ npcs.post('/:npcId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -241,7 +257,6 @@ npcs.post('/:npcId/notes', async (c) => {
   return c.json(note, 201)
 })
 
-// Add NPC to a faction
 npcs.post('/:npcId/factions', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -262,7 +277,6 @@ npcs.post('/:npcId/factions', async (c) => {
   return c.json(fm, 201)
 })
 
-// Remove NPC from a faction
 npcs.delete('/:npcId/factions/:factionId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -279,7 +293,6 @@ npcs.delete('/:npcId/factions/:factionId', async (c) => {
   return c.json({ success: true })
 })
 
-// Soft delete an NPC
 npcs.delete('/:npcId', async (c) => {
   const user = c.get('user')
   const campaignId = c.req.param('campaignId')!
@@ -289,7 +302,12 @@ npcs.delete('/:npcId', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const existing = await prisma.nPC.findFirst({
-    where: { id: npcId, campaignId, deletedAt: null },
+    where: {
+      id: npcId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
+      deletedAt: null,
+    },
   })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 

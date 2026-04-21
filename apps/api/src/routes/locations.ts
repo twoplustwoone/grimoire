@@ -1,5 +1,10 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const locations = new Hono()
@@ -15,7 +20,7 @@ locations.get('/', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const list = await prisma.location.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       parent: { select: { id: true, name: true } },
       npcs: { where: { deletedAt: null }, select: { id: true, name: true } },
@@ -35,7 +40,8 @@ locations.post('/', async (c) => {
 
   const location = await prisma.location.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       name: body.name.trim(),
       description: body.description?.trim() ?? null,
       parentId: body.parentId ?? null,
@@ -56,7 +62,7 @@ locations.get('/:locationId', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const location = await prisma.location.findFirst({
-    where: { id: locationId, campaignId, deletedAt: null },
+    where: { id: locationId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       parent: { select: { id: true, name: true } },
       children: { where: { deletedAt: null }, select: { id: true, name: true } },
@@ -77,7 +83,7 @@ locations.patch('/:locationId', async (c) => {
   const locationId = c.req.param('locationId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.location.findFirst({ where: { id: locationId, campaignId, deletedAt: null } })
+  const existing = await prisma.location.findFirst({ where: { id: locationId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
@@ -114,12 +120,16 @@ locations.patch('/:locationId/notes/:noteId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -129,8 +139,8 @@ locations.patch('/:locationId/notes/:noteId', async (c) => {
       campaignId,
       authorId: user.id,
       field: 'note',
-      oldValue: existing.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existing.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })
@@ -157,16 +167,21 @@ locations.post('/:locationId/notes', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'LOCATION',
       entityId: locationId,
       campaignId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -178,7 +193,7 @@ locations.post('/:locationId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -192,7 +207,7 @@ locations.delete('/:locationId', async (c) => {
   const locationId = c.req.param('locationId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.location.findFirst({ where: { id: locationId, campaignId, deletedAt: null } })
+  const existing = await prisma.location.findFirst({ where: { id: locationId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.location.update({ where: { id: locationId }, data: { deletedAt: new Date() } })

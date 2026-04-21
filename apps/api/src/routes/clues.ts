@@ -1,5 +1,10 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const clues = new Hono()
@@ -15,7 +20,7 @@ clues.get('/', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const list = await prisma.clue.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       discoveredInSession: { select: { id: true, number: true, title: true } },
     },
@@ -34,7 +39,8 @@ clues.post('/', async (c) => {
 
   const clue = await prisma.clue.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       title: body.title.trim(),
       description: body.description?.trim() ?? null,
       discoveredInSessionId: body.discoveredInSessionId ?? null,
@@ -55,7 +61,7 @@ clues.get('/:clueId', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const clue = await prisma.clue.findFirst({
-    where: { id: clueId, campaignId, deletedAt: null },
+    where: { id: clueId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       discoveredInSession: { select: { id: true, number: true, title: true } },
     },
@@ -74,7 +80,7 @@ clues.patch('/:clueId', async (c) => {
   const clueId = c.req.param('clueId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.clue.findFirst({ where: { id: clueId, campaignId, deletedAt: null } })
+  const existing = await prisma.clue.findFirst({ where: { id: clueId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
@@ -110,12 +116,16 @@ clues.patch('/:clueId/notes/:noteId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -125,8 +135,8 @@ clues.patch('/:clueId/notes/:noteId', async (c) => {
       campaignId,
       authorId: user.id,
       field: 'note',
-      oldValue: existing.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existing.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })
@@ -153,16 +163,21 @@ clues.post('/:clueId/notes', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'CLUE',
       entityId: clueId,
       campaignId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -174,7 +189,7 @@ clues.post('/:clueId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -188,7 +203,7 @@ clues.delete('/:clueId', async (c) => {
   const clueId = c.req.param('clueId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.clue.findFirst({ where: { id: clueId, campaignId, deletedAt: null } })
+  const existing = await prisma.clue.findFirst({ where: { id: clueId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.clue.update({ where: { id: clueId }, data: { deletedAt: new Date() } })

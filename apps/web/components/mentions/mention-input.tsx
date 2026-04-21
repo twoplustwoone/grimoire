@@ -1,93 +1,33 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Mention, { type MentionOptions } from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useParams } from 'next/navigation'
 import { useEffect } from 'react'
+import {
+  Bold,
+  Italic,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Quote,
+  Minus,
+} from 'lucide-react'
 import { createMentionSuggestion } from '@/lib/tiptap-mention-suggestion'
-import { buildMentionToken } from '@/lib/mentions'
 import { getEntityChipClasses } from '@/lib/entity-display'
+import { emptyDoc, type ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
 interface Props {
-  value: string
-  onChange: (value: string) => void
+  value: ProseMirrorDoc | null | undefined
+  onChange: (value: ProseMirrorDoc) => void
   placeholder?: string
   rows?: number
   className?: string
   onKeyDown?: (e: React.KeyboardEvent) => void
   onSave?: () => void
-}
-
-function tiptapToTokens(doc: Record<string, unknown>): string {
-  if (!doc || !doc.content) return ''
-
-  function processNode(node: Record<string, unknown>): string {
-    if (node.type === 'text') {
-      return (node.text as string) ?? ''
-    }
-    if (node.type === 'mention') {
-      const attrs = node.attrs as { id: string; label: string; type: string; name: string }
-      return buildMentionToken(attrs.name ?? attrs.label, attrs.type ?? 'NPC', attrs.id)
-    }
-    if (node.type === 'hardBreak') {
-      return '\n'
-    }
-    if (node.content) {
-      const children = (node.content as Record<string, unknown>[]).map(processNode).join('')
-      if (node.type === 'paragraph') {
-        return children
-      }
-      return children
-    }
-    return ''
-  }
-
-  const paragraphs = (doc.content as Record<string, unknown>[])
-  return paragraphs.map(processNode).join('\n')
-}
-
-function tokensToTiptap(content: string): Record<string, unknown> {
-  const regex = /@\[([^\]]+)\]\((\w+):([^)]+)\)/g
-  const paragraphs = content.split('\n')
-
-  const tiptapParagraphs = paragraphs.map((para) => {
-    const nodes: Record<string, unknown>[] = []
-    let lastIndex = 0
-    let match
-
-    regex.lastIndex = 0
-    while ((match = regex.exec(para)) !== null) {
-      if (match.index > lastIndex) {
-        nodes.push({ type: 'text', text: para.slice(lastIndex, match.index) })
-      }
-      nodes.push({
-        type: 'mention',
-        attrs: {
-          id: match[3],
-          label: match[1],
-          name: match[1],
-          type: match[2].toUpperCase(),
-        },
-      })
-      lastIndex = match.index + match[0].length
-    }
-
-    if (lastIndex < para.length) {
-      nodes.push({ type: 'text', text: para.slice(lastIndex) })
-    }
-
-    return {
-      type: 'paragraph',
-      content: nodes.length > 0 ? nodes : undefined,
-    }
-  })
-
-  return {
-    type: 'doc',
-    content: tiptapParagraphs,
-  }
 }
 
 export function MentionInput({ value, onChange, placeholder, rows = 3, className, onSave }: Props) {
@@ -98,17 +38,10 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
-        bold: false,
-        italic: false,
         strike: false,
         code: false,
         codeBlock: false,
-        blockquote: false,
-        heading: false,
-        horizontalRule: false,
-        bulletList: false,
-        orderedList: false,
-        listItem: false,
+        heading: { levels: [2, 3] },
       }),
       Placeholder.configure({
         placeholder: placeholder ?? 'Write a note... (type @ to mention an entity)',
@@ -134,16 +67,15 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
           : undefined) as MentionOptions['suggestion'] | undefined,
       }),
     ],
-    content: tokensToTiptap(value),
+    content: value ?? emptyDoc(),
     onUpdate: ({ editor }) => {
-      const tokens = tiptapToTokens(editor.getJSON() as Record<string, unknown>)
-      onChange(tokens)
+      onChange(editor.getJSON() as ProseMirrorDoc)
     },
     editorProps: {
       attributes: {
-        class: 'focus:outline-none',
+        class: 'prose prose-sm max-w-none focus:outline-none dark:prose-invert',
       },
-      handleKeyDown: (view, event) => {
+      handleKeyDown: (_view, event) => {
         if (onSave && event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
           onSave()
           return true
@@ -155,9 +87,9 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
 
   useEffect(() => {
     if (!editor) return
-    const current = tiptapToTokens(editor.getJSON() as Record<string, unknown>)
-    if (current !== value) {
-      editor.commands.setContent(tokensToTiptap(value), { emitUpdate: false })
+    const current = editor.getJSON()
+    if (!docsEqual(current, value)) {
+      editor.commands.setContent(value ?? emptyDoc(), { emitUpdate: false })
     }
   }, [value, editor])
 
@@ -166,15 +98,117 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
   return (
     <div
       className={`
-        w-full rounded-md border border-input bg-background px-3 py-2
-        text-sm ring-offset-background cursor-text
+        w-full rounded-md border border-input bg-background
+        text-sm ring-offset-background
         focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2
         ${className ?? ''}
       `}
-      style={{ minHeight }}
-      onClick={() => editor?.commands.focus()}
     >
-      <EditorContent editor={editor} />
+      {editor ? <Toolbar editor={editor} /> : null}
+      <div
+        className="px-3 py-2 cursor-text"
+        style={{ minHeight }}
+        onClick={() => editor?.commands.focus()}
+      >
+        <EditorContent editor={editor} />
+      </div>
     </div>
   )
+}
+
+function Toolbar({ editor }: { editor: Editor }) {
+  const buttons: Array<{
+    label: string
+    icon: React.ComponentType<{ className?: string }>
+    action: () => void
+    isActive: () => boolean
+  }> = [
+    {
+      label: 'Bold',
+      icon: Bold,
+      action: () => editor.chain().focus().toggleBold().run(),
+      isActive: () => editor.isActive('bold'),
+    },
+    {
+      label: 'Italic',
+      icon: Italic,
+      action: () => editor.chain().focus().toggleItalic().run(),
+      isActive: () => editor.isActive('italic'),
+    },
+    {
+      label: 'Heading 2',
+      icon: Heading2,
+      action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+      isActive: () => editor.isActive('heading', { level: 2 }),
+    },
+    {
+      label: 'Heading 3',
+      icon: Heading3,
+      action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+      isActive: () => editor.isActive('heading', { level: 3 }),
+    },
+    {
+      label: 'Bullet list',
+      icon: List,
+      action: () => editor.chain().focus().toggleBulletList().run(),
+      isActive: () => editor.isActive('bulletList'),
+    },
+    {
+      label: 'Numbered list',
+      icon: ListOrdered,
+      action: () => editor.chain().focus().toggleOrderedList().run(),
+      isActive: () => editor.isActive('orderedList'),
+    },
+    {
+      label: 'Quote',
+      icon: Quote,
+      action: () => editor.chain().focus().toggleBlockquote().run(),
+      isActive: () => editor.isActive('blockquote'),
+    },
+    {
+      label: 'Divider',
+      icon: Minus,
+      action: () => editor.chain().focus().setHorizontalRule().run(),
+      isActive: () => false,
+    },
+  ]
+
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-1 py-1">
+      {buttons.map((b) => {
+        const Icon = b.icon
+        const active = b.isActive()
+        return (
+          <button
+            key={b.label}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault()
+              b.action()
+            }}
+            aria-label={b.label}
+            aria-pressed={active}
+            className={`flex h-11 w-11 md:h-8 md:w-8 items-center justify-center rounded transition-colors ${
+              active
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`}
+            title={b.label}
+          >
+            <Icon className="h-4 w-4" />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function docsEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (!a || !b) return false
+  try {
+    return JSON.stringify(a) === JSON.stringify(b)
+  } catch {
+    return false
+  }
 }

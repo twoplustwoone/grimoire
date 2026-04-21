@@ -86,7 +86,7 @@ async function updateEntityStatus(
 ): Promise<UpdateResult> {
   switch (entityType) {
     case 'NPC': {
-      const existing = await tx.nPC.findFirst({ where: { id: entityId, campaignId, deletedAt: null } })
+      const existing = await tx.nPC.findFirst({ where: { id: entityId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
       if (!existing) throw new McpError(ErrorCode.InvalidParams, 'NPC not found in this campaign')
       if (existing.status === status) throw noopError(entityType, status)
       const row = await tx.nPC.update({
@@ -96,7 +96,7 @@ async function updateEntityStatus(
       return { noop: false, id: row.id, status: row.status, updatedAt: row.updatedAt, oldStatus: existing.status }
     }
     case 'PLAYER_CHARACTER': {
-      const existing = await tx.playerCharacter.findFirst({ where: { id: entityId, campaignId, deletedAt: null } })
+      const existing = await tx.playerCharacter.findFirst({ where: { id: entityId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
       if (!existing) throw new McpError(ErrorCode.InvalidParams, 'PlayerCharacter not found in this campaign')
       if (existing.status === status) throw noopError(entityType, status)
       const row = await tx.playerCharacter.update({
@@ -106,7 +106,7 @@ async function updateEntityStatus(
       return { noop: false, id: row.id, status: row.status, updatedAt: row.updatedAt, oldStatus: existing.status }
     }
     case 'LOCATION': {
-      const existing = await tx.location.findFirst({ where: { id: entityId, campaignId, deletedAt: null } })
+      const existing = await tx.location.findFirst({ where: { id: entityId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
       if (!existing) throw new McpError(ErrorCode.InvalidParams, 'Location not found in this campaign')
       if (existing.status === status) throw noopError(entityType, status)
       const row = await tx.location.update({
@@ -116,7 +116,7 @@ async function updateEntityStatus(
       return { noop: false, id: row.id, status: row.status, updatedAt: row.updatedAt, oldStatus: existing.status }
     }
     case 'FACTION': {
-      const existing = await tx.faction.findFirst({ where: { id: entityId, campaignId, deletedAt: null } })
+      const existing = await tx.faction.findFirst({ where: { id: entityId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
       if (!existing) throw new McpError(ErrorCode.InvalidParams, 'Faction not found in this campaign')
       if (existing.status === status) throw noopError(entityType, status)
       const row = await tx.faction.update({
@@ -126,7 +126,7 @@ async function updateEntityStatus(
       return { noop: false, id: row.id, status: row.status, updatedAt: row.updatedAt, oldStatus: existing.status }
     }
     case 'THREAD': {
-      const existing = await tx.thread.findFirst({ where: { id: entityId, campaignId, deletedAt: null } })
+      const existing = await tx.thread.findFirst({ where: { id: entityId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
       if (!existing) throw new McpError(ErrorCode.InvalidParams, 'Thread not found in this campaign')
       if (existing.status === status) throw noopError(entityType, status)
       const row = await tx.thread.update({

@@ -87,7 +87,7 @@ reveals.get('/preview', async (c) => {
       ? prisma.clue.findMany({ where: { id: { in: revealedByType.CLUE }, deletedAt: null }, select: { id: true, title: true, description: true } })
       : [],
     prisma.playerCharacter.findFirst({
-      where: { campaignId, linkedUserId: targetUserId, deletedAt: null },
+      where: { ownerType: 'CAMPAIGN', ownerId: campaignId, linkedUserId: targetUserId, deletedAt: null },
       select: { id: true, name: true, description: true },
     }),
   ])

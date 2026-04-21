@@ -1,5 +1,10 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const sessions = new Hono()
@@ -15,7 +20,7 @@ sessions.get('/', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const list = await prisma.gameSession.findMany({
-    where: { campaignId },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId },
     include: {
       entityTags: true,
       _count: { select: { entityTags: true } },
@@ -33,14 +38,15 @@ sessions.post('/', async (c) => {
   const body = await c.req.json()
 
   const lastSession = await prisma.gameSession.findFirst({
-    where: { campaignId },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId },
     orderBy: { number: 'desc' },
   })
   const number = (lastSession?.number ?? 0) + 1
 
   const session = await prisma.gameSession.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       number,
       title: body.title?.trim() ?? null,
       playedOn: body.playedOn ? new Date(body.playedOn) : null,
@@ -70,7 +76,7 @@ sessions.get('/:sessionId', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const session = await prisma.gameSession.findFirst({
-    where: { id: sessionId, campaignId },
+    where: { id: sessionId, ownerType: 'CAMPAIGN', ownerId: campaignId },
     include: { entityTags: true },
   })
   if (!session) return c.json({ error: 'Not found' }, 404)
@@ -89,7 +95,7 @@ sessions.patch('/:sessionId', async (c) => {
   const sessionId = c.req.param('sessionId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.gameSession.findFirst({ where: { id: sessionId, campaignId } })
+  const existing = await prisma.gameSession.findFirst({ where: { id: sessionId, ownerType: 'CAMPAIGN', ownerId: campaignId } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
@@ -113,13 +119,17 @@ sessions.post('/:sessionId/notes', async (c) => {
   const sessionId = c.req.param('sessionId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.gameSession.findFirst({ where: { id: sessionId, campaignId } })
+  const existing = await prisma.gameSession.findFirst({ where: { id: sessionId, ownerType: 'CAMPAIGN', ownerId: campaignId } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'SESSION',
@@ -127,7 +137,8 @@ sessions.post('/:sessionId/notes', async (c) => {
       campaignId,
       sessionId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -140,7 +151,7 @@ sessions.post('/:sessionId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -160,12 +171,16 @@ sessions.patch('/:sessionId/notes/:noteId', async (c) => {
   if (!existingNote) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -176,8 +191,8 @@ sessions.patch('/:sessionId/notes/:noteId', async (c) => {
       sessionId,
       authorId: user.id,
       field: 'note',
-      oldValue: existingNote.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existingNote.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })

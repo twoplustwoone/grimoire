@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import type { PrismaClient } from '@grimoire/db'
 import { EntityType } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js'
 import { requireGM } from '../auth.js'
 import { validateInput } from '../errors.js'
@@ -10,7 +15,7 @@ const inputSchema = z.object({
   entityType: z.nativeEnum(EntityType),
   entityId: z.string().min(1),
   noteId: z.string().nullable(),
-  content: z.string().min(1, 'content is required'),
+  content: z.record(z.any()),
 })
 
 export async function handler(
@@ -21,11 +26,17 @@ export async function handler(
   const { campaignId, entityType, entityId, noteId, content } = validateInput(inputSchema, args)
   await requireGM(userId, campaignId, db)
 
-  const trimmed = content.trim()
-  if (!trimmed) {
+  if (!isProseMirrorDoc(content)) {
+    throw new McpError(ErrorCode.InvalidParams, 'content must be a ProseMirror doc (type: "doc")')
+  }
+  const plaintext = docToPlainText(content).trim()
+  if (!plaintext) {
     throw new McpError(ErrorCode.InvalidParams, 'Invalid input: content is required')
   }
+  const mentions = extractMentionsFromDoc(content)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const contentJson = content as any
   const note = await db.$transaction(async (tx) => {
     if (noteId === null) {
       const created = await tx.note.create({
@@ -34,7 +45,8 @@ export async function handler(
           entityId,
           campaignId,
           authorId: userId,
-          content: trimmed,
+          content: contentJson,
+          mentions,
         },
       })
       await tx.changelogEntry.create({
@@ -45,7 +57,7 @@ export async function handler(
           authorId: userId,
           field: 'note',
           oldValue: null,
-          newValue: trimmed,
+          newValue: plaintext,
           note: 'Note added via MCP',
         },
       })
@@ -65,7 +77,7 @@ export async function handler(
 
     const updated = await tx.note.update({
       where: { id: noteId },
-      data: { content: trimmed },
+      data: { content: contentJson, mentions },
     })
     await tx.changelogEntry.create({
       data: {
@@ -74,8 +86,8 @@ export async function handler(
         campaignId,
         authorId: userId,
         field: 'note',
-        oldValue: existing.content,
-        newValue: trimmed,
+        oldValue: docToPlainText(existing.content),
+        newValue: plaintext,
         note: 'Note edited via MCP',
       },
     })
@@ -87,7 +99,7 @@ export async function handler(
       type: 'text',
       text: JSON.stringify({
         id: note.id,
-        content: note.content,
+        content: plaintext,
         createdAt: note.createdAt,
         updatedAt: note.updatedAt,
       }, null, 2),

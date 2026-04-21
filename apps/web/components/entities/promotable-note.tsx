@@ -32,10 +32,15 @@ import {
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
 import { MentionInput } from '@/components/mentions/mention-input'
 import { ArrowUpCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import {
+  docToPlainText,
+  emptyDoc,
+  type ProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 
 interface Note {
   id: string
-  content: string
+  content: unknown
   createdAt: Date
 }
 
@@ -43,11 +48,11 @@ interface Props {
   note: Note
   campaignId: string
   editingNoteId?: string | null
-  editingContent?: string
-  onStartEdit?: (id: string, content: string) => void
+  editingContent?: ProseMirrorDoc
+  onStartEdit?: (id: string, content: ProseMirrorDoc) => void
   onSaveEdit?: (id: string) => void
   onCancelEdit?: () => void
-  onEditContentChange?: (content: string) => void
+  onEditContentChange?: (content: ProseMirrorDoc) => void
   onDelete?: (noteId: string) => void
   onPromote?: (noteId: string) => void
   promoteEndpoint: string
@@ -74,6 +79,8 @@ export function PromotableNote({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const isEditing = editingNoteId === note.id
+  const contentDoc = note.content as ProseMirrorDoc
+  const plaintext = docToPlainText(note.content)
 
   async function handlePromote() {
     setPromoting(true)
@@ -82,7 +89,7 @@ export function PromotableNote({
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        title: promoteTitle.trim() || note.content.slice(0, 60),
+        title: promoteTitle.trim() || plaintext.slice(0, 60),
         deleteNote,
       }),
     })
@@ -101,7 +108,7 @@ export function PromotableNote({
 
   return (
     <div className="text-sm border-l-2 pl-3 py-1">
-      <MentionRenderer content={note.content} campaignId={campaignId} />
+      <MentionRenderer content={contentDoc} campaignId={campaignId} />
 
       {showPromoteForm && (
         <div className="mt-3 p-3 bg-muted/50 rounded-md space-y-3 border">
@@ -113,7 +120,7 @@ export function PromotableNote({
             <Input
               value={promoteTitle}
               onChange={(e) => setPromoteTitle(e.target.value)}
-              placeholder={note.content.slice(0, 60)}
+              placeholder={plaintext.slice(0, 60)}
               autoFocus
               className="h-9 text-sm"
             />
@@ -153,7 +160,7 @@ export function PromotableNote({
               <MoreHorizontal className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => onStartEdit?.(note.id, note.content)}>
+              <DropdownMenuItem onSelect={() => onStartEdit?.(note.id, contentDoc)}>
                 <Pencil className="h-4 w-4" />
                 Edit
               </DropdownMenuItem>
@@ -171,7 +178,6 @@ export function PromotableNote({
         )}
       </div>
 
-      {/* Edit sheet — opens from the dropdown. */}
       <Sheet open={isEditing} onOpenChange={(o) => !o && onCancelEdit?.()}>
         <SheetContent side="bottom" className="max-h-[90vh]">
           <SheetHeader>
@@ -179,7 +185,7 @@ export function PromotableNote({
           </SheetHeader>
           <div className="flex-1 min-h-0 overflow-y-auto">
             <MentionInput
-              value={editingContent ?? ''}
+              value={editingContent ?? emptyDoc()}
               onChange={(v) => onEditContentChange?.(v)}
               rows={6}
               placeholder="Edit note... (type @ to mention an entity)"

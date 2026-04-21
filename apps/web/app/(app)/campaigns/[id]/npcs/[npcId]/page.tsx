@@ -37,7 +37,7 @@ export default async function NPCDetailPage({ params }: Props) {
   if (!membership) notFound()
 
   const npc = await prisma.nPC.findFirst({
-    where: { id: npcId, campaignId, deletedAt: null },
+    where: { id: npcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       location: { select: { id: true, name: true } },
       factionMemberships: {
@@ -65,12 +65,12 @@ export default async function NPCDetailPage({ params }: Props) {
 
   const [availableLocations, availableFactions, players] = await Promise.all([
     prisma.location.findMany({
-      where: { campaignId, deletedAt: null },
+      where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),
     prisma.faction.findMany({
-      where: { campaignId, deletedAt: null },
+      where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     }),

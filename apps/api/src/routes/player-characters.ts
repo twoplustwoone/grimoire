@@ -1,5 +1,10 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const playerCharacters = new Hono()
@@ -22,7 +27,7 @@ playerCharacters.get('/', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const pcs = await prisma.playerCharacter.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       linkedUser: { select: { id: true, name: true, email: true } },
     },
@@ -47,11 +52,13 @@ playerCharacters.post('/', async (c) => {
 
   const pc = await prisma.playerCharacter.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       name: body.name.trim(),
       description: body.description?.trim() ?? null,
       linkedUserId: body.linkedUserId ?? null,
       status: body.status ?? 'ACTIVE',
+      externalUrl: body.externalUrl?.trim() ?? null,
     },
   })
 
@@ -102,7 +109,7 @@ playerCharacters.get('/:pcId', async (c) => {
   if (!membership) return c.json({ error: 'Not found' }, 404)
 
   const pc = await prisma.playerCharacter.findFirst({
-    where: { id: pcId, campaignId, deletedAt: null },
+    where: { id: pcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       linkedUser: { select: { id: true, name: true, email: true } },
     },
@@ -133,7 +140,7 @@ playerCharacters.patch('/:pcId', async (c) => {
   if (!isGM(membership.role)) return c.json({ error: 'Not authorized' }, 403)
 
   const existing = await prisma.playerCharacter.findFirst({
-    where: { id: pcId, campaignId, deletedAt: null },
+    where: { id: pcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
   })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
@@ -146,10 +153,11 @@ playerCharacters.patch('/:pcId', async (c) => {
       description: body.description !== undefined ? (body.description?.trim() ?? null) : existing.description,
       status: body.status ?? existing.status,
       linkedUserId: body.linkedUserId !== undefined ? body.linkedUserId : existing.linkedUserId,
+      externalUrl: body.externalUrl !== undefined ? (body.externalUrl?.trim() ?? null) : existing.externalUrl,
     },
   })
 
-  const fieldsToTrack = ['name', 'description', 'status', 'linkedUserId'] as const
+  const fieldsToTrack = ['name', 'description', 'status', 'linkedUserId', 'externalUrl'] as const
   for (const field of fieldsToTrack) {
     if (body[field] !== undefined && body[field] !== (existing as Record<string, unknown>)[field]) {
       await prisma.changelogEntry.create({
@@ -179,7 +187,7 @@ playerCharacters.delete('/:pcId', async (c) => {
   if (!isGM(membership.role)) return c.json({ error: 'Not authorized' }, 403)
 
   const existing = await prisma.playerCharacter.findFirst({
-    where: { id: pcId, campaignId, deletedAt: null },
+    where: { id: pcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
   })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
@@ -228,16 +236,21 @@ playerCharacters.post('/:pcId/notes', async (c) => {
   if (!isGM(membership.role)) return c.json({ error: 'Not authorized' }, 403)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'PLAYER_CHARACTER',
       entityId: pcId,
       campaignId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -249,7 +262,7 @@ playerCharacters.post('/:pcId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -270,12 +283,16 @@ playerCharacters.patch('/:pcId/notes/:noteId', async (c) => {
   if (existing.authorId !== user.id) return c.json({ error: 'Not authorized' }, 403)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -285,8 +302,8 @@ playerCharacters.patch('/:pcId/notes/:noteId', async (c) => {
       campaignId,
       authorId: user.id,
       field: 'note',
-      oldValue: existing.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existing.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })

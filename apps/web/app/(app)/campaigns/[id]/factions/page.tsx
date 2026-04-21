@@ -32,7 +32,7 @@ export default async function FactionsPage({ params }: Props) {
   if (!membership) notFound()
 
   const list = await prisma.faction.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: { memberships: { include: { npc: { select: { id: true, name: true } } } } },
     orderBy: { name: 'asc' },
   })

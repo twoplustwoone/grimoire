@@ -9,36 +9,39 @@ export async function handler(
   const campaignId = args.campaignId as string
   await requireMember(userId, campaignId, db)
 
-  const [campaign, openThreads, recentSessions, activeNPCs, playerCharacters, recentEvents] = await Promise.all([
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
+
+  const [
+    campaign,
+    openThreads,
+    recentSessions,
+    activeNPCs,
+    playerCharacters,
+    recentEvents,
+    counts,
+  ] = await Promise.all([
     db.campaign.findUnique({
       where: { id: campaignId },
-      select: {
-        name: true,
-        description: true,
-        settings: true,
-        _count: {
-          select: { npcs: true, playerCharacters: true, locations: true, factions: true, threads: true, clues: true, sessions: true },
-        },
-      },
+      select: { name: true, description: true, settings: true },
     }),
     db.thread.findMany({
-      where: { campaignId, deletedAt: null, status: { in: ['OPEN', 'DORMANT'] } },
+      where: { ...ownedBy, deletedAt: null, status: { in: ['OPEN', 'DORMANT'] } },
       select: { id: true, title: true, urgency: true, status: true, description: true },
       orderBy: { urgency: 'asc' },
     }),
     db.gameSession.findMany({
-      where: { campaignId },
+      where: ownedBy,
       select: { id: true, number: true, title: true, status: true, aiSummary: true, playedOn: true },
       orderBy: { number: 'desc' },
       take: 3,
     }),
     db.nPC.findMany({
-      where: { campaignId, deletedAt: null, status: 'ACTIVE' },
+      where: { ...ownedBy, deletedAt: null, status: 'ACTIVE' },
       select: { id: true, name: true, description: true },
       take: 10,
     }),
     db.playerCharacter.findMany({
-      where: { campaignId, deletedAt: null },
+      where: { ...ownedBy, deletedAt: null },
       select: {
         id: true,
         name: true,
@@ -48,17 +51,30 @@ export async function handler(
       },
     }),
     db.worldEvent.findMany({
-      where: { campaignId },
+      where: ownedBy,
       select: { title: true, description: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take: 5,
     }),
+    Promise.all([
+      db.nPC.count({ where: { ...ownedBy, deletedAt: null } }),
+      db.playerCharacter.count({ where: { ...ownedBy, deletedAt: null } }),
+      db.location.count({ where: { ...ownedBy, deletedAt: null } }),
+      db.faction.count({ where: { ...ownedBy, deletedAt: null } }),
+      db.thread.count({ where: { ...ownedBy, deletedAt: null } }),
+      db.clue.count({ where: { ...ownedBy, deletedAt: null } }),
+      db.gameSession.count({ where: ownedBy }),
+    ]).then(([npcs, playerCharacters, locations, factions, threads, clues, sessions]) => ({
+      npcs, playerCharacters, locations, factions, threads, clues, sessions,
+    })),
   ])
+
+  const summary = campaign ? { ...campaign, _count: counts } : null
 
   return {
     content: [{
       type: 'text',
-      text: JSON.stringify({ campaign, openThreads, recentSessions, activeNPCs, playerCharacters, recentWorldEvents: recentEvents }, null, 2),
+      text: JSON.stringify({ campaign: summary, openThreads, recentSessions, activeNPCs, playerCharacters, recentWorldEvents: recentEvents }, null, 2),
     }],
   }
 }

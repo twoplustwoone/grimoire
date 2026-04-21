@@ -36,7 +36,7 @@ export default async function NPCsPage({ params }: Props) {
   if (!membership) notFound()
 
   const npcList = await prisma.nPC.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       location: { select: { id: true, name: true } },
       factionMemberships: {

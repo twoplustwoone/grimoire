@@ -22,7 +22,6 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { BookOpen, Eye, EyeOff, MoreHorizontal, Trash2, Pencil, Check, X } from 'lucide-react'
-import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface InfoNode {
   id: string
@@ -159,7 +158,7 @@ export function InformationNodes({ nodes: initialNodes, campaignId }: Props) {
                         />
                       </div>
                     </div>
-                    <MentionRenderer content={node.content} campaignId={campaignId} />
+                    <p className="text-sm whitespace-pre-wrap">{node.content}</p>
                     <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
                       {visConfig.label}
                     </p>

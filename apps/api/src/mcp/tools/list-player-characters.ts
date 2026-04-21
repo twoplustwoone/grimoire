@@ -10,7 +10,7 @@ export async function handler(
   await requireMember(userId, campaignId, db)
 
   const pcs = await db.playerCharacter.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       linkedUser: { select: { id: true, name: true, email: true } },
     },

@@ -45,19 +45,16 @@ model Campaign {
   updatedAt   DateTime       @updatedAt
 
   memberships      CampaignMembership[]
-  sessions         GameSession[]
-  npcs             NPC[]
-  playerCharacters PlayerCharacter[]
-  locations        Location[]
-  factions         Faction[]
-  threads          Thread[]
-  clues            Clue[]
-  worldEvents      WorldEvent[]
   customFieldDefs  CustomFieldDefinition[]
   inWorldDates     InWorldDate[]
   relationships    Relationship[]
   reveals          EntityReveal[]
   invites          CampaignInvite[]
+}
+
+enum OwnerType {
+  CAMPAIGN
+  JOURNAL
 }
 
 enum CampaignStatus {
@@ -91,7 +88,8 @@ enum MemberRole {
 
 model GameSession {
   id         String        @id @default(cuid())
-  campaignId String
+  ownerType  OwnerType
+  ownerId    String
   title      String?
   number     Int
   playedOn   DateTime?
@@ -102,13 +100,12 @@ model GameSession {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  campaign     Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   inWorldDates SessionInWorldDate[]
   entityTags   SessionEntityTag[]
   clues        Clue[]
   worldEvents  WorldEvent[]
 
-  @@unique([campaignId, number])
+  @@unique([ownerType, ownerId, number])
   @@map("Session")
 }
 
@@ -158,7 +155,8 @@ model InWorldDate {
 
 model NPC {
   id          String       @id @default(cuid())
-  campaignId  String
+  ownerType   OwnerType
+  ownerId     String
   name        String
   description String?
   status      EntityStatus @default(ACTIVE)
@@ -167,26 +165,29 @@ model NPC {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  campaign           Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   location           Location?           @relation(fields: [locationId], references: [id])
   factionMemberships FactionMembership[]
+
+  @@index([ownerType, ownerId])
 }
 
 model PlayerCharacter {
   id           String                @id @default(cuid())
-  campaignId   String
+  ownerType    OwnerType
+  ownerId      String
   linkedUserId String?
   name         String
   description  String?
   status       PlayerCharacterStatus @default(ACTIVE)
+  externalUrl  String?
   deletedAt    DateTime?
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  linkedUser User?    @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+  linkedUser User? @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+  invites    CampaignInvite[]
 
-  @@index([campaignId])
+  @@index([ownerType, ownerId])
   @@index([linkedUserId])
 }
 
@@ -198,7 +199,8 @@ enum PlayerCharacterStatus {
 
 model Location {
   id          String       @id @default(cuid())
-  campaignId  String
+  ownerType   OwnerType
+  ownerId     String
   name        String
   description String?
   status      EntityStatus @default(ACTIVE)
@@ -207,15 +209,17 @@ model Location {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  campaign Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   parent   Location?  @relation("LocationHierarchy", fields: [parentId], references: [id])
   children Location[] @relation("LocationHierarchy")
   npcs     NPC[]
+
+  @@index([ownerType, ownerId])
 }
 
 model Faction {
   id          String       @id @default(cuid())
-  campaignId  String
+  ownerType   OwnerType
+  ownerId     String
   name        String
   description String?
   agenda      String?
@@ -224,8 +228,9 @@ model Faction {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  campaign    Campaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   memberships FactionMembership[]
+
+  @@index([ownerType, ownerId])
 }
 
 model FactionMembership {
@@ -242,7 +247,8 @@ model FactionMembership {
 
 model Thread {
   id           String        @id @default(cuid())
-  campaignId   String
+  ownerType    OwnerType
+  ownerId      String
   title        String
   description  String?
   status       ThreadStatus  @default(OPEN)
@@ -252,8 +258,9 @@ model Thread {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  campaign   Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   entityTags ThreadEntityTag[]
+
+  @@index([ownerType, ownerId])
 }
 
 enum ThreadStatus {
@@ -283,7 +290,8 @@ model ThreadEntityTag {
 
 model Clue {
   id                    String    @id @default(cuid())
-  campaignId            String
+  ownerType             OwnerType
+  ownerId               String
   title                 String
   description           String?
   discoveredInSessionId String?
@@ -291,22 +299,25 @@ model Clue {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  campaign            Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   discoveredInSession GameSession? @relation(fields: [discoveredInSessionId], references: [id])
+
+  @@index([ownerType, ownerId])
 }
 
 model WorldEvent {
   id            String    @id @default(cuid())
-  campaignId    String
+  ownerType     OwnerType
+  ownerId       String
   title         String
   description   String?
   inWorldDateId String?
   sessionId     String?
   createdAt     DateTime  @default(now())
 
-  campaign    Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   inWorldDate InWorldDate? @relation(fields: [inWorldDateId], references: [id])
   session     GameSession? @relation(fields: [sessionId], references: [id])
+
+  @@index([ownerType, ownerId])
 }
 
 enum EntityStatus {
@@ -338,7 +349,7 @@ model Note {
   campaignId String
   sessionId  String?
   authorId   String
-  content    String
+  content    Json
   mentions   Json?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
@@ -450,11 +461,13 @@ model CampaignInvite {
   email      String
   token      String     @unique @default(cuid())
   role       MemberRole @default(PLAYER)
+  pcId       String?
   expiresAt  DateTime
   acceptedAt DateTime?
   createdAt  DateTime   @default(now())
 
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  pc       PlayerCharacter? @relation(fields: [pcId], references: [id], onDelete: SetNull)
 
   @@index([campaignId])
   @@index([token])

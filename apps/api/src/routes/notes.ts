@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import { docToPlainText } from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const notes = new Hono()
@@ -23,13 +24,14 @@ notes.post('/:noteId/promote', async (c) => {
 
   const body = await c.req.json()
 
+  const plaintext = docToPlainText(note.content)
   const infoNode = await prisma.informationNode.create({
     data: {
       entityType: note.entityType,
       entityId: note.entityId,
       campaignId,
-      title: body.title?.trim() ?? note.content.slice(0, 60),
-      content: note.content,
+      title: body.title?.trim() ?? plaintext.slice(0, 60),
+      content: plaintext,
       visibility: 'GM_ONLY',
     },
   })

@@ -1,5 +1,10 @@
 import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
+import {
+  docToPlainText,
+  extractMentionsFromDoc,
+  isProseMirrorDoc,
+} from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 
 const factions = new Hono()
@@ -15,7 +20,7 @@ factions.get('/', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const list = await prisma.faction.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       memberships: { include: { npc: { select: { id: true, name: true } } } },
     },
@@ -34,7 +39,8 @@ factions.post('/', async (c) => {
 
   const faction = await prisma.faction.create({
     data: {
-      campaignId,
+      ownerType: 'CAMPAIGN',
+      ownerId: campaignId,
       name: body.name.trim(),
       description: body.description?.trim() ?? null,
       agenda: body.agenda?.trim() ?? null,
@@ -55,7 +61,7 @@ factions.get('/:factionId', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const faction = await prisma.faction.findFirst({
-    where: { id: factionId, campaignId, deletedAt: null },
+    where: { id: factionId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       memberships: { include: { npc: { select: { id: true, name: true, status: true } } } },
     },
@@ -74,7 +80,7 @@ factions.patch('/:factionId', async (c) => {
   const factionId = c.req.param('factionId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.faction.findFirst({ where: { id: factionId, campaignId, deletedAt: null } })
+  const existing = await prisma.faction.findFirst({ where: { id: factionId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
@@ -111,12 +117,16 @@ factions.patch('/:factionId/notes/:noteId', async (c) => {
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.update({
     where: { id: noteId },
-    data: { content: trimmed },
+    data: { content: body.content, mentions },
   })
 
   await prisma.changelogEntry.create({
@@ -126,8 +136,8 @@ factions.patch('/:factionId/notes/:noteId', async (c) => {
       campaignId,
       authorId: user.id,
       field: 'note',
-      oldValue: existing.content,
-      newValue: trimmed,
+      oldValue: docToPlainText(existing.content),
+      newValue: plaintext,
       note: 'Note edited',
     },
   })
@@ -154,16 +164,21 @@ factions.post('/:factionId/notes', async (c) => {
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
-  if (!body.content?.trim()) return c.json({ error: 'Content is required' }, 400)
+  if (!isProseMirrorDoc(body.content)) {
+    return c.json({ error: 'content must be a ProseMirror doc' }, 400)
+  }
+  const plaintext = docToPlainText(body.content).trim()
+  if (!plaintext) return c.json({ error: 'Content is required' }, 400)
 
-  const trimmed = body.content.trim()
+  const mentions = extractMentionsFromDoc(body.content)
   const note = await prisma.note.create({
     data: {
       entityType: 'FACTION',
       entityId: factionId,
       campaignId,
       authorId: user.id,
-      content: trimmed,
+      content: body.content,
+      mentions,
     },
   })
 
@@ -175,7 +190,7 @@ factions.post('/:factionId/notes', async (c) => {
       authorId: user.id,
       field: 'note',
       oldValue: null,
-      newValue: trimmed,
+      newValue: plaintext,
       note: 'Note added',
     },
   })
@@ -189,7 +204,7 @@ factions.delete('/:factionId', async (c) => {
   const factionId = c.req.param('factionId')!
   if (!await getMembership(user.id, campaignId)) return c.json({ error: 'Not found' }, 404)
 
-  const existing = await prisma.faction.findFirst({ where: { id: factionId, campaignId, deletedAt: null } })
+  const existing = await prisma.faction.findFirst({ where: { id: factionId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null } })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   await prisma.faction.update({ where: { id: factionId }, data: { deletedAt: new Date() } })

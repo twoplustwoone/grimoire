@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { hashPassword } from '@better-auth/utils/password'
 import { prisma } from './index.js'
 import { createDemoCampaign } from './demo-campaign.js'
+import { plainTextToDoc } from './prosemirror.js'
 
 async function ensurePlayerAccount(email: string, name: string, password: string) {
   const user = await prisma.user.upsert({
@@ -65,10 +66,9 @@ async function main() {
     console.log('🧹 Cleared existing seed campaign')
   }
 
-  // Create user and account directly — no running server needed
   const passwordHash = await hashPassword('gm@grimoire.dev')
 
-  let user = await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { email: 'gm@grimoire.dev' },
     update: {},
     create: {
@@ -78,7 +78,6 @@ async function main() {
     },
   })
 
-  // Always recreate the account row to ensure the hash is current
   await prisma.account.deleteMany({
     where: { userId: user.id, providerId: 'credential' },
   })
@@ -119,31 +118,33 @@ async function main() {
 
   console.log(`✅ Created campaign: ${campaign.name}`)
 
-  const [waterdeep, trollskull, xanatharGuild, yawningPortal, dockWard] = await Promise.all([
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'Waterdeep', description: 'The City of Splendors, a bustling metropolis on the Sword Coast.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'Trollskull Manor', description: 'A formerly haunted tavern gifted to the party. Now their base of operations in the North Ward.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'Xanathar Guild Hideout', description: 'A labyrinthine underground complex beneath Waterdeep, home to the beholder crime lord.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'The Yawning Portal', description: 'A famous tavern built around the entrance to Undermountain. Run by Durnan, a retired adventurer.' } }),
-    prisma.location.create({ data: { campaignId: campaign.id, name: 'Dock Ward', description: 'The rough-and-tumble waterfront district, home to sailors, fishmongers, and thieves.' } }),
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaign.id }
+
+  const [, trollskull, xanatharGuild, yawningPortal] = await Promise.all([
+    prisma.location.create({ data: { ...ownedBy, name: 'Waterdeep', description: 'The City of Splendors, a bustling metropolis on the Sword Coast.' } }),
+    prisma.location.create({ data: { ...ownedBy, name: 'Trollskull Manor', description: 'A formerly haunted tavern gifted to the party. Now their base of operations in the North Ward.' } }),
+    prisma.location.create({ data: { ...ownedBy, name: 'Xanathar Guild Hideout', description: 'A labyrinthine underground complex beneath Waterdeep, home to the beholder crime lord.' } }),
+    prisma.location.create({ data: { ...ownedBy, name: 'The Yawning Portal', description: 'A famous tavern built around the entrance to Undermountain. Run by Durnan, a retired adventurer.' } }),
+    prisma.location.create({ data: { ...ownedBy, name: 'Dock Ward', description: 'The rough-and-tumble waterfront district, home to sailors, fishmongers, and thieves.' } }),
   ])
 
   console.log('✅ Created locations')
 
   const [xanatharFaction, zhentarim, harpers] = await Promise.all([
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'Xanathar Guild', description: 'A powerful thieves guild led by the paranoid beholder Xanathar.', agenda: 'Control Waterdeep\'s criminal underworld and recover the stolen gold.' } }),
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'Zhentarim', description: 'A mercenary organization operating in the shadows of Waterdeep.', agenda: 'Expand influence in Waterdeep through business and intimidation.' } }),
-    prisma.faction.create({ data: { campaignId: campaign.id, name: 'Harpers', description: 'A secret organization dedicated to preserving freedom and fighting tyranny.', agenda: 'Protect the innocent and ensure the gold returns to the city coffers.' } }),
+    prisma.faction.create({ data: { ...ownedBy, name: 'Xanathar Guild', description: 'A powerful thieves guild led by the paranoid beholder Xanathar.', agenda: 'Control Waterdeep\'s criminal underworld and recover the stolen gold.' } }),
+    prisma.faction.create({ data: { ...ownedBy, name: 'Zhentarim', description: 'A mercenary organization operating in the shadows of Waterdeep.', agenda: 'Expand influence in Waterdeep through business and intimidation.' } }),
+    prisma.faction.create({ data: { ...ownedBy, name: 'Harpers', description: 'A secret organization dedicated to preserving freedom and fighting tyranny.', agenda: 'Protect the innocent and ensure the gold returns to the city coffers.' } }),
   ])
 
   console.log('✅ Created factions')
 
-  const [volo, durnan, laeral, xanathar, mirt, yagra] = await Promise.all([
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Volo', description: 'The famous author Volothamp Geddarm, an eccentric and often unreliable guide to Waterdeep.', locationId: yawningPortal.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Durnan', description: 'The gruff owner of the Yawning Portal. Former adventurer, keeps his past close to his chest.', locationId: yawningPortal.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Laeral Silverhand', description: 'The Open Lord of Waterdeep. One of the Seven Sisters, an incredibly powerful archmage.', status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Xanathar', description: 'A paranoid beholder crime lord who rules the Xanathar Guild. Obsessed with his goldfish Sylgar.', locationId: xanatharGuild.id, status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Mirt', description: 'A retired adventurer and moneylender known as Mirt the Merciless. Secret Harper operative.', status: 'ACTIVE' } }),
-    prisma.nPC.create({ data: { campaignId: campaign.id, name: 'Yagra Stonefist', description: 'A half-orc Zhentarim enforcer the party met at the Yawning Portal. Pragmatic and direct.', locationId: yawningPortal.id, status: 'ACTIVE' } }),
+  const [volo, durnan, , xanathar, mirt, yagra] = await Promise.all([
+    prisma.nPC.create({ data: { ...ownedBy, name: 'Volo', description: 'The famous author Volothamp Geddarm, an eccentric and often unreliable guide to Waterdeep.', locationId: yawningPortal.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ...ownedBy, name: 'Durnan', description: 'The gruff owner of the Yawning Portal. Former adventurer, keeps his past close to his chest.', locationId: yawningPortal.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ...ownedBy, name: 'Laeral Silverhand', description: 'The Open Lord of Waterdeep. One of the Seven Sisters, an incredibly powerful archmage.', status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ...ownedBy, name: 'Xanathar', description: 'A paranoid beholder crime lord who rules the Xanathar Guild. Obsessed with his goldfish Sylgar.', locationId: xanatharGuild.id, status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ...ownedBy, name: 'Mirt', description: 'A retired adventurer and moneylender known as Mirt the Merciless. Secret Harper operative.', status: 'ACTIVE' } }),
+    prisma.nPC.create({ data: { ...ownedBy, name: 'Yagra Stonefist', description: 'A half-orc Zhentarim enforcer the party met at the Yawning Portal. Pragmatic and direct.', locationId: yawningPortal.id, status: 'ACTIVE' } }),
   ])
 
   console.log('✅ Created NPCs')
@@ -163,9 +164,9 @@ async function main() {
   console.log('✅ Created relationships')
 
   const [goldThread, trollskullThread, xanatharThread] = await Promise.all([
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'The Missing 500,000 Gold Dragons', description: 'A massive cache of gold meant for the city coffers has been stolen. Multiple factions are hunting for it.', status: 'OPEN', urgency: 'HIGH' } }),
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'Restore Trollskull Manor', description: 'The party has been given a rundown tavern. They need to renovate it and deal with the resident poltergeist.', status: 'OPEN', urgency: 'MEDIUM' } }),
-    prisma.thread.create({ data: { campaignId: campaign.id, title: 'Xanathar Surveillance', description: 'The Xanathar Guild has been watching the party since the Yawning Portal brawl.', status: 'OPEN', urgency: 'HIGH' } }),
+    prisma.thread.create({ data: { ...ownedBy, title: 'The Missing 500,000 Gold Dragons', description: 'A massive cache of gold meant for the city coffers has been stolen. Multiple factions are hunting for it.', status: 'OPEN', urgency: 'HIGH' } }),
+    prisma.thread.create({ data: { ...ownedBy, title: 'Restore Trollskull Manor', description: 'The party has been given a rundown tavern. They need to renovate it and deal with the resident poltergeist.', status: 'OPEN', urgency: 'MEDIUM' } }),
+    prisma.thread.create({ data: { ...ownedBy, title: 'Xanathar Surveillance', description: 'The Xanathar Guild has been watching the party since the Yawning Portal brawl.', status: 'OPEN', urgency: 'HIGH' } }),
   ])
 
   await Promise.all([
@@ -178,16 +179,16 @@ async function main() {
   console.log('✅ Created threads')
 
   const [, , stoneOfGolorrClue] = await Promise.all([
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Zhentarim Safe House', description: 'A Zhentarim agent let slip that they have a safe house somewhere in the Dock Ward.' } }),
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'Xanathar\'s Paranoia', description: 'Xanathar trusts almost no one. Anyone wanting an audience must bring a gift — ideally information.' } }),
-    prisma.clue.create({ data: { campaignId: campaign.id, title: 'The Stone of Golorr', description: 'Rumors of an aboleth-created artifact that holds the location of the hidden vault.' } }),
+    prisma.clue.create({ data: { ...ownedBy, title: 'The Zhentarim Safe House', description: 'A Zhentarim agent let slip that they have a safe house somewhere in the Dock Ward.' } }),
+    prisma.clue.create({ data: { ...ownedBy, title: 'Xanathar\'s Paranoia', description: 'Xanathar trusts almost no one. Anyone wanting an audience must bring a gift — ideally information.' } }),
+    prisma.clue.create({ data: { ...ownedBy, title: 'The Stone of Golorr', description: 'Rumors of an aboleth-created artifact that holds the location of the hidden vault.' } }),
   ])
 
   console.log('✅ Created clues')
 
   const session1 = await prisma.gameSession.create({
     data: {
-      campaignId: campaign.id,
+      ...ownedBy,
       number: 1,
       title: 'The Yawning Portal Brawl',
       playedOn: new Date('2024-01-15'),
@@ -207,14 +208,14 @@ async function main() {
   ])
 
   await Promise.all([
-    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: user.id, content: 'Players really engaged with Durnan — consider making him a recurring figure who gives subtle quest hooks' } }),
-    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: user.id, content: 'Yagra made an impression — players asked about her backstory. Plant Zhentarim connection hints next session' } }),
-    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: user.id, content: 'Remember: Xanathar Guild watching the party after the brawl' } }),
+    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: user.id, content: plainTextToDoc('Players really engaged with Durnan — consider making him a recurring figure who gives subtle quest hooks') } }),
+    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: user.id, content: plainTextToDoc('Yagra made an impression — players asked about her backstory. Plant Zhentarim connection hints next session') } }),
+    prisma.note.create({ data: { entityType: 'SESSION', entityId: session1.id, campaignId: campaign.id, sessionId: session1.id, authorId: user.id, content: plainTextToDoc('Remember: Xanathar Guild watching the party after the brawl') } }),
   ])
 
   await prisma.gameSession.create({
     data: {
-      campaignId: campaign.id,
+      ...ownedBy,
       number: 2,
       title: 'Finding Floon',
       status: 'PLANNED',
@@ -223,9 +224,6 @@ async function main() {
 
   console.log('✅ Created sessions')
 
-  // User.name is the player's real-world handle; PlayerCharacter.name below
-  // is the in-fiction character they play. These are intentionally distinct
-  // so UI that lists "Player · Character" doesn't render as a tautology.
   const serafine = await ensurePlayerAccount('serafine@grimoire.dev', 'Jordan Reyes', 'password')
   const rook = await ensurePlayerAccount('rook@grimoire.dev', 'Sam Okafor', 'password')
   const maren = await ensurePlayerAccount('maren@grimoire.dev', 'Alex Park', 'password')
@@ -244,7 +242,7 @@ async function main() {
   await Promise.all([
     prisma.playerCharacter.create({
       data: {
-        campaignId: campaign.id,
+        ...ownedBy,
         linkedUserId: serafine.id,
         name: 'Serafine Ashveil',
         description: 'A hedge-wizard from the Dock Ward who freelances as a spellbook restorer. Knows more about Waterdeep\'s back alleys than she lets on.',
@@ -253,7 +251,7 @@ async function main() {
     }),
     prisma.playerCharacter.create({
       data: {
-        campaignId: campaign.id,
+        ...ownedBy,
         linkedUserId: rook.id,
         name: 'Rook Valdris',
         description: 'A half-elf rogue with a Zhentarim past he\'s actively trying to bury. Sharp tongue, sharper knives.',
@@ -262,7 +260,7 @@ async function main() {
     }),
     prisma.playerCharacter.create({
       data: {
-        campaignId: campaign.id,
+        ...ownedBy,
         linkedUserId: maren.id,
         name: 'Maren Solis',
         description: 'A paladin of Tyr who joined the party after a failed investigation into Xanathar Guild corruption in the Watch.',

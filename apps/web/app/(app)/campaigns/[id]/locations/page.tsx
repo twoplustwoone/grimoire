@@ -29,7 +29,7 @@ export default async function LocationsPage({ params }: Props) {
   if (!membership) notFound()
 
   const list = await prisma.location.findMany({
-    where: { campaignId, deletedAt: null },
+    where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       parent: { select: { id: true, name: true } },
       npcs: { where: { deletedAt: null }, select: { id: true } },

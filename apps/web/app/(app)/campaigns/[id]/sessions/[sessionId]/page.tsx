@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, FileText } from 'lucide-react'
 import { SessionControls } from './session-controls'
 import { SessionEntityTagger } from '@/components/entities/session-entity-tagger'
-import { MentionRenderer } from '@/components/mentions/mention-renderer'
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
@@ -41,8 +40,9 @@ export default async function SessionDetailPage({ params }: Props) {
   })
   if (!membership) notFound()
 
+  const ownedBy = { ownerType: 'CAMPAIGN' as const, ownerId: campaignId }
   const gameSession = await prisma.gameSession.findFirst({
-    where: { id: sessionId, campaignId },
+    where: { id: sessionId, ...ownedBy },
     include: { entityTags: true },
   })
   if (!gameSession) notFound()
@@ -53,11 +53,11 @@ export default async function SessionDetailPage({ params }: Props) {
   })
 
   const [npcList, locationList, factionList, threadList, clueList] = await Promise.all([
-    prisma.nPC.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true } }),
-    prisma.location.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true } }),
-    prisma.faction.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, name: true } }),
-    prisma.thread.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true } }),
-    prisma.clue.findMany({ where: { campaignId, deletedAt: null }, select: { id: true, title: true } }),
+    prisma.nPC.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true } }),
+    prisma.location.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true } }),
+    prisma.faction.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, name: true } }),
+    prisma.thread.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, title: true } }),
+    prisma.clue.findMany({ where: { ...ownedBy, deletedAt: null }, select: { id: true, title: true } }),
   ])
 
   const availableEntities = [
@@ -140,9 +140,7 @@ export default async function SessionDetailPage({ params }: Props) {
             {gameSession.gmSummary && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">GM NOTES</p>
-                <p className="text-sm whitespace-pre-wrap">
-                  <MentionRenderer content={gameSession.gmSummary} campaignId={campaignId} />
-                </p>
+                <p className="text-sm whitespace-pre-wrap">{gameSession.gmSummary}</p>
               </div>
             )}
           </CardContent>

@@ -36,7 +36,7 @@ export default async function PlayerCharacterDetailPage({ params }: Props) {
   if (!membership) notFound()
 
   const pc = await prisma.playerCharacter.findFirst({
-    where: { id: pcId, campaignId, deletedAt: null },
+    where: { id: pcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       linkedUser: { select: { id: true, name: true, email: true } },
     },
