@@ -89,7 +89,7 @@ Places in the world. Self-referential via `parentId` — a tavern can be a child
 ```
 Location
 - parentId (self-referential) — optional parent location
-- status: ACTIVE | INACTIVE | DESTROYED | etc.
+- status: EntityStatus (shared with NPC and Faction)
 ```
 
 Locations can have NPCs assigned to them (via `NPC.locationId`) and show up as edges in the relationship graph.
@@ -121,6 +121,29 @@ A real-world session at the table. Has a session `number` (unique per campaign),
 Note: the Prisma model is `GameSession` but the database table is `Session` (via `@@map("Session")`). This avoids a naming collision with Better Auth's own `Session` model (which maps to the `session` table lowercase).
 
 `SessionEntityTag` connects sessions to every entity that appeared in them — NPCs, locations, factions, threads, clues. These tags are what the AI recap uses to build context, and what the relationship graph uses to draw session-entity edges.
+
+### Status enums at a glance
+
+The per-entity status fields don't each have their own enum. `EntityStatus` is shared across three models; the other two status-bearing models have their own enums.
+
+| Model            | Enum                    | Values                                           |
+|------------------|-------------------------|--------------------------------------------------|
+| NPC              | `EntityStatus`          | ACTIVE, INACTIVE, DEAD, DESTROYED, RETIRED       |
+| Location         | `EntityStatus`          | (same)                                           |
+| Faction          | `EntityStatus`          | (same)                                           |
+| PlayerCharacter  | `PlayerCharacterStatus` | ACTIVE, RETIRED, DECEASED                        |
+| Thread           | `ThreadStatus`          | OPEN, RESOLVED, DORMANT                          |
+| GameSession      | `SessionStatus`         | PLANNED, COMPLETED                               |
+| Campaign         | `CampaignStatus`        | ACTIVE, PAUSED, COMPLETED, ARCHIVED              |
+| Clue             | —                       | No status field                                  |
+| WorldEvent       | —                       | No status field                                  |
+
+### Model-shape gotchas
+
+A couple of fields that look like they should exist but don't — both tripped up MCP write-tool work:
+
+- `GameSession` has no `description` field. It has `title`, `gmSummary`, and `aiSummary`. Any generic "update description" flow needs to exclude `SESSION`.
+- `WorldEvent` has no `updatedAt` column (only `createdAt`). Any flow that returns "latest updated-at" needs to special-case it — or exclude it entirely if the return contract requires `updatedAt`.
 
 ---
 
