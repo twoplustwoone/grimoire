@@ -145,3 +145,70 @@ Claude project documents:
 Don't suggest or implement: character sheet mechanics (HP, stats, inventory),
 battle maps, virtual tabletop features, or generic note-taking unrelated to
 campaigns. Read VISION.md if you're unsure whether something belongs.
+
+## Database migrations
+
+Production is reached via `prisma migrate deploy`, not `migrate reset` — the
+deploy pipeline applies migrations sequentially against whatever data is in
+the Railway DB. "Pre-launch" does not mean "production gets nuked on every
+deploy"; it means there are no real users at risk. Rows still exist,
+migrations still apply to them, and failed migrations leave production in a
+partially-applied state because Prisma DDL is not transactional by default.
+
+Every migration on this project must be **data-preserving** and
+**idempotent**:
+
+**Data-preserving** — schema reshapes that change nullability or drop
+columns must be staged:
+
+1. `ADD` the new column as `NULL` (or with a default)
+2. `UPDATE` to backfill values from the old column (or another source)
+3. `ALTER ... SET NOT NULL` once backfill is complete
+4. `DROP` the old column
+
+Writing a migration as "ADD NOT NULL + DROP old column" in one step will
+pass on a freshly-nuked local DB and fail on any populated Railway DB. If
+`pnpm db:reset` is the only path tested, the migration is not verified.
+
+**Idempotent** — every DDL statement must be safe to replay from any
+partial state:
+
+- `DROP ... IF EXISTS` on drops (columns, indexes, constraints, types)
+- `ADD COLUMN IF NOT EXISTS` on adds
+- `CREATE INDEX IF NOT EXISTS` on indexes
+- `CREATE TYPE` wrapped in a `DO $$ ... IF NOT EXISTS (SELECT ... FROM pg_type WHERE ...) ... CREATE TYPE ... $$`
+
+Idempotence matters because a failed migration leaves artifacts committed
+(enum types, dropped FKs, partial column adds) that the retry will
+otherwise collide with. Without idempotence, every failure compounds into
+a second, different failure on retry.
+
+**Verification before declaring a migration shipped:**
+
+1. Local `pnpm db:reset` + seed (migration applies to empty DB)
+2. Local seed **with pre-migration data**, then run `prisma migrate deploy`
+   (migration applies to populated DB — this is what Railway actually does)
+3. Only then commit and push to Railway
+
+When a Railway migration does fail, clear the failed marker via
+`railway ssh` + `prisma migrate resolve --rolled-back <migration_name>`
+before pushing the fix. Do not try to re-deploy over a failed migration;
+Prisma will refuse and the retry won't even attempt.
+
+## Node `--experimental-strip-types` and relative imports
+
+Files consumed at API startup (anything in `packages/db/src/` that
+`apps/api` imports) run under Node's strip-types mode. Relative imports
+with explicit `.js` extensions do not auto-rewrite to `.ts` under
+strip-types — the runtime looks for `prosemirror.js` on disk and crashes
+with `Cannot find module`.
+
+For cross-file imports inside `packages/db/src/` that are consumed at API
+startup: use **package self-references** (e.g.,
+`import { ... } from '@grimoire/db/prosemirror'`) rather than relative
+imports. The exports map in `packages/db/package.json` resolves these
+correctly regardless of runtime.
+
+Relative `.js` imports are only safe in files that run exclusively under
+`tsx` (e.g., `seed.ts`). If in doubt, use the package self-reference — it
+works in both environments.
