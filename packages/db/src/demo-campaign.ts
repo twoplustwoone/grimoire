@@ -204,10 +204,68 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
-  await prisma.journal.create({
+  const serafineJournal = await prisma.journal.create({
     data: {
       ownerId: serafinePlayer.id,
       name: "Serafine's Journal",
+    },
+  })
+
+  // Seed two sessions with three captures total so the journal home
+  // has something to render on a fresh seed. All createdAt values are
+  // outside the 12h active-session window so manual testing of the
+  // "new session or continue?" dialog works out of the box.
+  const captureNow = Date.now()
+  const threeDaysAgo = new Date(captureNow - 3 * 24 * 60 * 60 * 1000)
+
+  const tavernSession = await prisma.gameSession.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      number: 1,
+      title: 'The Tavern',
+      playedOn: threeDaysAgo,
+    },
+  })
+
+  await prisma.journalCapture.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalSessionId: tavernSession.id,
+      content: plainTextToDoc(
+        "Met a cloaked figure at the bar. He wouldn't give his name but he knew too much about the murders. I'll remember the shape of the scar on his hand."
+      ),
+      createdAt: new Date(threeDaysAgo.getTime() + 60 * 60 * 1000),
+    },
+  })
+
+  await prisma.journalCapture.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalSessionId: tavernSession.id,
+      content: plainTextToDoc(
+        "Kael tried to pickpocket him. Didn't go well. The figure just smiled, drained his cup, and left. I think we've been marked."
+      ),
+      createdAt: new Date(threeDaysAgo.getTime() + 90 * 60 * 1000),
+    },
+  })
+
+  const untitledSession = await prisma.gameSession.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      number: 2,
+    },
+  })
+
+  await prisma.journalCapture.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalSessionId: untitledSession.id,
+      content: plainTextToDoc(
+        "Found the scar-handed man's tower. Runes etched in the door I've only seen in my grandmother's old books. Leaving now — don't trust myself not to knock."
+      ),
+      createdAt: new Date(captureNow - 20 * 60 * 60 * 1000),
     },
   })
 

@@ -23,6 +23,8 @@ import apiKeys from './routes/api-keys.js'
 import playerCharacters from './routes/player-characters.js'
 import members from './routes/members.js'
 import journals from './routes/journals.js'
+import journalSessions from './routes/journal-sessions.js'
+import journalCaptures from './routes/journal-captures.js'
 import { handleMcpRequest } from './mcp/handler.js'
 import oauth from './mcp/oauth-routes.js'
 
@@ -36,7 +38,7 @@ app.use('*', cors({
   credentials: true,
 }))
 
-app.on(['GET', 'POST'], '/api/auth/**', (c) => {
+app.on(['GET', 'POST'], '/api/auth/*', (c) => {
   return auth.handler(c.req.raw)
 })
 
@@ -44,6 +46,8 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 
 app.route('/campaigns', campaigns)
 app.route('/journals', journals)
+app.route('/journals/:id/sessions', journalSessions)
+app.route('/journals/:id/captures', journalCaptures)
 app.route('/campaigns/:campaignId/npcs', npcs)
 app.route('/campaigns/:campaignId/player-characters', playerCharacters)
 app.route('/campaigns/:campaignId/locations', locations)

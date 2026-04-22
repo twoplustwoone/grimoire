@@ -59,6 +59,12 @@ enum OwnerType {
   JOURNAL
 }
 
+enum StructuredStatus {
+  RAW
+  PARTIALLY_STRUCTURED
+  STRUCTURED
+}
+
 enum CampaignStatus {
   ACTIVE
   PAUSED
@@ -79,8 +85,27 @@ model Journal {
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
 
+  captures         JournalCapture[]
+
   @@index([ownerId])
   @@index([linkedCampaignId])
+}
+
+model JournalCapture {
+  id               String           @id @default(cuid())
+  journalId        String
+  journal          Journal          @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  journalSessionId String
+  journalSession   GameSession      @relation(fields: [journalSessionId], references: [id], onDelete: Cascade)
+  content          Json
+  mentions         Json?
+  structuredStatus StructuredStatus @default(RAW)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  @@index([journalId])
+  @@index([journalSessionId])
 }
 
 model CampaignMembership {
@@ -119,10 +144,11 @@ model GameSession {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  inWorldDates SessionInWorldDate[]
-  entityTags   SessionEntityTag[]
-  clues        Clue[]
-  worldEvents  WorldEvent[]
+  inWorldDates    SessionInWorldDate[]
+  entityTags      SessionEntityTag[]
+  clues           Clue[]
+  worldEvents     WorldEvent[]
+  journalCaptures JournalCapture[]
 
   @@unique([ownerType, ownerId, number])
   @@map("Session")

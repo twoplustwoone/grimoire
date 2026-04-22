@@ -10,11 +10,15 @@ import { cn } from '@/lib/utils'
 interface EditableFieldProps {
   value: string | null | undefined
   onSave: (value: string) => Promise<void>
-  type?: 'input' | 'textarea'
+  type?: 'input' | 'textarea' | 'date'
   placeholder?: string
   className?: string
   emptyText?: string
 }
+
+/** Callers store ISO date strings (YYYY-MM-DD). The native date input
+ *  accepts that format and returns it unchanged; display mode renders
+ *  `new Date(value).toLocaleDateString()`. */
 
 export function EditableField({
   value,
@@ -41,13 +45,17 @@ export function EditableField({
   }
 
   if (!editing) {
+    const display =
+      type === 'date' && value
+        ? new Date(value).toLocaleDateString()
+        : value
     return (
       <div
         className={cn('group flex items-start gap-2 cursor-pointer', className)}
         onClick={() => setEditing(true)}
       >
         <span className={cn('flex-1', !value && 'text-muted-foreground italic text-sm')}>
-          {value || emptyText}
+          {display || emptyText}
         </span>
         <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 shrink-0" />
       </div>
@@ -69,6 +77,7 @@ export function EditableField({
         />
       ) : (
         <Input
+          type={type === 'date' ? 'date' : 'text'}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={placeholder}

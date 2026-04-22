@@ -28,9 +28,13 @@ interface Props {
   className?: string
   onKeyDown?: (e: React.KeyboardEvent) => void
   onSave?: () => void
+  /** Enable the Mention extension + suggestion UI. Defaults to true.
+   *  Captures (J3) pass false — no journal entities exist to mention
+   *  until J6. */
+  allowMentions?: boolean
 }
 
-export function MentionInput({ value, onChange, placeholder, rows = 3, className, onSave }: Props) {
+export function MentionInput({ value, onChange, placeholder, rows = 3, className, onSave, allowMentions = true }: Props) {
   const params = useParams()
   const campaignId = params?.id as string | undefined
 
@@ -44,28 +48,36 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
         heading: { levels: [2, 3] },
       }),
       Placeholder.configure({
-        placeholder: placeholder ?? 'Write a note... (type @ to mention an entity)',
+        placeholder:
+          placeholder ??
+          (allowMentions
+            ? 'Write a note... (type @ to mention an entity)'
+            : 'What happened?'),
       }),
-      Mention.configure({
-        HTMLAttributes: {
-          class: 'mention-chip',
-        },
-        renderHTML({ node }) {
-          const colorClass = getEntityChipClasses(node.attrs.type ?? 'NPC')
-          return [
-            'span',
-            {
-              class: `inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium mx-0.5 cursor-default select-none ${colorClass}`,
-              'data-mention-id': node.attrs.id,
-              'data-mention-type': node.attrs.type,
-            },
-            `@${node.attrs.name ?? node.attrs.label}`,
+      ...(allowMentions
+        ? [
+            Mention.configure({
+              HTMLAttributes: {
+                class: 'mention-chip',
+              },
+              renderHTML({ node }) {
+                const colorClass = getEntityChipClasses(node.attrs.type ?? 'NPC')
+                return [
+                  'span',
+                  {
+                    class: `inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium mx-0.5 cursor-default select-none ${colorClass}`,
+                    'data-mention-id': node.attrs.id,
+                    'data-mention-type': node.attrs.type,
+                  },
+                  `@${node.attrs.name ?? node.attrs.label}`,
+                ]
+              },
+              suggestion: (campaignId
+                ? createMentionSuggestion(campaignId)
+                : undefined) as MentionOptions['suggestion'] | undefined,
+            }),
           ]
-        },
-        suggestion: (campaignId
-          ? createMentionSuggestion(campaignId)
-          : undefined) as MentionOptions['suggestion'] | undefined,
-      }),
+        : []),
     ],
     content: value ?? emptyDoc(),
     onUpdate: ({ editor }) => {
