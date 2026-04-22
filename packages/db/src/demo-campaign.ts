@@ -4,7 +4,7 @@ import {
   plainTextToDoc,
   type ProseMirrorDoc,
   type ProseMirrorNode,
-} from './prosemirror.js'
+} from '@grimoire/db/prosemirror'
 
 function mentionNode(name: string, entityType: string, entityId: string): ProseMirrorNode {
   return {
