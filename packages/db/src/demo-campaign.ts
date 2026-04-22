@@ -204,6 +204,13 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
+  await prisma.journal.create({
+    data: {
+      ownerId: serafinePlayer.id,
+      name: "Serafine's Journal",
+    },
+  })
+
   const kaelPlayer = await prisma.user.upsert({
     where: { email: 'kael@grimoire.dev' },
     update: {},

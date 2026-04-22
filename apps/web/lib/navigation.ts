@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Notebook,
   Users,
   UserCircle,
   MapPin,
@@ -26,6 +27,7 @@ export interface NavItem {
 
 export const topLevelNavigation: NavItem[] = [
   { name: 'Campaigns', href: '/campaigns', icon: BookOpen },
+  { name: 'Journals', href: '/journals', icon: Notebook },
 ]
 
 export const campaignNavigation: NavItem[] = [

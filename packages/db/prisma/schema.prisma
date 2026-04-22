@@ -30,6 +30,7 @@ model User {
   oauthAccessTokens  OAuthAccessToken[]
   oauthRefreshTokens OAuthRefreshToken[]
   playerCharacters   PlayerCharacter[]
+  journals           Journal[]
 }
 
 // ==================== CAMPAIGN ====================
@@ -50,6 +51,7 @@ model Campaign {
   relationships    Relationship[]
   reveals          EntityReveal[]
   invites          CampaignInvite[]
+  linkedJournals   Journal[]
 }
 
 enum OwnerType {
@@ -62,6 +64,23 @@ enum CampaignStatus {
   PAUSED
   COMPLETED
   ARCHIVED
+}
+
+// ==================== JOURNAL ====================
+
+model Journal {
+  id               String    @id @default(cuid())
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  linkedCampaignId String?
+  linkedCampaign   Campaign? @relation(fields: [linkedCampaignId], references: [id], onDelete: SetNull)
+  name             String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@index([ownerId])
+  @@index([linkedCampaignId])
 }
 
 model CampaignMembership {

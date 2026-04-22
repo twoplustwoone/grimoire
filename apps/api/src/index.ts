@@ -22,6 +22,7 @@ import reveals from './routes/reveals.js'
 import apiKeys from './routes/api-keys.js'
 import playerCharacters from './routes/player-characters.js'
 import members from './routes/members.js'
+import journals from './routes/journals.js'
 import { handleMcpRequest } from './mcp/handler.js'
 import oauth from './mcp/oauth-routes.js'
 
@@ -42,6 +43,7 @@ app.on(['GET', 'POST'], '/api/auth/**', (c) => {
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
 app.route('/campaigns', campaigns)
+app.route('/journals', journals)
 app.route('/campaigns/:campaignId/npcs', npcs)
 app.route('/campaigns/:campaignId/player-characters', playerCharacters)
 app.route('/campaigns/:campaignId/locations', locations)
