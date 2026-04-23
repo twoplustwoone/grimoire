@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { emptyDoc, type ProseMirrorDoc } from '@grimoire/db/prosemirror'
 import {
@@ -34,25 +34,57 @@ interface Props {
   onOpenChange: (open: boolean) => void
 }
 
+interface EditorBodyHandle {
+  tryClose: () => void
+}
+
 export function CaptureEditorSheet(props: Props) {
   const { open, onOpenChange } = props
+  const bodyRef = useRef<EditorBodyHandle | null>(null)
+
+  // Route every Radix-initiated close (X button, Escape, outside
+  // click) through EditorBody's dirty-check. Cancel already goes
+  // through the same handle; save and "Discard" use forceClose.
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      onOpenChange(true)
+      return
+    }
+    if (bodyRef.current) {
+      bodyRef.current.tryClose()
+      return
+    }
+    onOpenChange(false)
+  }
+
+  function forceClose() {
+    onOpenChange(false)
+  }
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="h-[90vh] max-h-[90vh] flex flex-col">
-        {open && <EditorBody {...props} />}
+        {open && <EditorBody ref={bodyRef} forceClose={forceClose} {...props} />}
       </SheetContent>
     </Sheet>
   )
 }
 
-function EditorBody({
-  journalId,
-  journalSessionId,
-  captureId,
-  initialContent,
-  sessionLabel,
-  onOpenChange,
-}: Props) {
+interface EditorBodyProps extends Props {
+  forceClose: () => void
+}
+
+const EditorBody = forwardRef<EditorBodyHandle, EditorBodyProps>(function EditorBody(
+  {
+    journalId,
+    journalSessionId,
+    captureId,
+    initialContent,
+    sessionLabel,
+    forceClose,
+  },
+  ref,
+) {
   const router = useRouter()
   const seed: ProseMirrorDoc = (initialContent as ProseMirrorDoc | null) ?? emptyDoc()
   const [draft, setDraft] = useState<ProseMirrorDoc>(seed)
@@ -61,6 +93,16 @@ function EditorBody({
   const [confirmDiscard, setConfirmDiscard] = useState(false)
 
   const isDirty = JSON.stringify(draft) !== JSON.stringify(seed)
+
+  function tryClose() {
+    if (isDirty) {
+      setConfirmDiscard(true)
+    } else {
+      forceClose()
+    }
+  }
+
+  useImperativeHandle(ref, () => ({ tryClose }))
 
   async function handleSave() {
     setSaving(true)
@@ -85,15 +127,7 @@ function EditorBody({
       return
     }
     router.refresh()
-    onOpenChange(false)
-  }
-
-  function requestClose() {
-    if (isDirty) {
-      setConfirmDiscard(true)
-    } else {
-      onOpenChange(false)
-    }
+    forceClose()
   }
 
   return (
@@ -116,7 +150,7 @@ function EditorBody({
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <SheetFooter>
-        <Button variant="outline" onClick={requestClose} disabled={saving}>
+        <Button variant="outline" onClick={tryClose} disabled={saving}>
           Cancel
         </Button>
         <Button onClick={handleSave} disabled={saving}>
@@ -137,7 +171,7 @@ function EditorBody({
             <AlertDialogAction
               onClick={() => {
                 setConfirmDiscard(false)
-                onOpenChange(false)
+                forceClose()
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -148,4 +182,4 @@ function EditorBody({
       </AlertDialog>
     </>
   )
-}
+})
