@@ -15,12 +15,23 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { journalId } = await params
-  const journal = await prisma.journal.findUnique({
-    where: { id: journalId },
-    select: { owner: { select: { name: true, email: true } } },
-  })
-  const name = journal?.owner.name ?? journal?.owner.email ?? 'Player'
+  const { id: campaignId, journalId } = await params
+  const [journal, mirrorPc] = await Promise.all([
+    prisma.journal.findUnique({
+      where: { id: journalId },
+      select: { owner: { select: { name: true, email: true } } },
+    }),
+    prisma.playerCharacter.findFirst({
+      where: {
+        ownerType: 'JOURNAL',
+        ownerId: journalId,
+        deletedAt: null,
+        journalMirror: { campaignPc: { ownerId: campaignId } },
+      },
+      select: { name: true },
+    }),
+  ])
+  const name = mirrorPc?.name ?? journal?.owner.name ?? journal?.owner.email ?? 'Player'
   return { title: `${name}'s journal — Shared` }
 }
 
@@ -99,7 +110,21 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
     select: { id: true, name: true, description: true },
   })
 
+  // Resolve the mirrored PC independent of the share filter above —
+  // we want the GM-facing title to use the PC name even when only
+  // captures are shared (backstory itself may not be).
+  const mirrorPc = await prisma.playerCharacter.findFirst({
+    where: {
+      ownerType: 'JOURNAL',
+      ownerId: journal.id,
+      deletedAt: null,
+      journalMirror: { campaignPc: { ownerId: campaignId } },
+    },
+    select: { name: true },
+  })
+
   const ownerName = journal.owner.name ?? journal.owner.email
+  const displayName = mirrorPc?.name ?? ownerName
   const pc = pcs[0] ?? null
 
   type SessionBlock = {
@@ -139,10 +164,10 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
           {' / '}
           <Link href={`/campaigns/${campaignId}/journals`} className="hover:underline">Journals</Link>
           {' / '}
-          <span>{ownerName}</span>
+          <span>{displayName}</span>
         </p>
         <div className="flex items-baseline justify-between gap-3">
-          <h1 className="text-3xl font-bold">{ownerName}&apos;s journal</h1>
+          <h1 className="text-3xl font-bold">{displayName}&apos;s journal</h1>
           {isJournalWide ? (
             <Badge variant="secondary">Full journal shared</Badge>
           ) : (
@@ -158,7 +183,7 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Backstory — {pc.name}</CardTitle>
-            <p className="text-xs text-muted-foreground">Shared by {ownerName}</p>
+            <p className="text-xs text-muted-foreground">Shared by {displayName}</p>
           </CardHeader>
           <CardContent>
             {pc.description ? (
@@ -173,7 +198,7 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
       {sessionBlocks.length > 0 && (
         <div className="mb-6 space-y-4">
           <h2 className="text-lg font-semibold">Captures</h2>
-          <p className="text-xs text-muted-foreground -mt-2">Shared by {ownerName}</p>
+          <p className="text-xs text-muted-foreground -mt-2">Shared by {displayName}</p>
           {sessionBlocks.map((block) => (
             <Card key={block.sessionId}>
               <CardHeader className="pb-3">
@@ -199,7 +224,7 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
       {npcs.length > 0 && (
         <div className="mb-6 space-y-3">
           <h2 className="text-lg font-semibold">Journal entities</h2>
-          <p className="text-xs text-muted-foreground -mt-2">Shared by {ownerName}</p>
+          <p className="text-xs text-muted-foreground -mt-2">Shared by {displayName}</p>
           {npcs.map((n) => (
             <Card key={n.id}>
               <CardHeader className="pb-2">

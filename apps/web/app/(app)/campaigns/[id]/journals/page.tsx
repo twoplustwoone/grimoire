@@ -48,6 +48,22 @@ export default async function CampaignJournalsPage({ params }: Props) {
     orderBy: { updatedAt: 'desc' },
   })
 
+  // Resolve each journal's mirrored PC (if any) so the GM sees the
+  // story-world name ("Serafine's journal") rather than the player's
+  // real name. Falls back to owner name when no mirror exists.
+  const journalPcs = journals.length
+    ? await prisma.playerCharacter.findMany({
+        where: {
+          ownerType: 'JOURNAL',
+          ownerId: { in: journals.map((j) => j.id) },
+          deletedAt: null,
+          journalMirror: { campaignPc: { ownerId: campaignId } },
+        },
+        select: { ownerId: true, name: true },
+      })
+    : []
+  const pcNameByJournal = new Map(journalPcs.map((pc) => [pc.ownerId, pc.name]))
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
@@ -79,7 +95,8 @@ export default async function CampaignJournalsPage({ params }: Props) {
             const captures = j.shares.filter((s) => s.sharedEntityType === 'CAPTURE').length
             const entities = j.shares.filter((s) => JOURNAL_ENTITY_SCOPES.has(s.sharedEntityType)).length
             const pc = j.shares.some((s) => s.sharedEntityType === 'PLAYER_CHARACTER')
-            const ownerName = j.owner.name ?? j.owner.email
+            const pcName = pcNameByJournal.get(j.id)
+            const displayName = pcName ?? j.owner.name ?? j.owner.email
 
             const summaryParts: string[] = []
             if (isJournalWide) summaryParts.push('Full journal')
@@ -96,7 +113,7 @@ export default async function CampaignJournalsPage({ params }: Props) {
                 <Card className="hover:border-foreground/30 transition-colors">
                   <CardHeader className="pb-3">
                     <div className="flex items-baseline justify-between gap-3">
-                      <CardTitle className="text-lg">{ownerName}</CardTitle>
+                      <CardTitle className="text-lg">{displayName}&apos;s journal</CardTitle>
                       {isJournalWide && <Badge variant="secondary">Full journal shared</Badge>}
                     </div>
                   </CardHeader>
