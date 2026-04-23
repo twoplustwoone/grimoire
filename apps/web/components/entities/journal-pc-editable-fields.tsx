@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { EditableField } from './editable-field'
@@ -12,6 +13,10 @@ interface Props {
   pcId: string
   name: string
   description: string | null
+  /** Optional render slot for the backstory's share toggle. Rendered
+   *  in the section header so the toggle is visually associated with
+   *  the backstory content it controls. */
+  shareToggle?: ReactNode
 }
 
 function descriptionToDoc(description: string | null): ProseMirrorDoc {
@@ -41,7 +46,13 @@ function docToPlainText(doc: ProseMirrorDoc): string {
   return lines.join('\n')
 }
 
-export function JournalPcEditableFields({ journalId, pcId, name, description }: Props) {
+export function JournalPcEditableFields({
+  journalId,
+  pcId,
+  name,
+  description,
+  shareToggle,
+}: Props) {
   const router = useRouter()
   const [draft, setDraft] = useState<ProseMirrorDoc>(descriptionToDoc(description))
   const [savingBackstory, setSavingBackstory] = useState(false)
@@ -80,13 +91,16 @@ export function JournalPcEditableFields({ journalId, pcId, name, description }: 
       </h1>
 
       <div className="mt-6">
-        <div className="flex items-baseline justify-between mb-2">
+        <div className="flex items-center justify-between gap-3 mb-2">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Backstory
           </h2>
-          {savedAt && (
-            <span className="text-xs text-muted-foreground">Saved</span>
-          )}
+          <div className="flex items-center gap-3">
+            {savedAt && (
+              <span className="text-xs text-muted-foreground">Saved</span>
+            )}
+            {shareToggle}
+          </div>
         </div>
         <MentionInput
           allowMentions={false}

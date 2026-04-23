@@ -91,18 +91,17 @@ export default async function JournalPcPage({ params }: Props) {
           pcId={pc.id}
           name={pc.name}
           description={pc.description}
+          shareToggle={
+            <ShareToggle
+              journalId={journal.id}
+              scope="PLAYER_CHARACTER"
+              entityId={pc.id}
+              initialShareId={pcShare?.id ?? null}
+              isJournalWideShare={isJournalWideShare}
+              hasLinkedCampaign={hasLinkedCampaign}
+            />
+          }
         />
-        <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-          <span>Backstory</span>
-          <ShareToggle
-            journalId={journal.id}
-            scope="PLAYER_CHARACTER"
-            entityId={pc.id}
-            initialShareId={pcShare?.id ?? null}
-            isJournalWideShare={isJournalWideShare}
-            hasLinkedCampaign={hasLinkedCampaign}
-          />
-        </div>
       </div>
 
       {mirrorActive && mirrorCampaignName && (
