@@ -29,10 +29,22 @@ export default async function JournalSessionPage({ params }: Props) {
 
   const journal = await prisma.journal.findFirst({
     where: { id, deletedAt: null },
-    select: { id: true, name: true, ownerId: true },
+    select: { id: true, name: true, ownerId: true, linkedCampaignId: true },
   })
   if (!journal) notFound()
   if (journal.ownerId !== session.user.id) notFound()
+
+  const shares = await prisma.journalShare.findMany({
+    where: { journalId: journal.id },
+    select: { id: true, sharedEntityType: true, sharedEntityId: true },
+  })
+  const isJournalWideShare = shares.some((s) => s.sharedEntityType === 'JOURNAL')
+  const captureShareById = new Map(
+    shares
+      .filter((s) => s.sharedEntityType === 'CAPTURE' && s.sharedEntityId)
+      .map((s) => [s.sharedEntityId!, s.id])
+  )
+  const hasLinkedCampaign = journal.linkedCampaignId !== null
 
   const gameSession = await prisma.gameSession.findFirst({
     where: { id: sessionId, ownerType: 'JOURNAL', ownerId: journal.id },
@@ -52,6 +64,7 @@ export default async function JournalSessionPage({ params }: Props) {
     id: c.id,
     content: c.content as unknown as ProseMirrorDoc,
     createdAt: c.createdAt.toISOString(),
+    shareId: captureShareById.get(c.id) ?? null,
   }))
 
   return (
@@ -78,6 +91,8 @@ export default async function JournalSessionPage({ params }: Props) {
         sessionId={gameSession.id}
         sessionLabel={sessionLabel}
         captures={captures}
+        isJournalWideShare={isJournalWideShare}
+        hasLinkedCampaign={hasLinkedCampaign}
       />
     </div>
   )

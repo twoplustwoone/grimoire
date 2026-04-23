@@ -70,6 +70,17 @@ enum LinkOrigin {
   GM
 }
 
+enum ShareScope {
+  JOURNAL
+  NPC
+  LOCATION
+  FACTION
+  THREAD
+  CLUE
+  PLAYER_CHARACTER
+  CAPTURE
+}
+
 enum CampaignStatus {
   ACTIVE
   PAUSED
@@ -92,6 +103,7 @@ model Journal {
 
   captures         JournalCapture[]
   links            JournalLink[]
+  shares           JournalShare[]
 
   @@index([ownerId])
   @@index([linkedCampaignId])
@@ -111,6 +123,18 @@ model JournalLink {
   @@unique([journalEntityType, journalEntityId, campaignEntityType, campaignEntityId])
   @@index([journalId])
   @@index([campaignEntityType, campaignEntityId])
+}
+
+model JournalShare {
+  id               String     @id @default(cuid())
+  journalId        String
+  journal          Journal    @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  sharedEntityType ShareScope
+  sharedEntityId   String?
+  createdAt        DateTime   @default(now())
+
+  @@unique([journalId, sharedEntityType, sharedEntityId])
+  @@index([journalId])
 }
 
 model PlayerCharacterMirror {

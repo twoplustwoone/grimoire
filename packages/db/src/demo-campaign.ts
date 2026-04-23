@@ -228,7 +228,7 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
-  await prisma.journalCapture.create({
+  const firstTavernCapture = await prisma.journalCapture.create({
     data: {
       journalId: serafineJournal.id,
       journalSessionId: tavernSession.id,
@@ -417,6 +417,25 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
       campaignEntityId: castor.id,
       proposedBy: 'PLAYER',
     },
+  })
+
+  // J5 — Serafine has opted in to sharing two specific items with
+  // the GM: the tavern-night capture and her theory about the
+  // scar-handed man. Journal-wide share is off; PC backstory is
+  // unshared (description is blank).
+  await prisma.journalShare.createMany({
+    data: [
+      {
+        journalId: serafineJournal.id,
+        sharedEntityType: 'CAPTURE',
+        sharedEntityId: firstTavernCapture.id,
+      },
+      {
+        journalId: serafineJournal.id,
+        sharedEntityType: 'NPC',
+        sharedEntityId: scarHandedMan.id,
+      },
+    ],
   })
 
   async function ensureAllPlayersReveal(

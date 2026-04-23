@@ -41,6 +41,7 @@ export const campaignNavigation: NavItem[] = [
   { name: 'Clues', href: 'clues', icon: Search },
   { name: 'World Events', href: 'world-events', icon: Globe },
   { name: 'Graph', href: 'graph', icon: Network },
+  { name: 'Journals', href: 'journals', icon: Notebook },
   { name: 'Settings', href: 'settings', icon: Settings },
 ]
 

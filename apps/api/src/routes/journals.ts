@@ -51,7 +51,13 @@ journals.get('/:id', async (c) => {
   const id = c.req.param('id')!
   const guard = await guardJournal(user.id, id)
   if (guard.status !== 200) return c.json({ error: guard.status === 403 ? 'Forbidden' : 'Not found' }, guard.status)
-  return c.json(guard.journal)
+
+  const shares = await prisma.journalShare.findMany({
+    where: { journalId: id },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return c.json({ ...guard.journal, shares })
 })
 
 // Update a journal. Owner-only. Only `name` is accepted in J2.

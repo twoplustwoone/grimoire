@@ -84,6 +84,18 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
     },
   })
 
+  const shares = await prisma.journalShare.findMany({
+    where: { journalId: journal.id },
+    select: { id: true, sharedEntityType: true, sharedEntityId: true },
+  })
+  const isJournalWideShare = shares.some((s) => s.sharedEntityType === 'JOURNAL')
+  const captureShareById = new Map(
+    shares
+      .filter((s) => s.sharedEntityType === 'CAPTURE' && s.sharedEntityId)
+      .map((s) => [s.sharedEntityId!, s.id])
+  )
+  const hasLinkedCampaign = journal.linkedCampaignId !== null
+
   const feedSessions: FeedSession[] = sessionsWithCaptures.map((s) => ({
     id: s.id,
     number: s.number,
@@ -93,6 +105,7 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
       id: c.id,
       content: c.content as unknown as ProseMirrorDoc,
       createdAt: c.createdAt.toISOString(),
+      shareId: captureShareById.get(c.id) ?? null,
     })),
   }))
 
@@ -127,7 +140,12 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
         </Card>
       ) : (
         <div className="mb-8">
-          <CaptureFeed journalId={journal.id} sessions={feedSessions} />
+          <CaptureFeed
+            journalId={journal.id}
+            sessions={feedSessions}
+            isJournalWideShare={isJournalWideShare}
+            hasLinkedCampaign={hasLinkedCampaign}
+          />
         </div>
       )}
 

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
 import { CaptureEditorSheet } from '@/components/captures/capture-editor-sheet'
+import { ShareToggle } from '@/components/journals/share-toggle'
 import { formatRelativeTime } from '@/lib/activity-feed'
 import { docToPlainText, type ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
@@ -25,6 +26,7 @@ export interface FeedCapture {
   id: string
   content: ProseMirrorDoc
   createdAt: string
+  shareId: string | null
 }
 
 export interface FeedSession {
@@ -38,9 +40,11 @@ export interface FeedSession {
 interface Props {
   journalId: string
   sessions: FeedSession[]
+  isJournalWideShare: boolean
+  hasLinkedCampaign: boolean
 }
 
-export function CaptureFeed({ journalId, sessions }: Props) {
+export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinkedCampaign }: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [editing, setEditing] = useState<FeedCapture | null>(null)
   const [deleting, setDeleting] = useState<FeedCapture | null>(null)
@@ -115,7 +119,7 @@ export function CaptureFeed({ journalId, sessions }: Props) {
                     {isOpen && (
                       <div className="mt-2 space-y-3">
                         <MentionRenderer content={c.content} />
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                           <Button
                             size="sm"
                             variant="outline"
@@ -133,6 +137,14 @@ export function CaptureFeed({ journalId, sessions }: Props) {
                             <Trash2 className="h-3 w-3 mr-1" />
                             Delete
                           </Button>
+                          <ShareToggle
+                            journalId={journalId}
+                            scope="CAPTURE"
+                            entityId={c.id}
+                            initialShareId={c.shareId}
+                            isJournalWideShare={isJournalWideShare}
+                            hasLinkedCampaign={hasLinkedCampaign}
+                          />
                         </div>
                       </div>
                     )}

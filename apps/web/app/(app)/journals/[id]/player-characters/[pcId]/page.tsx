@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { JournalPcEditableFields } from '@/components/entities/journal-pc-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { ShareToggle } from '@/components/journals/share-toggle'
 
 interface Props {
   params: Promise<{ id: string; pcId: string }>
@@ -47,6 +48,16 @@ export default async function JournalPcPage({ params }: Props) {
   })
   if (!pc) notFound()
 
+  const shares = await prisma.journalShare.findMany({
+    where: { journalId: journal.id },
+    select: { id: true, sharedEntityType: true, sharedEntityId: true },
+  })
+  const isJournalWideShare = shares.some((s) => s.sharedEntityType === 'JOURNAL')
+  const pcShare = shares.find(
+    (s) => s.sharedEntityType === 'PLAYER_CHARACTER' && s.sharedEntityId === pc.id
+  )
+  const hasLinkedCampaign = journal.linkedCampaignId !== null
+
   let mirrorCampaignName: string | null = null
   let mirrorActive = false
   if (pc.journalMirror) {
@@ -81,6 +92,17 @@ export default async function JournalPcPage({ params }: Props) {
           name={pc.name}
           description={pc.description}
         />
+        <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+          <span>Backstory</span>
+          <ShareToggle
+            journalId={journal.id}
+            scope="PLAYER_CHARACTER"
+            entityId={pc.id}
+            initialShareId={pcShare?.id ?? null}
+            isJournalWideShare={isJournalWideShare}
+            hasLinkedCampaign={hasLinkedCampaign}
+          />
+        </div>
       </div>
 
       {mirrorActive && mirrorCampaignName && (

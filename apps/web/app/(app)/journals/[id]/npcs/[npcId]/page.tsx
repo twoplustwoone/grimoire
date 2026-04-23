@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { JournalNpcEditableFields } from '@/components/entities/journal-npc-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { ShareToggle } from '@/components/journals/share-toggle'
 import { CrossReferencesSection } from './cross-references-section'
 
 interface Props {
@@ -37,6 +38,16 @@ export default async function JournalNpcPage({ params }: Props) {
     where: { id: npcId, ownerType: 'JOURNAL', ownerId: journal.id, deletedAt: null },
   })
   if (!npc) notFound()
+
+  const shares = await prisma.journalShare.findMany({
+    where: { journalId: journal.id },
+    select: { id: true, sharedEntityType: true, sharedEntityId: true },
+  })
+  const isJournalWideShare = shares.some((s) => s.sharedEntityType === 'JOURNAL')
+  const npcShare = shares.find(
+    (s) => s.sharedEntityType === 'NPC' && s.sharedEntityId === npc.id
+  )
+  const hasLinkedCampaign = journal.linkedCampaignId !== null
 
   // Fetch cross-references for this entity; hydrate campaign-side names.
   const linkRows = journal.linkedCampaignId
@@ -84,6 +95,16 @@ export default async function JournalNpcPage({ params }: Props) {
           name={npc.name}
           description={npc.description}
         />
+        <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+          <ShareToggle
+            journalId={journal.id}
+            scope="NPC"
+            entityId={npc.id}
+            initialShareId={npcShare?.id ?? null}
+            isJournalWideShare={isJournalWideShare}
+            hasLinkedCampaign={hasLinkedCampaign}
+          />
+        </div>
       </div>
 
       {journal.linkedCampaignId && (

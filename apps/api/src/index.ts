@@ -28,6 +28,8 @@ import journalCaptures from './routes/journal-captures.js'
 import journalLinks from './routes/journal-links.js'
 import journalPlayerCharacters from './routes/journal-player-characters.js'
 import journalNpcs from './routes/journal-npcs.js'
+import journalShares from './routes/journal-shares.js'
+import gmJournalView from './routes/gm-journal-view.js'
 import { handleMcpRequest } from './mcp/handler.js'
 import oauth from './mcp/oauth-routes.js'
 
@@ -54,6 +56,7 @@ app.route('/journals/:id/captures', journalCaptures)
 app.route('/journals/:id/links', journalLinks)
 app.route('/journals/:id/player-characters', journalPlayerCharacters)
 app.route('/journals/:id/npcs', journalNpcs)
+app.route('/journals/:id/shares', journalShares)
 app.route('/campaigns/:campaignId/npcs', npcs)
 app.route('/campaigns/:campaignId/player-characters', playerCharacters)
 app.route('/campaigns/:campaignId/locations', locations)
@@ -68,6 +71,7 @@ app.route('/campaigns/:campaignId/information-nodes', infoNodes)
 app.route('/campaigns/:campaignId/invites', invites)
 app.route('/campaigns/:campaignId/members', members)
 app.route('/campaigns/:campaignId/reveals', reveals)
+app.route('/campaigns/:campaignId/journals', gmJournalView)
 app.route('/invites', inviteAccept)
 app.route('/api-keys', apiKeys)
 app.route('/search', search)
