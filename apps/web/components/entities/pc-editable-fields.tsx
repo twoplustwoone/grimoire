@@ -82,9 +82,25 @@ export function PcEditableFields({
 
       {isMirrored && mirror && (
         <div className="mt-2 text-sm text-muted-foreground">
-          Linked to{' '}
-          {mirror.ownerName ? <strong>{mirror.ownerName}&apos;s</strong> : 'a player&apos;s'}{' '}
-          journal.
+          {isGM && mirror.journalId ? (
+            <>
+              Linked to{' '}
+              <Link
+                href={`/campaigns/${campaignId}/journals/${mirror.journalId}`}
+                className="text-primary hover:underline"
+              >
+                <strong>{mirror.ownerName ? `${mirror.ownerName}'s` : "a player's"}</strong>{' '}
+                journal
+              </Link>
+              .
+            </>
+          ) : (
+            <>
+              Linked to{' '}
+              {mirror.ownerName ? <strong>{mirror.ownerName}&apos;s</strong> : 'a player&apos;s'}{' '}
+              journal.
+            </>
+          )}
           {mirror.viewerIsMirrorPlayer && mirror.journalId && mirror.journalPcId && (
             <>
               {' '}
