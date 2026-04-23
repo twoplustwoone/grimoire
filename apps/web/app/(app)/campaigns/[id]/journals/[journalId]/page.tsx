@@ -78,6 +78,26 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
       .filter((s) => s.sharedEntityType === 'PLAYER_CHARACTER' && s.sharedEntityId)
       .map((s) => s.sharedEntityId!)
   )
+  const sharedLocationIds = new Set(
+    journal.shares
+      .filter((s) => s.sharedEntityType === 'LOCATION' && s.sharedEntityId)
+      .map((s) => s.sharedEntityId!)
+  )
+  const sharedFactionIds = new Set(
+    journal.shares
+      .filter((s) => s.sharedEntityType === 'FACTION' && s.sharedEntityId)
+      .map((s) => s.sharedEntityId!)
+  )
+  const sharedThreadIds = new Set(
+    journal.shares
+      .filter((s) => s.sharedEntityType === 'THREAD' && s.sharedEntityId)
+      .map((s) => s.sharedEntityId!)
+  )
+  const sharedClueIds = new Set(
+    journal.shares
+      .filter((s) => s.sharedEntityType === 'CLUE' && s.sharedEntityId)
+      .map((s) => s.sharedEntityId!)
+  )
 
   const captures = await prisma.journalCapture.findMany({
     where: {
@@ -108,6 +128,50 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
       ...(isJournalWide ? {} : { id: { in: Array.from(sharedPcIds) } }),
     },
     select: { id: true, name: true, description: true },
+  })
+
+  const locations = await prisma.location.findMany({
+    where: {
+      ownerType: 'JOURNAL',
+      ownerId: journal.id,
+      deletedAt: null,
+      ...(isJournalWide ? {} : { id: { in: Array.from(sharedLocationIds) } }),
+    },
+    select: { id: true, name: true, description: true },
+    orderBy: { name: 'asc' },
+  })
+
+  const factions = await prisma.faction.findMany({
+    where: {
+      ownerType: 'JOURNAL',
+      ownerId: journal.id,
+      deletedAt: null,
+      ...(isJournalWide ? {} : { id: { in: Array.from(sharedFactionIds) } }),
+    },
+    select: { id: true, name: true, description: true },
+    orderBy: { name: 'asc' },
+  })
+
+  const threads = await prisma.thread.findMany({
+    where: {
+      ownerType: 'JOURNAL',
+      ownerId: journal.id,
+      deletedAt: null,
+      ...(isJournalWide ? {} : { id: { in: Array.from(sharedThreadIds) } }),
+    },
+    select: { id: true, title: true, description: true },
+    orderBy: { title: 'asc' },
+  })
+
+  const clues = await prisma.clue.findMany({
+    where: {
+      ownerType: 'JOURNAL',
+      ownerId: journal.id,
+      deletedAt: null,
+      ...(isJournalWide ? {} : { id: { in: Array.from(sharedClueIds) } }),
+    },
+    select: { id: true, title: true, description: true },
+    orderBy: { title: 'asc' },
   })
 
   // Resolve the mirrored PC independent of the share filter above —
@@ -221,27 +285,116 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
         </div>
       )}
 
-      {npcs.length > 0 && (
-        <div className="mb-6 space-y-3">
-          <h2 className="text-lg font-semibold">Journal entities</h2>
-          <p className="text-xs text-muted-foreground -mt-2">Shared by {displayName}</p>
-          {npcs.map((n) => (
-            <Card key={n.id}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{n.name}</CardTitle>
-                <p className="text-xs text-muted-foreground">NPC (journal)</p>
-              </CardHeader>
-              {n.description && (
-                <CardContent>
-                  <p className="text-sm whitespace-pre-wrap">{n.description}</p>
-                </CardContent>
-              )}
-            </Card>
-          ))}
+      {(npcs.length > 0 ||
+        locations.length > 0 ||
+        factions.length > 0 ||
+        threads.length > 0 ||
+        clues.length > 0) && (
+        <div className="mb-6 space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold">Journal entities</h2>
+            <p className="text-xs text-muted-foreground">Shared by {displayName}</p>
+          </div>
+
+          {npcs.length > 0 && (
+            <div className="space-y-3">
+              {npcs.map((n) => (
+                <Card key={n.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{n.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground">NPC (journal)</p>
+                  </CardHeader>
+                  {n.description && (
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{n.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {locations.length > 0 && (
+            <div className="space-y-3">
+              {locations.map((l) => (
+                <Card key={l.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{l.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground">Location (journal)</p>
+                  </CardHeader>
+                  {l.description && (
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{l.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {factions.length > 0 && (
+            <div className="space-y-3">
+              {factions.map((f) => (
+                <Card key={f.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{f.name}</CardTitle>
+                    <p className="text-xs text-muted-foreground">Faction (journal)</p>
+                  </CardHeader>
+                  {f.description && (
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{f.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {threads.length > 0 && (
+            <div className="space-y-3">
+              {threads.map((t) => (
+                <Card key={t.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{t.title}</CardTitle>
+                    <p className="text-xs text-muted-foreground">Thread (journal)</p>
+                  </CardHeader>
+                  {t.description && (
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{t.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {clues.length > 0 && (
+            <div className="space-y-3">
+              {clues.map((c) => (
+                <Card key={c.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{c.title}</CardTitle>
+                    <p className="text-xs text-muted-foreground">Clue (journal)</p>
+                  </CardHeader>
+                  {c.description && (
+                    <CardContent>
+                      <p className="text-sm whitespace-pre-wrap">{c.description}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {!pc && sessionBlocks.length === 0 && npcs.length === 0 && (
+      {!pc &&
+        sessionBlocks.length === 0 &&
+        npcs.length === 0 &&
+        locations.length === 0 &&
+        factions.length === 0 &&
+        threads.length === 0 &&
+        clues.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             Shared content is no longer available (items may have been deleted or unshared).

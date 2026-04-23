@@ -13,15 +13,26 @@ export interface MentionItem {
 type MentionSuggestion = Omit<SuggestionOptions<MentionItem, MentionItem>, 'editor'>
 
 export function createMentionSuggestion(campaignId: string): MentionSuggestion {
+  return buildMentionSuggestion((q) =>
+    `/api/v1/search?campaignId=${campaignId}&q=${encodeURIComponent(q)}`
+  )
+}
+
+/** Journal-scoped mention source. Surfaces only entities owned by
+ *  the journal (ownerType=JOURNAL, ownerId=journalId) — campaign
+ *  entities are reached via cross-references, not mentions. */
+export function createJournalMentionSuggestion(journalId: string): MentionSuggestion {
+  return buildMentionSuggestion((q) =>
+    `/api/v1/journals/${journalId}/search?q=${encodeURIComponent(q)}`
+  )
+}
+
+function buildMentionSuggestion(buildUrl: (query: string) => string): MentionSuggestion {
   return {
     items: async ({ query }) => {
-      if (!campaignId) return []
       const q = query.length > 0 ? query : 'a'
       try {
-        const res = await fetch(
-          `/api/v1/search?campaignId=${campaignId}&q=${encodeURIComponent(q)}`,
-          { credentials: 'include' }
-        )
+        const res = await fetch(buildUrl(q), { credentials: 'include' })
         if (!res.ok) return []
         const data = await res.json()
         return data.slice(0, 8).map((item: { id: string; type: string; name: string }) => ({

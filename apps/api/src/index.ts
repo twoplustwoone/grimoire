@@ -28,6 +28,11 @@ import journalCaptures from './routes/journal-captures.js'
 import journalLinks from './routes/journal-links.js'
 import journalPlayerCharacters from './routes/journal-player-characters.js'
 import journalNpcs from './routes/journal-npcs.js'
+import journalLocations from './routes/journal-locations.js'
+import journalFactions from './routes/journal-factions.js'
+import journalThreads from './routes/journal-threads.js'
+import journalClues from './routes/journal-clues.js'
+import journalSearch from './routes/journal-search.js'
 import journalShares from './routes/journal-shares.js'
 import gmJournalView from './routes/gm-journal-view.js'
 import { handleMcpRequest } from './mcp/handler.js'
@@ -56,6 +61,11 @@ app.route('/journals/:id/captures', journalCaptures)
 app.route('/journals/:id/links', journalLinks)
 app.route('/journals/:id/player-characters', journalPlayerCharacters)
 app.route('/journals/:id/npcs', journalNpcs)
+app.route('/journals/:id/locations', journalLocations)
+app.route('/journals/:id/factions', journalFactions)
+app.route('/journals/:id/threads', journalThreads)
+app.route('/journals/:id/clues', journalClues)
+app.route('/journals/:id/search', journalSearch)
 app.route('/journals/:id/shares', journalShares)
 app.route('/campaigns/:campaignId/npcs', npcs)
 app.route('/campaigns/:campaignId/player-characters', playerCharacters)

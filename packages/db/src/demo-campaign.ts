@@ -419,6 +419,62 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
+  // J6 — journal-owned Location/Faction/Thread/Clue so every new
+  // detail page surface has seed data to render. The tavern
+  // cross-references the Merchant Quarter (where Serafine met the
+  // scar-handed man); the other three stand alone as the player's
+  // private notes.
+  const rustedFlagon = await prisma.location.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      name: 'The Rusted Flagon',
+      description:
+        "The tavern where I met the scar-handed man. Corner booth, view of both doors. The barkeep pretended not to listen but his towel wasn't moving.",
+    },
+  })
+
+  await prisma.journalLink.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalEntityType: 'LOCATION',
+      journalEntityId: rustedFlagon.id,
+      campaignEntityType: 'LOCATION',
+      campaignEntityId: merchantQuarter.id,
+      proposedBy: 'PLAYER',
+    },
+  })
+
+  await prisma.faction.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      name: 'The Grey Cloaks',
+      description:
+        "Whoever they are, they keep turning up at the edges of things — the night the mages died, the tavern, now the tower. Not a name anyone uses out loud. I'm writing it down so I stop forgetting to notice them.",
+    },
+  })
+
+  await prisma.thread.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      title: 'Who does the Scar-Handed Man work for?',
+      description:
+        'He knew too much about the murders to be unaffiliated. The question is which faction. Start with the merchant guild — he drinks their wine.',
+    },
+  })
+
+  await prisma.clue.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      title: 'Runes on the Tower Door',
+      description:
+        "Etched into the frame, not the door itself. Grandmother had a page of these in her old book — she called them 'owner's marks,' said mages use them to tag things they don't want stolen. Whoever set them isn't subtle.",
+    },
+  })
+
   // J5 — Serafine has opted in to sharing two specific items with
   // the GM: the tavern-night capture and her theory about the
   // scar-handed man. Journal-wide share is off; PC backstory is

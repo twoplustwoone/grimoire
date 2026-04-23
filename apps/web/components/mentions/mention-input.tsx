@@ -16,7 +16,10 @@ import {
   Quote,
   Minus,
 } from 'lucide-react'
-import { createMentionSuggestion } from '@/lib/tiptap-mention-suggestion'
+import {
+  createJournalMentionSuggestion,
+  createMentionSuggestion,
+} from '@/lib/tiptap-mention-suggestion'
 import { getEntityChipClasses } from '@/lib/entity-display'
 import { emptyDoc, type ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
@@ -28,15 +31,32 @@ interface Props {
   className?: string
   onKeyDown?: (e: React.KeyboardEvent) => void
   onSave?: () => void
-  /** Enable the Mention extension + suggestion UI. Defaults to true.
-   *  Captures (J3) pass false — no journal entities exist to mention
-   *  until J6. */
+  /** Enable the Mention extension + suggestion UI. Defaults to true. */
   allowMentions?: boolean
+  /** Scope @-mentions to this journal's owned entities. When set,
+   *  takes precedence over the route-based campaign detection so
+   *  callers on journal routes (e.g. capture editor) surface the
+   *  right suggestion list. */
+  mentionJournalId?: string
 }
 
-export function MentionInput({ value, onChange, placeholder, rows = 3, className, onSave, allowMentions = true }: Props) {
+export function MentionInput({
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+  className,
+  onSave,
+  allowMentions = true,
+  mentionJournalId,
+}: Props) {
   const params = useParams()
   const campaignId = params?.id as string | undefined
+  const suggestion: MentionOptions['suggestion'] | undefined = mentionJournalId
+    ? (createJournalMentionSuggestion(mentionJournalId) as MentionOptions['suggestion'])
+    : campaignId
+      ? (createMentionSuggestion(campaignId) as MentionOptions['suggestion'])
+      : undefined
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -72,9 +92,7 @@ export function MentionInput({ value, onChange, placeholder, rows = 3, className
                   `@${node.attrs.name ?? node.attrs.label}`,
                 ]
               },
-              suggestion: (campaignId
-                ? createMentionSuggestion(campaignId)
-                : undefined) as MentionOptions['suggestion'] | undefined,
+              suggestion,
             }),
           ]
         : []),

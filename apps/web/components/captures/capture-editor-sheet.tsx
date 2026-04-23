@@ -139,7 +139,7 @@ const EditorBody = forwardRef<EditorBodyHandle, EditorBodyProps>(function Editor
 
       <div className="flex-1 overflow-y-auto">
         <MentionInput
-          allowMentions={false}
+          mentionJournalId={journalId}
           value={draft}
           onChange={setDraft}
           rows={12}
