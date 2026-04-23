@@ -27,7 +27,7 @@ interface Props {
 }
 
 function sessionLabel(s: { number: number; title: string | null }) {
-  return s.title ? `Session ${s.number} — ${s.title}` : `Session ${s.number}`
+  return `Session ${s.number} — ${s.title ?? 'Untitled'}`
 }
 
 export function CaptureCTA({ journalId, activeSession, recentSessions }: Props) {
