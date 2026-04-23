@@ -6,19 +6,13 @@ import {
   isProseMirrorDoc,
 } from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
+import { guardJournal } from '../lib/journal-guard.js'
 
 const journalCaptures = new Hono()
 
 journalCaptures.use('*', authMiddleware)
 
 const ACTIVE_SESSION_WINDOW_MS = 12 * 60 * 60 * 1000
-
-async function guardJournal(userId: string, journalId: string) {
-  const journal = await prisma.journal.findFirst({ where: { id: journalId, deletedAt: null } })
-  if (!journal) return { status: 404 as const }
-  if (journal.ownerId !== userId) return { status: 403 as const }
-  return { status: 200 as const, journal }
-}
 
 // Flat list of the journal's captures (newest first) with minimal
 // session join so the feed can group on the client.

@@ -65,6 +65,11 @@ enum StructuredStatus {
   STRUCTURED
 }
 
+enum LinkOrigin {
+  PLAYER
+  GM
+}
+
 enum CampaignStatus {
   ACTIVE
   PAUSED
@@ -86,9 +91,35 @@ model Journal {
   deletedAt        DateTime?
 
   captures         JournalCapture[]
+  links            JournalLink[]
 
   @@index([ownerId])
   @@index([linkedCampaignId])
+}
+
+model JournalLink {
+  id                 String     @id @default(cuid())
+  journalId          String
+  journal            Journal    @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  journalEntityType  EntityType
+  journalEntityId    String
+  campaignEntityType EntityType
+  campaignEntityId   String
+  proposedBy         LinkOrigin
+  createdAt          DateTime   @default(now())
+
+  @@unique([journalEntityType, journalEntityId, campaignEntityType, campaignEntityId])
+  @@index([journalId])
+  @@index([campaignEntityType, campaignEntityId])
+}
+
+model PlayerCharacterMirror {
+  id           String          @id @default(cuid())
+  campaignPcId String          @unique
+  campaignPc   PlayerCharacter @relation("CampaignMirror", fields: [campaignPcId], references: [id], onDelete: Cascade)
+  journalPcId  String          @unique
+  journalPc    PlayerCharacter @relation("JournalMirror", fields: [journalPcId], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
 }
 
 model JournalCapture {
@@ -229,8 +260,10 @@ model PlayerCharacter {
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 
-  linkedUser User? @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
-  invites    CampaignInvite[]
+  linkedUser      User? @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+  invites         CampaignInvite[]
+  campaignMirror  PlayerCharacterMirror? @relation("CampaignMirror")
+  journalMirror   PlayerCharacterMirror? @relation("JournalMirror")
 
   @@index([ownerType, ownerId])
   @@index([linkedUserId])

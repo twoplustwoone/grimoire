@@ -39,9 +39,33 @@ export default async function PlayerCharacterDetailPage({ params }: Props) {
     where: { id: pcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
     include: {
       linkedUser: { select: { id: true, name: true, email: true } },
+      campaignMirror: {
+        include: {
+          journalPc: {
+            select: {
+              id: true,
+              ownerId: true,
+              linkedUser: { select: { id: true, name: true, email: true } },
+            },
+          },
+        },
+      },
     },
   })
   if (!pc) notFound()
+
+  const mirror = pc.campaignMirror
+    ? {
+        ownerName:
+          pc.campaignMirror.journalPc.linkedUser?.name ??
+          pc.campaignMirror.journalPc.linkedUser?.email ??
+          null,
+        viewerIsMirrorPlayer:
+          pc.campaignMirror.journalPc.linkedUser?.id === session.user.id,
+        journalId: pc.campaignMirror.journalPc.ownerId,
+        journalPcId: pc.campaignMirror.journalPc.id,
+      }
+    : null
 
   const [notes, changelog, infoNodes, playerMembers] = await Promise.all([
     prisma.note.findMany({
@@ -99,6 +123,7 @@ export default async function PlayerCharacterDetailPage({ params }: Props) {
           linkedUserId={pc.linkedUserId}
           players={playerOptions}
           isGM={isGM}
+          mirror={mirror}
         />
         {pc.linkedUser && (
           <p className="mt-2 text-sm text-muted-foreground">

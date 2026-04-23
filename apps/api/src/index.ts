@@ -25,6 +25,9 @@ import members from './routes/members.js'
 import journals from './routes/journals.js'
 import journalSessions from './routes/journal-sessions.js'
 import journalCaptures from './routes/journal-captures.js'
+import journalLinks from './routes/journal-links.js'
+import journalPlayerCharacters from './routes/journal-player-characters.js'
+import journalNpcs from './routes/journal-npcs.js'
 import { handleMcpRequest } from './mcp/handler.js'
 import oauth from './mcp/oauth-routes.js'
 
@@ -48,6 +51,9 @@ app.route('/campaigns', campaigns)
 app.route('/journals', journals)
 app.route('/journals/:id/sessions', journalSessions)
 app.route('/journals/:id/captures', journalCaptures)
+app.route('/journals/:id/links', journalLinks)
+app.route('/journals/:id/player-characters', journalPlayerCharacters)
+app.route('/journals/:id/npcs', journalNpcs)
 app.route('/campaigns/:campaignId/npcs', npcs)
 app.route('/campaigns/:campaignId/player-characters', playerCharacters)
 app.route('/campaigns/:campaignId/locations', locations)

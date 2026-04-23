@@ -49,21 +49,101 @@ inviteAccept.post('/:token/accept', async (c) => {
   })
   if (existing) return c.json({ error: 'Already a member' }, 400)
 
-  await prisma.$transaction([
-    prisma.campaignMembership.create({
+  const freestandingJournals = await prisma.journal.count({
+    where: { ownerId: session.user.id, deletedAt: null, linkedCampaignId: null },
+  })
+
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.campaignMembership.create({
       data: {
         campaignId: invite.campaignId,
         userId: session.user.id,
         role: invite.role,
       },
-    }),
-    prisma.campaignInvite.update({
+    })
+    await tx.campaignInvite.update({
       where: { token },
       data: { acceptedAt: new Date() },
-    }),
-  ])
+    })
 
-  return c.json({ campaignId: invite.campaignId, success: true })
+    let claimedPcId: string | null = null
+    if (invite.pcId) {
+      const pc = await tx.playerCharacter.findFirst({
+        where: { id: invite.pcId, ownerType: 'CAMPAIGN', ownerId: invite.campaignId, deletedAt: null },
+        include: { campaignMirror: { select: { id: true } } },
+      })
+      // Quietly skip if the PC is no longer claimable — the user still
+      // joined; they can claim a different PC later.
+      if (pc && !pc.linkedUserId && !pc.campaignMirror) {
+        await tx.playerCharacter.update({
+          where: { id: pc.id },
+          data: { linkedUserId: session.user.id },
+        })
+        claimedPcId = pc.id
+      }
+    }
+
+    // Auto-create a journal in two cases (both preserve the
+    // "every membership guarantees a journal" rule):
+    //   - zero journals + claimed PC → create + link + mirror
+    //   - zero journals + no claimed PC → create freestanding
+    let autoCreatedJournalId: string | null = null
+    const totalJournals = await tx.journal.count({
+      where: { ownerId: session.user.id, deletedAt: null },
+    })
+
+    if (totalJournals === 0) {
+      const defaultName = session.user.name
+        ? `${session.user.name}'s Journal`
+        : `${invite.campaign.name} Journal`
+
+      if (claimedPcId) {
+        const campaignPc = await tx.playerCharacter.findUnique({ where: { id: claimedPcId } })
+        if (!campaignPc) throw new Error('claimed PC vanished')
+        const journal = await tx.journal.create({
+          data: {
+            ownerId: session.user.id,
+            name: defaultName,
+            linkedCampaignId: invite.campaignId,
+          },
+        })
+        const journalPc = await tx.playerCharacter.create({
+          data: {
+            ownerType: 'JOURNAL',
+            ownerId: journal.id,
+            linkedUserId: session.user.id,
+            name: campaignPc.name,
+            status: 'ACTIVE',
+          },
+        })
+        await tx.playerCharacterMirror.create({
+          data: { campaignPcId: campaignPc.id, journalPcId: journalPc.id },
+        })
+        autoCreatedJournalId = journal.id
+      } else {
+        const journal = await tx.journal.create({
+          data: { ownerId: session.user.id, name: defaultName },
+        })
+        autoCreatedJournalId = journal.id
+      }
+    }
+
+    return { claimedPcId, autoCreatedJournalId }
+  })
+
+  // Client needs the linking sheet when the user has existing journals
+  // AND a PC was claimed from the invite (the linking ceremony binds
+  // the claimed PC to one of those journals).
+  const requiresLinkingSheet =
+    freestandingJournals > 0 && result.claimedPcId !== null
+
+  return c.json({
+    campaignId: invite.campaignId,
+    success: true,
+    autoCreatedJournalId: result.autoCreatedJournalId,
+    pcId: result.claimedPcId,
+    requiresLinkingSheet,
+  })
 })
 
 export default inviteAccept

@@ -20,16 +20,23 @@ interface Member {
   user: { id: string; name: string | null; email: string }
 }
 
+interface ReservablePc {
+  id: string
+  name: string
+}
+
 interface Props {
   campaignId: string
   initialInvites: Invite[]
   members: Member[]
+  reservablePcs?: ReservablePc[]
 }
 
-export function InvitePlayers({ campaignId, initialInvites, members }: Props) {
+export function InvitePlayers({ campaignId, initialInvites, members, reservablePcs = [] }: Props) {
   const router = useRouter()
   const [invites, setInvites] = useState<Invite[]>(initialInvites)
   const [email, setEmail] = useState('')
+  const [reservedPcId, setReservedPcId] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [newInviteUrl, setNewInviteUrl] = useState<string | null>(null)
@@ -46,7 +53,10 @@ export function InvitePlayers({ campaignId, initialInvites, members }: Props) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ email: email.trim() }),
+      body: JSON.stringify({
+        email: email.trim(),
+        pcId: reservedPcId || null,
+      }),
     })
 
     const data = await res.json()
@@ -54,6 +64,7 @@ export function InvitePlayers({ campaignId, initialInvites, members }: Props) {
       setInvites([data.invite, ...invites])
       setNewInviteUrl(data.inviteUrl)
       setEmail('')
+      setReservedPcId('')
       router.refresh()
     } else {
       setError(data.error ?? 'Failed to create invite')
@@ -119,6 +130,24 @@ export function InvitePlayers({ campaignId, initialInvites, members }: Props) {
               {sending ? 'Sending...' : 'Invite'}
             </Button>
           </div>
+          {reservablePcs.length > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <label htmlFor="reservedPc" className="text-muted-foreground shrink-0">
+                Reserve a character:
+              </label>
+              <select
+                id="reservedPc"
+                value={reservedPcId}
+                onChange={(e) => setReservedPcId(e.target.value)}
+                className="text-sm border rounded-md px-2 py-1 bg-background flex-1"
+              >
+                <option value="">None</option>
+                {reservablePcs.map((pc) => (
+                  <option key={pc.id} value={pc.id}>{pc.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </form>
 

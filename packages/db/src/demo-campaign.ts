@@ -373,6 +373,52 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     }),
   ])
 
+  // Link Serafine's journal to the demo campaign and mirror her PC.
+  // Gives testers an end-to-end linked/mirrored example on fresh seed.
+  await prisma.journal.update({
+    where: { id: serafineJournal.id },
+    data: { linkedCampaignId: campaign.id },
+  })
+
+  const serafineJournalPC = await prisma.playerCharacter.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      linkedUserId: serafinePlayer.id,
+      name: 'Serafine Ashveil',
+      // Blank backstory so the empty-state editor is visible to testers.
+      status: 'ACTIVE',
+    },
+  })
+
+  await prisma.playerCharacterMirror.create({
+    data: { campaignPcId: serafinePC.id, journalPcId: serafineJournalPC.id },
+  })
+
+  // A journal-owned NPC the player has theorised about, cross-referenced
+  // to Castor Vel — the demo campaign's most obvious "too-helpful
+  // informant" figure.
+  const scarHandedMan = await prisma.nPC.create({
+    data: {
+      ownerType: 'JOURNAL',
+      ownerId: serafineJournal.id,
+      name: 'The Scar-Handed Man',
+      description:
+        "The cloaked figure from the tavern. Scar across the back of his right hand. Knew too much about the murders for a stranger. I'm writing him down before I forget the details.",
+    },
+  })
+
+  await prisma.journalLink.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalEntityType: 'NPC',
+      journalEntityId: scarHandedMan.id,
+      campaignEntityType: 'NPC',
+      campaignEntityId: castor.id,
+      proposedBy: 'PLAYER',
+    },
+  })
+
   async function ensureAllPlayersReveal(
     entityType: 'NPC' | 'LOCATION' | 'FACTION' | 'THREAD' | 'CLUE' | 'PLAYER_CHARACTER',
     entityId: string,

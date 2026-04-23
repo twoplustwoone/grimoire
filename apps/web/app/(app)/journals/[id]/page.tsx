@@ -9,6 +9,7 @@ import { JournalEditableFields } from '@/components/entities/journal-editable-fi
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { CaptureCTA } from './capture-cta'
 import { CaptureFeed, type FeedSession, type FeedCapture } from './capture-feed'
+import { WelcomeBanner } from './welcome-banner'
 import type { ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
 const ACTIVE_SESSION_WINDOW_MS = 12 * 60 * 60 * 1000
@@ -19,6 +20,7 @@ function activeWindowStart(): Date {
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ welcome?: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,8 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: journal?.name ?? 'Journal' }
 }
 
-export default async function JournalHomePage({ params }: Props) {
+export default async function JournalHomePage({ params, searchParams }: Props) {
   const { id } = await params
+  const sp = await searchParams
+  const showWelcome = sp.welcome === '1'
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) redirect('/sign-in')
 
@@ -94,6 +98,7 @@ export default async function JournalHomePage({ params }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {showWelcome && <WelcomeBanner journalId={journal.id} />}
       <div className="mb-8">
         <p className="text-sm text-muted-foreground mb-1">
           <Link href="/journals" className="hover:underline">Journals</Link>
@@ -128,9 +133,8 @@ export default async function JournalHomePage({ params }: Props) {
 
       <div className="flex items-center justify-between pt-8 border-t">
         <Link
-          href="#"
+          href={`/journals/${journal.id}/settings`}
           className="text-sm text-muted-foreground hover:underline"
-          aria-disabled="true"
         >
           Settings
         </Link>

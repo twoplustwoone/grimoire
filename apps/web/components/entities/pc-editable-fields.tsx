@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { EditableField } from './editable-field'
 import { EntityStatusSelect } from './entity-status-select'
@@ -7,6 +8,16 @@ import { EntityStatusSelect } from './entity-status-select'
 interface PlayerOption {
   userId: string
   label: string
+}
+
+export interface MirrorInfo {
+  /** Name of the player whose journal holds the mirrored PC. */
+  ownerName: string | null
+  /** The current viewer is the mirrored player. */
+  viewerIsMirrorPlayer: boolean
+  /** Journal id to deep-link the player back into their own journal PC. */
+  journalId: string | null
+  journalPcId: string | null
 }
 
 interface Props {
@@ -18,12 +29,15 @@ interface Props {
   linkedUserId: string | null
   players: PlayerOption[]
   isGM: boolean
+  /** Null when the PC is not mirrored. */
+  mirror?: MirrorInfo | null
 }
 
 export function PcEditableFields({
-  campaignId, pcId, name, description, status, linkedUserId, players, isGM,
+  campaignId, pcId, name, description, status, linkedUserId, players, isGM, mirror,
 }: Props) {
   const router = useRouter()
+  const isMirrored = !!mirror
 
   async function save(field: string, value: string | null) {
     await fetch(`/api/v1/campaigns/${campaignId}/player-characters/${pcId}`, {
@@ -35,14 +49,28 @@ export function PcEditableFields({
     router.refresh()
   }
 
+  const descriptionLabel = isMirrored ? 'Public one-liner' : null
+  const descriptionPlaceholder = isMirrored
+    ? 'How the party introduces this character. One or two sentences.'
+    : 'Add a description...'
+
   return (
     <>
       <div className="flex items-start justify-between">
         <h1 className="text-3xl font-bold flex-1">
-          {isGM ? (
+          {isGM && !isMirrored ? (
             <EditableField value={name} onSave={(v) => save('name', v)} placeholder="PC name" />
           ) : (
-            <span>{name}</span>
+            <span
+              className={isMirrored && isGM ? 'cursor-default' : ''}
+              title={
+                isMirrored && isGM
+                  ? "Name is owned by the player. Ask them to rename from their journal."
+                  : undefined
+              }
+            >
+              {name}
+            </span>
           )}
         </h1>
         {isGM ? (
@@ -51,14 +79,39 @@ export function PcEditableFields({
           <span className="text-xs px-2 py-1 rounded-full font-medium bg-muted text-muted-foreground">{status}</span>
         )}
       </div>
+
+      {isMirrored && mirror && (
+        <div className="mt-2 text-sm text-muted-foreground">
+          Linked to{' '}
+          {mirror.ownerName ? <strong>{mirror.ownerName}&apos;s</strong> : 'a player&apos;s'}{' '}
+          journal.
+          {mirror.viewerIsMirrorPlayer && mirror.journalId && mirror.journalPcId && (
+            <>
+              {' '}
+              <Link
+                href={`/journals/${mirror.journalId}/player-characters/${mirror.journalPcId}`}
+                className="text-primary hover:underline"
+              >
+                Open in your journal →
+              </Link>
+            </>
+          )}
+        </div>
+      )}
+
       <div className="mt-2">
+        {descriptionLabel && (
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+            {descriptionLabel}
+          </p>
+        )}
         {isGM ? (
           <EditableField
             value={description}
             onSave={(v) => save('description', v)}
             type="textarea"
-            placeholder="Add a description..."
-            emptyText="No description — click to add"
+            placeholder={descriptionPlaceholder}
+            emptyText={isMirrored ? 'No one-liner yet — click to add' : 'No description — click to add'}
             className="text-muted-foreground"
           />
         ) : description ? (

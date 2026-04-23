@@ -141,10 +141,23 @@ playerCharacters.patch('/:pcId', async (c) => {
 
   const existing = await prisma.playerCharacter.findFirst({
     where: { id: pcId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
+    include: { campaignMirror: { select: { id: true } } },
   })
   if (!existing) return c.json({ error: 'Not found' }, 404)
 
   const body = await c.req.json()
+
+  // Name is owned by the player when the PC is mirrored to a journal.
+  // Reject GM-side rename attempts; route through the player.
+  if (existing.campaignMirror && typeof body.name === 'string') {
+    const requested = body.name.trim()
+    if (requested && requested !== existing.name) {
+      return c.json(
+        { error: "Name is owned by the player. Ask them to rename from their journal." },
+        409
+      )
+    }
+  }
 
   const updated = await prisma.playerCharacter.update({
     where: { id: pcId },

@@ -29,7 +29,7 @@ export default async function CampaignSettingsPage({ params }: Props) {
 
   const isGM = membership.role === 'GM' || membership.role === 'CO_GM'
 
-  const [members, pendingInvites] = await Promise.all([
+  const [members, pendingInvites, reservablePcs] = await Promise.all([
     prisma.campaignMembership.findMany({
       where: { campaignId },
       include: { user: { select: { id: true, name: true, email: true } } },
@@ -37,6 +37,17 @@ export default async function CampaignSettingsPage({ params }: Props) {
     prisma.campaignInvite.findMany({
       where: { campaignId, acceptedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
+    }),
+    prisma.playerCharacter.findMany({
+      where: {
+        ownerType: 'CAMPAIGN',
+        ownerId: campaignId,
+        deletedAt: null,
+        linkedUserId: null,
+        campaignMirror: null,
+      },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
     }),
   ])
 
@@ -59,6 +70,7 @@ export default async function CampaignSettingsPage({ params }: Props) {
           campaignId={campaignId}
           initialInvites={pendingInvites}
           members={members}
+          reservablePcs={reservablePcs}
         />
       ) : (
         <p className="text-sm text-muted-foreground">Only GMs can manage invites.</p>
