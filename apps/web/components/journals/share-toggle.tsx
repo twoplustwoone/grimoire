@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import { Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -20,11 +20,11 @@ interface Props {
   className?: string
 }
 
-/** Subtle per-entity share toggle. Three visual states:
- *    unshared  → `EyeOff` icon, muted
- *    shared    → `Eye` icon, accent color
- *    disabled  → icon chosen from the derived "logical" state, with
- *                tooltip explaining why the toggle is inert
+/** Labeled share toggle. Two visual states:
+ *    unshared  → `Share2` + "Share",  muted foreground
+ *    shared    → `Share2` + "Shared", primary foreground
+ *  Plus a disabled state with a tooltip when sharing isn't available
+ *  (no linked campaign, or journal-wide share overrides per-item).
  *
  *  Error handling is revert-only: if the POST/DELETE fails, the
  *  optimistic state snaps back with no user-visible error signal
@@ -91,27 +91,27 @@ export function ShareToggle({
     }
   }
 
-  const iconSize = size === 'default' ? 'h-4 w-4' : 'h-3.5 w-3.5'
-  const Icon = visuallyShared ? Eye : EyeOff
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className={cn('inline-flex', className)}>
           <Button
             type="button"
-            size={size === 'default' ? 'icon' : 'icon-sm'}
-            variant="ghost"
+            size={size}
+            variant="outline"
             onClick={toggle}
             disabled={disabled}
             aria-pressed={visuallyShared}
             aria-label={tooltipText}
             className={cn(
-              visuallyShared ? 'text-primary' : 'text-muted-foreground',
+              visuallyShared
+                ? 'text-primary border-primary/40 hover:bg-primary/10'
+                : 'text-muted-foreground',
               disabled && 'opacity-60'
             )}
           >
-            <Icon className={iconSize} />
+            <Share2 />
+            {visuallyShared ? 'Shared' : 'Share'}
           </Button>
         </span>
       </TooltipTrigger>
