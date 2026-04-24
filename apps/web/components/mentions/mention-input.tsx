@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import {
   Bold,
   Italic,
+  Underline as UnderlineIcon,
   Heading2,
   Heading3,
   List,
@@ -202,6 +203,7 @@ function Toolbar({ editor }: { editor: Editor }) {
     selector: ({ editor }) => ({
       bold: editor.isActive('bold'),
       italic: editor.isActive('italic'),
+      underline: editor.isActive('underline'),
       h2: editor.isActive('heading', { level: 2 }),
       h3: editor.isActive('heading', { level: 3 }),
       bulletList: editor.isActive('bulletList'),
@@ -211,6 +213,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   }) ?? {
     bold: false,
     italic: false,
+    underline: false,
     h2: false,
     h3: false,
     bulletList: false,
@@ -235,6 +238,12 @@ function Toolbar({ editor }: { editor: Editor }) {
       icon: Italic,
       action: () => editor.chain().focus().toggleItalic().run(),
       active: activeState.italic,
+    },
+    {
+      label: 'Underline',
+      icon: UnderlineIcon,
+      action: () => editor.chain().focus().toggleUnderline().run(),
+      active: activeState.underline,
     },
     {
       label: 'Heading 2',

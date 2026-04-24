@@ -117,6 +117,8 @@ function applyMarks(text: string, marks: ProseMirrorMark[] | undefined): ReactNo
       out = <strong>{out}</strong>
     } else if (mark.type === 'italic') {
       out = <em>{out}</em>
+    } else if (mark.type === 'underline') {
+      out = <u>{out}</u>
     }
   }
   return out
