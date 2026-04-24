@@ -475,6 +475,25 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
+  // J7 — a capture that mentions a J6 journal entity inline, so a
+  // fresh-seed developer sees what noun-promotion and highlight-to-
+  // create eventually produce: prose that names a location and
+  // links it.
+  const flagonCaptureContent = docOfParagraph([
+    'Barkeep at ',
+    mentionNode('The Rusted Flagon', 'LOCATION', rustedFlagon.id),
+    " pretended not to listen, but his eyes flicked to the cellar door twice while the scar-handed man was at the bar. Worth another look before I leave the quarter.",
+  ])
+  await prisma.journalCapture.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalSessionId: tavernSession.id,
+      content: flagonCaptureContent,
+      mentions: extractMentionsFromDoc(flagonCaptureContent),
+      createdAt: new Date(threeDaysAgo.getTime() + 75 * 60 * 1000),
+    },
+  })
+
   // J5 — Serafine has opted in to sharing two specific items with
   // the GM: the tavern-night capture and her theory about the
   // scar-handed man. Journal-wide share is off; PC backstory is
