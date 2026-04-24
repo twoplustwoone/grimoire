@@ -445,7 +445,7 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
-  await prisma.faction.create({
+  const greyCloaks = await prisma.faction.create({
     data: {
       ownerType: 'JOURNAL',
       ownerId: serafineJournal.id,
@@ -465,7 +465,7 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
     },
   })
 
-  await prisma.clue.create({
+  const towerRunes = await prisma.clue.create({
     data: {
       ownerType: 'JOURNAL',
       ownerId: serafineJournal.id,
@@ -491,6 +491,46 @@ export async function createDemoCampaign(prisma: PrismaClient, userId: string) {
       content: flagonCaptureContent,
       mentions: extractMentionsFromDoc(flagonCaptureContent),
       createdAt: new Date(threeDaysAgo.getTime() + 75 * 60 * 1000),
+    },
+  })
+
+  // J8 — captures that mention multiple journal entities together so
+  // the graph has co-mention adjacency to render. One capture places
+  // the scar-handed man, the tavern, and the Grey Cloaks in the same
+  // scene; the other ties the tower runes back to his claims.
+  const scarWithCloaksContent = docOfParagraph([
+    'Saw ',
+    mentionNode('The Scar-Handed Man', 'NPC', scarHandedMan.id),
+    ' again at ',
+    mentionNode('The Rusted Flagon', 'LOCATION', rustedFlagon.id),
+    ' — this time he was speaking with someone wearing the grey of ',
+    mentionNode('The Grey Cloaks', 'FACTION', greyCloaks.id),
+    '. They left together, fast, through the kitchen.',
+  ])
+  await prisma.journalCapture.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalSessionId: tavernSession.id,
+      content: scarWithCloaksContent,
+      mentions: extractMentionsFromDoc(scarWithCloaksContent),
+      createdAt: new Date(threeDaysAgo.getTime() + 110 * 60 * 1000),
+    },
+  })
+
+  const runesCaptureContent = docOfParagraph([
+    "The ",
+    mentionNode('Runes on the Tower Door', 'CLUE', towerRunes.id),
+    ' — they match the pattern ',
+    mentionNode('The Scar-Handed Man', 'NPC', scarHandedMan.id),
+    " mentioned at the bar. He wasn't bluffing about knowing his way inside.",
+  ])
+  await prisma.journalCapture.create({
+    data: {
+      journalId: serafineJournal.id,
+      journalSessionId: untitledSession.id,
+      content: runesCaptureContent,
+      mentions: extractMentionsFromDoc(runesCaptureContent),
+      createdAt: new Date(captureNow - 18 * 60 * 60 * 1000),
     },
   })
 
