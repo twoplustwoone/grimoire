@@ -26,6 +26,7 @@ import journals from './routes/journals.js'
 import journalSessions from './routes/journal-sessions.js'
 import journalCaptures from './routes/journal-captures.js'
 import journalLinks from './routes/journal-links.js'
+import journalGraph from './routes/journal-graph.js'
 import journalPlayerCharacters from './routes/journal-player-characters.js'
 import journalNpcs from './routes/journal-npcs.js'
 import journalLocations from './routes/journal-locations.js'
@@ -59,6 +60,7 @@ app.route('/journals', journals)
 app.route('/journals/:id/sessions', journalSessions)
 app.route('/journals/:id/captures', journalCaptures)
 app.route('/journals/:id/links', journalLinks)
+app.route('/journals/:id/graph', journalGraph)
 app.route('/journals/:id/player-characters', journalPlayerCharacters)
 app.route('/journals/:id/npcs', journalNpcs)
 app.route('/journals/:id/locations', journalLocations)
