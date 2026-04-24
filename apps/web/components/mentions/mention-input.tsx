@@ -1,7 +1,6 @@
 'use client'
 
 import { useEditor, EditorContent, useEditorState, type Editor } from '@tiptap/react'
-import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Mention, { type MentionOptions } from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -16,7 +15,6 @@ import {
   ListOrdered,
   Quote,
   Minus,
-  Plus,
 } from 'lucide-react'
 import {
   createJournalMentionSuggestion,
@@ -40,17 +38,14 @@ interface Props {
   /** Scope @-mentions to this journal's owned entities. When set,
    *  takes precedence over the route-based campaign detection so
    *  callers on journal routes (e.g. capture editor) surface the
-   *  right suggestion list. Also enables the J7 noun-promotion and
-   *  highlight-to-create affordances. */
+   *  right suggestion list. Also enables J7 noun-promotion. */
   mentionJournalId?: string
 }
 
-/** In-flight state for the type picker. The suggestion-row flow
- *  inserts at a single point (the `@query` range has already been
- *  deleted). The bubble-menu flow replaces a live selection range. */
-type PendingCreate =
-  | { kind: 'insert-at'; name: string; at: number }
-  | { kind: 'replace-range'; name: string; from: number; to: number }
+/** In-flight state for the type picker. The `@query` range has
+ *  already been deleted by the suggestion-row flow, so we insert
+ *  the resolved mention at a single point. */
+type PendingCreate = { name: string; at: number }
 
 export function MentionInput({
   value,
@@ -67,7 +62,7 @@ export function MentionInput({
   const [pendingCreate, setPendingCreate] = useState<PendingCreate | null>(null)
   const suggestion: MentionOptions['suggestion'] | undefined = mentionJournalId
     ? (createJournalMentionSuggestion(mentionJournalId, (req) => {
-        setPendingCreate({ kind: 'insert-at', name: req.name, at: req.insertAt })
+        setPendingCreate({ name: req.name, at: req.insertAt })
       }) as MentionOptions['suggestion'])
     : campaignId
       ? (createMentionSuggestion(campaignId) as MentionOptions['suggestion'])
@@ -142,9 +137,8 @@ export function MentionInput({
     if (!pendingCreate || !mentionJournalId || !editor) return
     const result = await createJournalEntity(mentionJournalId, type, pendingCreate.name)
     if (!result) {
-      // Revert to pre-create state. For the suggestion flow the
-      // typed `@<query>` is already gone from the doc; the user can
-      // retype. For the bubble-menu flow the selection is untouched.
+      // Revert: the typed `@<query>` is already gone from the
+      // doc, so the user can retype if they want to try again.
       console.error('Failed to create journal entity', { type, name: pendingCreate.name })
       setPendingCreate(null)
       return
@@ -161,22 +155,11 @@ export function MentionInput({
       },
       { type: 'text', text: ' ' },
     ]
-    if (pendingCreate.kind === 'insert-at') {
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(pendingCreate.at, mentionContent)
-        .run()
-    } else {
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(
-          { from: pendingCreate.from, to: pendingCreate.to },
-          mentionContent,
-        )
-        .run()
-    }
+    editor
+      .chain()
+      .focus()
+      .insertContentAt(pendingCreate.at, mentionContent)
+      .run()
     setPendingCreate(null)
   }
 
@@ -192,31 +175,6 @@ export function MentionInput({
       `}
     >
       {editor ? <Toolbar editor={editor} /> : null}
-      {editor && allowMentions && mentionJournalId ? (
-        <BubbleMenu
-          editor={editor}
-          shouldShow={({ editor, from, to }) => {
-            if (!editor.isEditable) return false
-            if (from === to) return false
-            // Hide while the picker is open — the editor has no
-            // focus, and showing the menu over the modal is noise.
-            if (pendingCreate !== null) return false
-            return true
-          }}
-          options={{ placement: 'top' }}
-        >
-          <BubbleCreateButton
-            editor={editor}
-            onCreate={() => {
-              const { from, to } = editor.state.selection
-              if (from === to) return
-              const name = editor.state.doc.textBetween(from, to, ' ', ' ').trim()
-              if (!name) return
-              setPendingCreate({ kind: 'replace-range', name, from, to })
-            }}
-          />
-        </BubbleMenu>
-      ) : null}
       <div
         className="px-3 py-2 cursor-text"
         style={{ minHeight }}
@@ -232,57 +190,6 @@ export function MentionInput({
         name={pendingCreate?.name ?? ''}
         onPick={handlePickType}
       />
-    </div>
-  )
-}
-
-function BubbleCreateButton({
-  editor,
-  onCreate,
-}: {
-  editor: Editor
-  onCreate: () => void
-}) {
-  const hasMention =
-    useEditorState({
-      editor,
-      selector: ({ editor }) => {
-        if (!editor) return false
-        const { from, to } = editor.state.selection
-        if (from === to) return false
-        let found = false
-        editor.state.doc.nodesBetween(from, to, (node) => {
-          if (node.type.name === 'mention') {
-            found = true
-            return false
-          }
-          return undefined
-        })
-        return found
-      },
-    }) ?? false
-  const tooltip = hasMention
-    ? 'Narrow your selection — it contains a mention'
-    : 'Create entity from selection'
-  return (
-    <div className="flex items-center rounded-md border border-border bg-popover shadow-md ring-1 ring-foreground/10">
-      <button
-        type="button"
-        disabled={hasMention}
-        onMouseDown={(e) => {
-          // Don't let the bubble-menu trigger collapse the selection
-          // before we read it.
-          e.preventDefault()
-          if (hasMention) return
-          onCreate()
-        }}
-        title={tooltip}
-        aria-label={tooltip}
-        className="inline-flex min-h-[44px] md:min-h-[32px] items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        Create entity
-      </button>
     </div>
   )
 }

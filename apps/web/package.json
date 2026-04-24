@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@grimoire/db": "workspace:*",
-    "@tiptap/extension-bubble-menu": "^3.22.3",
     "@tiptap/extension-mention": "^3.22.3",
     "@tiptap/extension-placeholder": "^3.22.3",
     "@tiptap/pm": "^3.22.3",
