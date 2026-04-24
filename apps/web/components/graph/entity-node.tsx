@@ -23,7 +23,7 @@ const urgencyColors = {
 } as const
 
 export const EntityNode = memo(({ data, selected }: NodeProps) => {
-  const nodeData = data as { label: string; type: string; status: string; urgency?: string; campaignId?: string; entityId?: string; dimmed?: boolean; highlighted?: boolean }
+  const nodeData = data as { label: string; type: string; status: string; urgency?: string; campaignId?: string; entityId?: string; variant?: 'primary' | 'leaf'; dimmed?: boolean; highlighted?: boolean }
   const light = isLightTheme()
   const type = (nodeData.type as EntityType)
   const theme = ENTITY_GRAPH_NODE_THEME[type] ?? ENTITY_GRAPH_NODE_THEME.NPC
@@ -33,10 +33,13 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
   const textClass = light ? theme.textLight : theme.textDark
 
   const isInactive = nodeData.status === 'INACTIVE' || nodeData.status === 'DEAD' || nodeData.status === 'DESTROYED' || nodeData.status === 'RETIRED' || nodeData.status === 'RESOLVED'
+  const isLeaf = nodeData.variant === 'leaf'
 
-  const borderClass = nodeData.type === 'THREAD' && nodeData.urgency && urgencyColors[nodeData.urgency as keyof typeof urgencyColors]
-    ? urgencyColors[nodeData.urgency as keyof typeof urgencyColors]
-    : theme.border
+  const borderClass = isLeaf
+    ? 'border-dashed border-white/30'
+    : nodeData.type === 'THREAD' && nodeData.urgency && urgencyColors[nodeData.urgency as keyof typeof urgencyColors]
+      ? urgencyColors[nodeData.urgency as keyof typeof urgencyColors]
+      : theme.border
 
   const mutedTextColor = light ? 'text-foreground/50' : 'text-white/40'
   const isDimmed = nodeData.dimmed === true
@@ -51,6 +54,7 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
           min-w-[120px] max-w-[180px] cursor-pointer
           transition-all duration-150
           ${bgClass} ${borderClass}
+          ${isLeaf && !isHighlighted && !isDimmed ? 'opacity-70' : ''}
           ${isHighlighted ? 'ring-2 ring-white/60 scale-110 shadow-lg' : ''}
           ${isDimmed ? 'opacity-20 scale-95' : ''}
           ${!isDimmed && !isHighlighted && selected ? 'ring-2 ring-white/50 scale-105' : ''}
@@ -63,7 +67,14 @@ export const EntityNode = memo(({ data, selected }: NodeProps) => {
             {nodeData.label}
           </span>
         </div>
-        {nodeData.status && nodeData.status !== 'ACTIVE' && nodeData.status !== 'OPEN' && (
+        {isLeaf && (
+          <div className="mt-1">
+            <span className={`text-[9px] uppercase tracking-wider ${mutedTextColor}`}>
+              campaign
+            </span>
+          </div>
+        )}
+        {!isLeaf && nodeData.status && nodeData.status !== 'ACTIVE' && nodeData.status !== 'OPEN' && (
           <div className="mt-1">
             <span className={`text-[9px] uppercase tracking-wider ${mutedTextColor}`}>
               {nodeData.status}

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import {
   forceSimulation,
   forceLink,
@@ -16,6 +17,7 @@ export interface RawNode {
   label: string
   status: string | null
   urgency?: string
+  variant?: 'primary' | 'leaf'
 }
 
 export interface RawEdge {
@@ -24,6 +26,10 @@ export interface RawEdge {
   target: string
   label: string
   type: string
+  weight?: number
+  captureIds?: string[]
+  createdAt?: string
+  proposedBy?: string
 }
 
 interface SimNode extends SimulationNodeDatum {
@@ -54,13 +60,25 @@ const edgeStyleMap: Record<string, { stroke: string; strokeDasharray?: string }>
   membership: { stroke: '#a78bfa' },
   location: { stroke: '#34d399' },
   thread_tag: { stroke: '#fb923c', strokeDasharray: '4 2' },
+  cross_ref: { stroke: '#818cf8' },
+  co_mention: { stroke: '#94a3b8', strokeDasharray: '4 2' },
 }
 
 function buildEdges(rawEdges: RawEdge[], validIds: Set<string>): Edge[] {
   return rawEdges
     .filter(e => validIds.has(e.source) && validIds.has(e.target))
     .map(e => {
-      const style = edgeStyleMap[e.type] ?? { stroke: '#6b7280' }
+      const base = edgeStyleMap[e.type] ?? { stroke: '#6b7280' }
+      const style: CSSProperties = { ...base }
+      let baseOpacity = 1
+      if (e.type === 'co_mention' && typeof e.weight === 'number') {
+        // Log-scale width so a weight-1 edge is hairline (1px) and very
+        // popular pairs cap around 3.5px — enough to read weight at a
+        // glance without drowning the layout.
+        style.strokeWidth = Math.min(1 + Math.log2(Math.max(1, e.weight)), 3.5)
+        baseOpacity = Math.max(0.5, Math.min(1, 0.5 + e.weight * 0.1))
+        style.opacity = baseOpacity
+      }
       return {
         id: e.id,
         source: e.source,
@@ -71,7 +89,14 @@ function buildEdges(rawEdges: RawEdge[], validIds: Set<string>): Edge[] {
         style,
         labelStyle: { fill: '#9ca3af', fontSize: 10 },
         labelBgStyle: { fill: 'transparent' },
-        data: { edgeType: e.type },
+        data: {
+          edgeType: e.type,
+          weight: e.weight,
+          captureIds: e.captureIds,
+          createdAt: e.createdAt,
+          proposedBy: e.proposedBy,
+          baseOpacity,
+        },
       }
     })
 }
@@ -146,6 +171,7 @@ export function buildGraphLayout(
         type: raw.type,
         status: raw.status,
         urgency: raw.urgency,
+        variant: raw.variant,
         campaignId,
       },
     }
@@ -184,6 +210,7 @@ export function buildColumnLayout(
           type: node.type,
           status: node.status,
           urgency: node.urgency,
+          variant: node.variant,
           campaignId,
         },
       })
