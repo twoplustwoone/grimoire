@@ -99,6 +99,18 @@ function SidebarProvider({
         event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
         (event.metaKey || event.ctrlKey)
       ) {
+        // Don't steal ⌘B from editable contexts — text inputs,
+        // textareas, and contenteditable editors (Tiptap) use it
+        // for bold/selection semantics.
+        const target = event.target as HTMLElement | null
+        if (
+          target &&
+          (target.isContentEditable ||
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA")
+        ) {
+          return
+        }
         event.preventDefault()
         toggleSidebar()
       }
