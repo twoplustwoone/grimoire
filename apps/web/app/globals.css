@@ -277,3 +277,33 @@
   margin: 0.5rem 0;
   padding-left: 0.75rem;
 }
+
+.tiptap ul,
+.tiptap ol {
+  margin: 0.25rem 0;
+  padding-left: 1.5rem;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap ul ul {
+  list-style-type: circle;
+}
+
+.tiptap ul ul ul {
+  list-style-type: square;
+}
+
+.tiptap li {
+  margin: 0.125rem 0;
+}
+
+.tiptap li > p {
+  margin: 0;
+}
