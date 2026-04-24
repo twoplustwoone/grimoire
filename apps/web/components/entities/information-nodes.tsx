@@ -131,10 +131,10 @@ export function InformationNodes({ nodes: initialNodes, campaignId }: Props) {
                     />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={() => handleSaveEdit(node.id)}>
-                        <Check className="h-3 w-3 mr-1" />Save
+                        <Check className="h-3 w-3" />Save
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
-                        <X className="h-3 w-3 mr-1" />Cancel
+                        <X className="h-3 w-3" />Cancel
                       </Button>
                     </div>
                   </div>

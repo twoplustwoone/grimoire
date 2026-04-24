@@ -130,7 +130,7 @@ export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinked
                             variant="outline"
                             onClick={() => setEditing(c)}
                           >
-                            <Pencil className="h-3 w-3 mr-1" />
+                            <Pencil className="h-3 w-3" />
                             Edit
                           </Button>
                           <Button
@@ -139,7 +139,7 @@ export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinked
                             onClick={() => setDeleting(c)}
                             className="text-destructive border-destructive/30 hover:bg-destructive/10"
                           >
-                            <Trash2 className="h-3 w-3 mr-1" />
+                            <Trash2 className="h-3 w-3" />
                             Delete
                           </Button>
                           <ShareToggle

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus, Calendar } from 'lucide-react'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -26,7 +27,7 @@ export default async function CluesPage({ params }: Props) {
 
   const list = await prisma.clue.findMany({
     where: { ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
-    include: { discoveredInSession: { select: { id: true, number: true, title: true } } },
+    include: { discoveredInSession: { select: { id: true, title: true, createdAt: true } } },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -46,7 +47,7 @@ export default async function CluesPage({ params }: Props) {
           <h1 className="text-3xl font-bold">Clues</h1>
         </div>
         <PageHeaderAction href={`/campaigns/${campaignId}/clues/new`}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           New Clue
         </PageHeaderAction>
       </div>
@@ -56,7 +57,7 @@ export default async function CluesPage({ params }: Props) {
           <CardContent>
             <p className="text-muted-foreground mb-4">No clues yet.</p>
             <PageHeaderAction href={`/campaigns/${campaignId}/clues/new`}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               New Clue
             </PageHeaderAction>
           </CardContent>
@@ -65,14 +66,14 @@ export default async function CluesPage({ params }: Props) {
         <div className="grid gap-3">
           {list.map((clue) => (
             <Link key={clue.id} href={`/campaigns/${campaignId}/clues/${clue.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer">
                 <CardHeader className="py-4">
                   <CardTitle className="text-base">{clue.title}</CardTitle>
                   {clue.description && <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{clue.description}</p>}
                   {clue.discoveredInSession && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                       <Calendar className="h-3 w-3" />
-                      Session {clue.discoveredInSession.number}{clue.discoveredInSession.title ? `: ${clue.discoveredInSession.title}` : ''}
+                      {displaySessionTitle(clue.discoveredInSession)}
                     </span>
                   )}
                 </CardHeader>

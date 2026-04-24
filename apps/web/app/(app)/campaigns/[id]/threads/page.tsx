@@ -58,7 +58,7 @@ export default async function ThreadsPage({ params }: Props) {
           <h1 className="text-3xl font-bold">Threads</h1>
         </div>
         <PageHeaderAction href={`/campaigns/${campaignId}/threads/new`}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           New Thread
         </PageHeaderAction>
       </div>
@@ -68,7 +68,7 @@ export default async function ThreadsPage({ params }: Props) {
           <CardContent>
             <p className="text-muted-foreground mb-4">No threads yet.</p>
             <PageHeaderAction href={`/campaigns/${campaignId}/threads/new`}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               New Thread
             </PageHeaderAction>
           </CardContent>
@@ -77,7 +77,7 @@ export default async function ThreadsPage({ params }: Props) {
         <div className="grid gap-3">
           {list.map((t) => (
             <Link key={t.id} href={`/campaigns/${campaignId}/threads/${t.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{t.title}</CardTitle>

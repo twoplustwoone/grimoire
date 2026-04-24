@@ -156,7 +156,7 @@ export function SessionEntityTagger({
             size="sm"
             onClick={() => setShowSearch(true)}
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="h-4 w-4" />
             Tag entity
           </Button>
         )}

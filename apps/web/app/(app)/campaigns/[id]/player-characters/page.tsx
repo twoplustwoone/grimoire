@@ -60,7 +60,7 @@ export default async function PlayerCharactersPage({ params }: Props) {
         </div>
         {isGM && (
           <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4" />
             New PC
           </PageHeaderAction>
         )}
@@ -74,7 +74,7 @@ export default async function PlayerCharactersPage({ params }: Props) {
             </p>
             {isGM && (
               <PageHeaderAction href={`/campaigns/${campaignId}/player-characters/new`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 New PC
               </PageHeaderAction>
             )}
@@ -84,7 +84,7 @@ export default async function PlayerCharactersPage({ params }: Props) {
         <div className="grid gap-3">
           {pcs.map((pc) => (
             <Link key={pc.id} href={`/campaigns/${campaignId}/player-characters/${pc.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{pc.name}</CardTitle>

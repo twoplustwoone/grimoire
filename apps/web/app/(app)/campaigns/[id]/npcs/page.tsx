@@ -62,7 +62,7 @@ export default async function NPCsPage({ params }: Props) {
           <h1 className="text-3xl font-bold">NPCs</h1>
         </div>
         <PageHeaderAction href={`/campaigns/${campaignId}/npcs/new`}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           New NPC
         </PageHeaderAction>
       </div>
@@ -72,7 +72,7 @@ export default async function NPCsPage({ params }: Props) {
           <CardContent>
             <p className="text-muted-foreground mb-4">No NPCs yet. Add the first character.</p>
             <PageHeaderAction href={`/campaigns/${campaignId}/npcs/new`}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               New NPC
             </PageHeaderAction>
           </CardContent>
@@ -81,7 +81,7 @@ export default async function NPCsPage({ params }: Props) {
         <div className="grid gap-3">
           {npcList.map((npc) => (
             <Link key={npc.id} href={`/campaigns/${campaignId}/npcs/${npc.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{npc.name}</CardTitle>

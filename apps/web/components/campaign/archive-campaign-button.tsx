@@ -44,7 +44,7 @@ export function ArchiveCampaignButton({ campaignId, campaignName }: Props) {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-muted-foreground border-muted-foreground/30">
-          <Archive className="h-4 w-4 mr-2" />
+          <Archive className="h-4 w-4" />
           Archive campaign
         </Button>
       </AlertDialogTrigger>

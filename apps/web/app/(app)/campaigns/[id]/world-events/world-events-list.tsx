@@ -137,9 +137,9 @@ export function WorldEventsList({ campaignId, initialEvents, sessions }: Props) 
       <div className="flex justify-end">
         <Button onClick={() => setShowForm(!showForm)} variant={showForm ? 'outline' : 'default'}>
           {showForm ? (
-            <><X className="h-4 w-4 mr-2" />Cancel</>
+            <><X className="h-4 w-4" />Cancel</>
           ) : (
-            <><Plus className="h-4 w-4 mr-2" />Log Event</>
+            <><Plus className="h-4 w-4" />Log Event</>
           )}
         </Button>
       </div>
@@ -210,7 +210,7 @@ export function WorldEventsList({ campaignId, initialEvents, sessions }: Props) 
               Track things happening in your world — faction moves, disasters, political changes — whether they happen during a session or between them.
             </p>
             <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Log First Event
             </Button>
           </CardContent>
@@ -317,11 +317,11 @@ function EventCard({
             />
             <div className="flex gap-2">
               <Button size="sm" onClick={() => onSaveEdit(event.id)}>
-                <Check className="h-3 w-3 mr-1" />
+                <Check className="h-3 w-3" />
                 Save
               </Button>
               <Button size="sm" variant="outline" onClick={onCancelEdit}>
-                <X className="h-3 w-3 mr-1" />
+                <X className="h-3 w-3" />
                 Cancel
               </Button>
             </div>

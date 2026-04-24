@@ -53,7 +53,7 @@ export default async function FactionsPage({ params }: Props) {
           <h1 className="text-3xl font-bold">Factions</h1>
         </div>
         <PageHeaderAction href={`/campaigns/${campaignId}/factions/new`}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           New Faction
         </PageHeaderAction>
       </div>
@@ -63,7 +63,7 @@ export default async function FactionsPage({ params }: Props) {
           <CardContent>
             <p className="text-muted-foreground mb-4">No factions yet.</p>
             <PageHeaderAction href={`/campaigns/${campaignId}/factions/new`}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               New Faction
             </PageHeaderAction>
           </CardContent>
@@ -72,7 +72,7 @@ export default async function FactionsPage({ params }: Props) {
         <div className="grid gap-3">
           {list.map((f) => (
             <Link key={f.id} href={`/campaigns/${campaignId}/factions/${f.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{f.name}</CardTitle>

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeaderAction } from '@/components/layout/page-header-action'
 import { Plus, Calendar } from 'lucide-react'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -37,7 +38,7 @@ export default async function SessionsPage({ params }: Props) {
     include: {
       _count: { select: { entityTags: true } },
     },
-    orderBy: { number: 'desc' },
+    orderBy: { createdAt: 'desc' },
   })
 
   return (
@@ -56,7 +57,7 @@ export default async function SessionsPage({ params }: Props) {
           <h1 className="text-3xl font-bold">Sessions</h1>
         </div>
         <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           New Session
         </PageHeaderAction>
       </div>
@@ -66,7 +67,7 @@ export default async function SessionsPage({ params }: Props) {
           <CardContent>
             <p className="text-muted-foreground mb-4">No sessions yet. Log your first session.</p>
             <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4" />
               New Session
             </PageHeaderAction>
           </CardContent>
@@ -75,12 +76,12 @@ export default async function SessionsPage({ params }: Props) {
         <div className="grid gap-3">
           {gameSessions.map((gs) => (
             <Link key={gs.id} href={`/campaigns/${campaignId}/sessions/${gs.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer">
                 <CardHeader className="py-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      Session {gs.number}{gs.title ? ` — ${gs.title}` : ''}
+                      {displaySessionTitle(gs)}
                     </CardTitle>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[gs.status] ?? ''}`}>
                       {gs.status}

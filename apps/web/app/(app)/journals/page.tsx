@@ -37,7 +37,7 @@ export default async function JournalsPage() {
         </div>
         <Button asChild>
           <Link href="/journals/new">
-            <Plus className="h-4 w-4 mr-0 sm:mr-2" />
+            <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">New journal</span>
           </Link>
         </Button>
@@ -51,7 +51,7 @@ export default async function JournalsPage() {
             </p>
             <Button asChild>
               <Link href="/journals/new">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 New journal
               </Link>
             </Button>

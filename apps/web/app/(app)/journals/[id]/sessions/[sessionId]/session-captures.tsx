@@ -78,7 +78,7 @@ export function SessionCaptures({
               <MentionRenderer content={c.content} journalId={journalId} />
               <div className="flex gap-2 items-center">
                 <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
-                  <Pencil className="h-3 w-3 mr-1" />
+                  <Pencil className="h-3 w-3" />
                   Edit
                 </Button>
                 <Button
@@ -87,7 +87,7 @@ export function SessionCaptures({
                   onClick={() => setDeleting(c)}
                   className="text-destructive border-destructive/30 hover:bg-destructive/10"
                 >
-                  <Trash2 className="h-3 w-3 mr-1" />
+                  <Trash2 className="h-3 w-3" />
                   Delete
                 </Button>
                 <ShareToggle
@@ -106,7 +106,7 @@ export function SessionCaptures({
 
       <div className="flex justify-center">
         <Button onClick={() => setAddOpen(true)} variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4" />
           Add capture
         </Button>
       </div>

@@ -151,7 +151,7 @@ export function NpcAssignments({
               className="h-6 text-xs"
               onClick={() => setShowFactionSelect(!showFactionSelect)}
             >
-              <Plus className="h-3 w-3 mr-1" />
+              <Plus className="h-3 w-3" />
               Add
             </Button>
           </CardTitle>

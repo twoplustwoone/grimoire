@@ -60,7 +60,7 @@ export function JournalCrossReferencesSection({
         <div className="flex items-baseline justify-between">
           <CardTitle className="text-lg">Cross-references</CardTitle>
           <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-            <Plus className="h-3 w-3 mr-1" />
+            <Plus className="h-3 w-3" />
             Add cross-reference
           </Button>
         </div>

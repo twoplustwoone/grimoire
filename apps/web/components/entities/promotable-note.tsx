@@ -136,7 +136,7 @@ export function PromotableNote({
           </label>
           <div className="flex gap-2">
             <Button size="sm" onClick={handlePromote} disabled={promoting}>
-              <ArrowUpCircle className="h-3 w-3 mr-1" />
+              <ArrowUpCircle className="h-3 w-3" />
               {promoting ? 'Promoting...' : 'Promote'}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setShowPromoteForm(false)}>

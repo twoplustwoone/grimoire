@@ -207,7 +207,7 @@ export default async function CampaignPage({ params }: Props) {
                 </p>
               </div>
               <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 Start new session
               </PageHeaderAction>
             </div>
@@ -218,7 +218,7 @@ export default async function CampaignPage({ params }: Props) {
                 <p className="text-xs text-muted-foreground">Start your first session to begin capturing the campaign.</p>
               </div>
               <PageHeaderAction href={`/campaigns/${campaignId}/sessions/new`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 Start new session
               </PageHeaderAction>
             </div>
