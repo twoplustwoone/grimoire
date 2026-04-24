@@ -39,8 +39,11 @@ search.get('/', async (c) => {
     prisma.faction.findMany({ where: where('name'), select: { id: true, name: true, status: true }, take: 5 }),
     prisma.thread.findMany({ where: { ...ownedBy, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true, status: true, urgency: true }, take: 5 }),
     prisma.clue.findMany({ where: { ...ownedBy, deletedAt: null, title: { contains: q, mode: 'insensitive' } }, select: { id: true, title: true }, take: 5 }),
-    prisma.gameSession.findMany({ where: { ...ownedBy, OR: sessionOr }, select: { id: true, number: true, title: true, status: true }, take: 3 }),
+    prisma.gameSession.findMany({ where: { ...ownedBy, OR: sessionOr }, select: { id: true, title: true, createdAt: true, status: true }, take: 3 }),
   ])
+
+  const sessionName = (s: { title: string | null; createdAt: Date }) =>
+    s.title ?? `Session started ${s.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
 
   const results = [
     ...npcs.map(e => ({ id: e.id, type: 'NPC' as const, name: e.name, meta: e.status })),
@@ -49,7 +52,7 @@ search.get('/', async (c) => {
     ...factions.map(e => ({ id: e.id, type: 'FACTION' as const, name: e.name, meta: e.status })),
     ...threads.map(e => ({ id: e.id, type: 'THREAD' as const, name: e.title, meta: e.urgency })),
     ...clues.map(e => ({ id: e.id, type: 'CLUE' as const, name: e.title, meta: null })),
-    ...sessions.map(e => ({ id: e.id, type: 'SESSION' as const, name: `Session ${e.number}${e.title ? ` — ${e.title}` : ''}`, meta: e.status })),
+    ...sessions.map(e => ({ id: e.id, type: 'SESSION' as const, name: sessionName(e), meta: e.status })),
   ]
 
   return c.json(results)

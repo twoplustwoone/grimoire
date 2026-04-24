@@ -31,7 +31,7 @@ export default async function WorldEventsPage({ params }: Props) {
     prisma.worldEvent.findMany({
       where: ownedBy,
       include: {
-        session: { select: { id: true, number: true, title: true } },
+        session: { select: { id: true, title: true, createdAt: true } },
         inWorldDate: { select: { id: true, label: true, sortOrder: true } },
       },
       orderBy: [
@@ -41,8 +41,8 @@ export default async function WorldEventsPage({ params }: Props) {
     }),
     prisma.gameSession.findMany({
       where: ownedBy,
-      select: { id: true, number: true, title: true },
-      orderBy: { number: 'asc' },
+      select: { id: true, title: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
     }),
   ])
 

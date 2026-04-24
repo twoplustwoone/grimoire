@@ -26,20 +26,21 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Plus, Globe, Calendar, MoreHorizontal, Pencil, Trash2, X, Check } from 'lucide-react'
 import Link from 'next/link'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface WorldEvent {
   id: string
   title: string
   description: string | null
   createdAt: Date
-  session: { id: string; number: number; title: string | null } | null
+  session: { id: string; title: string | null; createdAt: Date | string } | null
   inWorldDate: { id: string; label: string; sortOrder: number } | null
 }
 
 interface Session {
   id: string
-  number: number
   title: string | null
+  createdAt: Date | string
 }
 
 interface Props {
@@ -182,7 +183,7 @@ export function WorldEventsList({ campaignId, initialEvents, sessions }: Props) 
                   <option value="">Between sessions</option>
                   {sessions.map(s => (
                     <option key={s.id} value={s.id}>
-                      Session {s.number}{s.title ? ` — ${s.title}` : ''}
+                      {displaySessionTitle(s)}
                     </option>
                   ))}
                 </select>
@@ -247,7 +248,7 @@ export function WorldEventsList({ campaignId, initialEvents, sessions }: Props) 
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <Link href={`/campaigns/${campaignId}/sessions/${session.id}`} className="hover:underline">
-              Session {session.number}{session.title ? ` — ${session.title}` : ''}
+              {displaySessionTitle(session)}
             </Link>
           </h2>
           <div className="space-y-3">

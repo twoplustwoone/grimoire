@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, FileText } from 'lucide-react'
 import { SessionControls } from './session-controls'
 import { SessionEntityTagger } from '@/components/entities/session-entity-tagger'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
@@ -16,12 +17,11 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, sessionId } = await params
   const [gameSession, campaign] = await Promise.all([
-    prisma.gameSession.findUnique({ where: { id: sessionId }, select: { number: true, title: true } }),
+    prisma.gameSession.findUnique({ where: { id: sessionId }, select: { title: true, createdAt: true } }),
     prisma.campaign.findUnique({ where: { id }, select: { name: true } }),
   ])
   if (!gameSession) return { title: 'Session' }
-  const sessionLabel = `Session ${gameSession.number}${gameSession.title ? ` — ${gameSession.title}` : ''}`
-  return { title: `${sessionLabel} — ${campaign?.name ?? 'Campaign'}` }
+  return { title: `${displaySessionTitle(gameSession)} — ${campaign?.name ?? 'Campaign'}` }
 }
 
 const statusColors: Record<string, string> = {
@@ -46,6 +46,8 @@ export default async function SessionDetailPage({ params }: Props) {
     include: { entityTags: true },
   })
   if (!gameSession) notFound()
+
+  const sessionLabel = displaySessionTitle(gameSession)
 
   const notes = await prisma.note.findMany({
     where: { entityType: 'SESSION', entityId: sessionId },
@@ -85,14 +87,13 @@ export default async function SessionDetailPage({ params }: Props) {
           {' / '}
           <Link href={`/campaigns/${campaignId}/sessions`} className="hover:underline">Sessions</Link>
           {' / '}
-          <span>Session {gameSession.number}</span>
+          <span>{sessionLabel}</span>
         </p>
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Calendar className="h-7 w-7 text-muted-foreground" />
-              Session {gameSession.number}
-              {gameSession.title && ` — ${gameSession.title}`}
+              {sessionLabel}
             </h1>
             {gameSession.playedOn && (
               <p className="text-muted-foreground mt-1">

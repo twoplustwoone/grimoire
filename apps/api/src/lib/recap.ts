@@ -77,7 +77,7 @@ export async function generateSessionRecap({ campaignId, sessionId }: RecapConte
   contextParts.push(`CAMPAIGN: ${campaign?.name ?? 'Unknown'}`)
   if (campaign?.description) contextParts.push(`Campaign description: ${campaign.description}`)
 
-  contextParts.push(`\nSESSION ${session.number}${session.title ? ` — ${session.title}` : ''}`)
+  contextParts.push(`\nSESSION: ${session.title ?? `started ${session.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}`)
   if (session.playedOn) contextParts.push(`Played on: ${session.playedOn.toLocaleDateString()}`)
   if (session.gmSummary) contextParts.push(`GM's own notes: ${session.gmSummary}`)
 

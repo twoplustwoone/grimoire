@@ -2,20 +2,21 @@
 
 import { useRouter } from 'next/navigation'
 import { EditableField } from './editable-field'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props {
   journalId: string
   sessionId: string
-  number: number
   title: string | null
+  createdAt: string
   playedOn: string | null
 }
 
 export function JournalSessionEditableFields({
   journalId,
   sessionId,
-  number,
   title,
+  createdAt,
   playedOn,
 }: Props) {
   const router = useRouter()
@@ -31,16 +32,16 @@ export function JournalSessionEditableFields({
   }
 
   const playedOnDraft = playedOn ? playedOn.slice(0, 10) : null
+  const placeholder = displaySessionTitle({ title: null, createdAt })
 
   return (
     <>
-      <p className="text-sm text-muted-foreground mb-1">Session {number}</p>
       <h1 className="text-3xl font-bold">
         <EditableField
           value={title ?? null}
           onSave={(v) => save({ title: v })}
-          placeholder="Session title"
-          emptyText="Untitled session — click to name it"
+          placeholder={placeholder}
+          emptyText={placeholder}
         />
       </h1>
       <div className="text-muted-foreground mt-2">

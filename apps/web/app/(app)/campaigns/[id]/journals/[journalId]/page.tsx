@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MentionRenderer } from '@/components/mentions/mention-renderer'
 import { formatRelativeTime } from '@/lib/activity-feed'
+import { displaySessionTitle } from '@/lib/session-display'
 import type { ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
 interface Props {
@@ -105,7 +106,7 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
       deletedAt: null,
       ...(isJournalWide ? {} : { id: { in: Array.from(sharedCaptureIds) } }),
     },
-    include: { journalSession: { select: { id: true, number: true, title: true } } },
+    include: { journalSession: { select: { id: true, title: true, createdAt: true } } },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -193,8 +194,8 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
 
   type SessionBlock = {
     sessionId: string
-    sessionNumber: number
     sessionTitle: string | null
+    sessionCreatedAt: Date
     captures: Array<{ id: string; content: ProseMirrorDoc; createdAt: Date }>
   }
   const capturesBySession = new Map<string, SessionBlock>()
@@ -203,8 +204,8 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
     if (!capturesBySession.has(key)) {
       capturesBySession.set(key, {
         sessionId: c.journalSession.id,
-        sessionNumber: c.journalSession.number,
         sessionTitle: c.journalSession.title,
+        sessionCreatedAt: c.journalSession.createdAt,
         captures: [],
       })
     }
@@ -215,7 +216,7 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
     })
   }
   const sessionBlocks = Array.from(capturesBySession.values()).sort(
-    (a, b) => b.sessionNumber - a.sessionNumber
+    (a, b) => b.sessionCreatedAt.getTime() - a.sessionCreatedAt.getTime()
   )
 
   return (
@@ -267,7 +268,7 @@ export default async function CampaignJournalDetailPage({ params }: Props) {
             <Card key={block.sessionId}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">
-                  {block.sessionTitle ?? `Session ${block.sessionNumber}`}
+                  {displaySessionTitle({ title: block.sessionTitle, createdAt: block.sessionCreatedAt })}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

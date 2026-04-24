@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { JournalSessionEditableFields } from '@/components/entities/journal-session-editable-fields'
 import { SessionCaptures, type DetailCapture } from './session-captures'
 import type { ProseMirrorDoc } from '@grimoire/db/prosemirror'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
@@ -16,10 +17,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, sessionId } = await params
   const session = await prisma.gameSession.findFirst({
     where: { id: sessionId, ownerType: 'JOURNAL', ownerId: id },
-    select: { title: true, number: true },
+    select: { title: true, createdAt: true },
   })
   if (!session) return { title: 'Session' }
-  return { title: session.title ?? `Session ${session.number}` }
+  return { title: displaySessionTitle(session) }
 }
 
 export default async function JournalSessionPage({ params }: Props) {
@@ -58,7 +59,7 @@ export default async function JournalSessionPage({ params }: Props) {
 
   if (!gameSession) notFound()
 
-  const sessionLabel = gameSession.title ?? `Session ${gameSession.number}`
+  const sessionLabel = displaySessionTitle(gameSession)
 
   const captures: DetailCapture[] = gameSession.journalCaptures.map((c) => ({
     id: c.id,
@@ -75,13 +76,13 @@ export default async function JournalSessionPage({ params }: Props) {
           {' / '}
           <Link href={`/journals/${journal.id}`} className="hover:underline">{journal.name}</Link>
           {' / '}
-          <span>Session {gameSession.number}</span>
+          <span>{sessionLabel}</span>
         </p>
         <JournalSessionEditableFields
           journalId={journal.id}
           sessionId={gameSession.id}
-          number={gameSession.number}
           title={gameSession.title}
+          createdAt={gameSession.createdAt.toISOString()}
           playedOn={gameSession.playedOn ? gameSession.playedOn.toISOString() : null}
         />
       </div>

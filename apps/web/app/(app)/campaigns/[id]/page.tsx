@@ -17,6 +17,7 @@ import {
   type EntityType,
 } from '@/lib/entity-display'
 import { groupActivity, formatRelativeTime, type RawChangelogEntry } from '@/lib/activity-feed'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -67,7 +68,7 @@ export default async function CampaignPage({ params }: Props) {
       prisma.gameSession.findFirst({
         where: ownedBy,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, number: true, title: true, playedOn: true, status: true },
+        select: { id: true, title: true, createdAt: true, playedOn: true, status: true },
       }),
       prisma.thread.findMany({
         where: { ...ownedBy, status: 'OPEN', deletedAt: null },
@@ -108,7 +109,7 @@ export default async function CampaignPage({ params }: Props) {
           title: true,
           description: true,
           createdAt: true,
-          session: { select: { number: true, title: true } },
+          session: { select: { title: true, createdAt: true } },
         },
       }),
       prisma.gameSession.count({ where: ownedBy }),
@@ -140,7 +141,7 @@ export default async function CampaignPage({ params }: Props) {
       prisma.faction.findMany({ where: { id: { in: idsByType.FACTION ?? [] } }, select: { id: true, name: true } }),
       prisma.thread.findMany({ where: { id: { in: idsByType.THREAD ?? [] } }, select: { id: true, title: true } }),
       prisma.clue.findMany({ where: { id: { in: idsByType.CLUE ?? [] } }, select: { id: true, title: true } }),
-      prisma.gameSession.findMany({ where: { id: { in: idsByType.SESSION ?? [] } }, select: { id: true, number: true, title: true } }),
+      prisma.gameSession.findMany({ where: { id: { in: idsByType.SESSION ?? [] } }, select: { id: true, title: true, createdAt: true } }),
       prisma.worldEvent.findMany({ where: { id: { in: idsByType.WORLD_EVENT ?? [] } }, select: { id: true, title: true } }),
     ])
 
@@ -151,7 +152,7 @@ export default async function CampaignPage({ params }: Props) {
   for (const e of facNames) nameLookup.set(`FACTION:${e.id}`, e.name)
   for (const e of thrNames) nameLookup.set(`THREAD:${e.id}`, e.title)
   for (const e of clueNames) nameLookup.set(`CLUE:${e.id}`, e.title)
-  for (const e of sessionNames) nameLookup.set(`SESSION:${e.id}`, e.title ?? `Session ${e.number}`)
+  for (const e of sessionNames) nameLookup.set(`SESSION:${e.id}`, displaySessionTitle(e))
   for (const e of eventNames) nameLookup.set(`WORLD_EVENT:${e.id}`, e.title)
 
   const activityGroups = groupActivity(activityRows, 10)
@@ -197,7 +198,7 @@ export default async function CampaignPage({ params }: Props) {
                   href={`/campaigns/${campaignId}/sessions/${lastSession.id}`}
                   className="text-lg font-medium hover:underline"
                 >
-                  Session {lastSession.number}{lastSession.title ? ` — ${lastSession.title}` : ''}
+                  {displaySessionTitle(lastSession)}
                 </Link>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {lastSession.playedOn
@@ -282,7 +283,7 @@ export default async function CampaignPage({ params }: Props) {
                     <li key={e.id} className="text-sm">
                       <p className="font-medium truncate">{e.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {e.session ? `Session ${e.session.number}${e.session.title ? ` — ${e.session.title}` : ''} · ` : ''}
+                        {e.session ? `${displaySessionTitle(e.session)} · ` : ''}
                         {new Date(e.createdAt).toLocaleDateString()}
                       </p>
                     </li>

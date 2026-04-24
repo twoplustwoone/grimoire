@@ -7,6 +7,7 @@ import {
 } from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
 import { guardJournal } from '../lib/journal-guard.js'
+import { defaultSessionTitle } from '../lib/session-title.js'
 
 const journalCaptures = new Hono()
 
@@ -74,6 +75,7 @@ journalCaptures.post('/', async (c) => {
           ownerType: 'JOURNAL',
           ownerId: journalId,
           number: (lastSession?.number ?? 0) + 1,
+          title: defaultSessionTitle(),
         },
       })
       sessionId = created.id

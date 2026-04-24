@@ -2,99 +2,70 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { PenSquare } from 'lucide-react'
+import { PenSquare, Plus } from 'lucide-react'
 import { CaptureEditorSheet } from '@/components/captures/capture-editor-sheet'
+import { displaySessionTitle } from '@/lib/session-display'
 
-interface RecentSession {
+interface ActiveSession {
   id: string
-  number: number
   title: string | null
+  createdAt: string
 }
 
 interface Props {
   journalId: string
-  activeSession: RecentSession | null
-  recentSessions: RecentSession[]
+  activeSession: ActiveSession | null
 }
 
-function sessionLabel(s: { number: number; title: string | null }) {
-  return `Session ${s.number} — ${s.title ?? 'Untitled'}`
-}
-
-export function CaptureCTA({ journalId, activeSession, recentSessions }: Props) {
+export function CaptureCTA({ journalId, activeSession }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [targetSessionId, setTargetSessionId] = useState<string | undefined>(undefined)
   const [targetSessionLabel, setTargetSessionLabel] = useState<string | undefined>(undefined)
+  const [creating, setCreating] = useState(false)
 
-  function start() {
+  function continueCapturing() {
     if (activeSession) {
       setTargetSessionId(activeSession.id)
-      setTargetSessionLabel(sessionLabel(activeSession))
-      setSheetOpen(true)
+      setTargetSessionLabel(displaySessionTitle(activeSession))
     } else {
-      setPickerOpen(true)
+      setTargetSessionId(undefined)
+      setTargetSessionLabel(undefined)
     }
-  }
-
-  function chooseNewSession() {
-    setPickerOpen(false)
-    setTargetSessionId(undefined)
-    setTargetSessionLabel(undefined)
     setSheetOpen(true)
   }
 
-  function chooseExisting(s: RecentSession) {
-    setPickerOpen(false)
-    setTargetSessionId(s.id)
-    setTargetSessionLabel(sessionLabel(s))
-    setSheetOpen(true)
+  async function newSession() {
+    if (creating) return
+    setCreating(true)
+    try {
+      const res = await fetch(`/api/v1/journals/${journalId}/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({}),
+      })
+      if (!res.ok) return
+      const session = (await res.json()) as { id: string; title: string | null; createdAt: string }
+      setTargetSessionId(session.id)
+      setTargetSessionLabel(displaySessionTitle(session))
+      setSheetOpen(true)
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
     <>
-      <Button size="lg" className="w-full sm:w-auto" onClick={start}>
-        <PenSquare className="h-4 w-4 mr-2" />
-        Start capturing
-      </Button>
-
-      <AlertDialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Start a new session?</AlertDialogTitle>
-            <AlertDialogDescription>
-              It&apos;s been a while since your last capture. Start a new session, or continue an earlier one?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-2">
-            <Button onClick={chooseNewSession} className="w-full justify-start">
-              New session
-            </Button>
-            {recentSessions.map((s) => (
-              <Button
-                key={s.id}
-                variant="outline"
-                onClick={() => chooseExisting(s)}
-                className="w-full justify-start"
-              >
-                Continue {sessionLabel(s)}
-              </Button>
-            ))}
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="lg" onClick={continueCapturing}>
+          <PenSquare />
+          Continue capturing
+        </Button>
+        <Button size="lg" variant="outline" onClick={newSession} disabled={creating}>
+          <Plus />
+          New session
+        </Button>
+      </div>
 
       <CaptureEditorSheet
         journalId={journalId}

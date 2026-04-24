@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { prisma } from '@grimoire/db'
 import { authMiddleware } from '../lib/auth-middleware.js'
 import { guardJournal } from '../lib/journal-guard.js'
+import { defaultSessionTitle } from '../lib/session-title.js'
 
 const journalSessions = new Hono()
 
@@ -50,7 +51,7 @@ journalSessions.post('/', async (c) => {
       ownerType: 'JOURNAL',
       ownerId: journalId,
       number,
-      title: body.title?.trim() || null,
+      title: body.title?.trim() || defaultSessionTitle(),
       playedOn: body.playedOn ? new Date(body.playedOn) : null,
     },
   })

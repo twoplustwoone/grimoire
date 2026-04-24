@@ -56,18 +56,19 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
     },
     orderBy: { createdAt: 'desc' },
     select: {
-      journalSession: { select: { id: true, number: true, title: true } },
+      journalSession: {
+        select: { id: true, title: true, createdAt: true },
+      },
     },
   })
 
-  const activeSession = latestCapture?.journalSession ?? null
-
-  const recentSessions = await prisma.gameSession.findMany({
-    where: { ownerType: 'JOURNAL', ownerId: journal.id },
-    orderBy: { number: 'desc' },
-    take: 5,
-    select: { id: true, number: true, title: true },
-  })
+  const activeSession = latestCapture?.journalSession
+    ? {
+        id: latestCapture.journalSession.id,
+        title: latestCapture.journalSession.title,
+        createdAt: latestCapture.journalSession.createdAt.toISOString(),
+      }
+    : null
 
   const sessionsWithCaptures = await prisma.gameSession.findMany({
     where: {
@@ -75,7 +76,7 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
       ownerId: journal.id,
       journalCaptures: { some: { deletedAt: null } },
     },
-    orderBy: { number: 'desc' },
+    orderBy: { createdAt: 'desc' },
     include: {
       journalCaptures: {
         where: { deletedAt: null },
@@ -98,9 +99,9 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
 
   const feedSessions: FeedSession[] = sessionsWithCaptures.map((s) => ({
     id: s.id,
-    number: s.number,
     title: s.title,
     playedOn: s.playedOn ? s.playedOn.toISOString() : null,
+    createdAt: s.createdAt.toISOString(),
     captures: s.journalCaptures.map<FeedCapture>((c) => ({
       id: c.id,
       content: c.content as unknown as ProseMirrorDoc,
@@ -126,7 +127,6 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
         <CaptureCTA
           journalId={journal.id}
           activeSession={activeSession}
-          recentSessions={recentSessions}
         />
       </div>
 

@@ -6,6 +6,7 @@ import {
   isProseMirrorDoc,
 } from '@grimoire/db/prosemirror'
 import { authMiddleware } from '../lib/auth-middleware.js'
+import { defaultSessionTitle } from '../lib/session-title.js'
 
 const sessions = new Hono()
 sessions.use('*', authMiddleware)
@@ -43,12 +44,13 @@ sessions.post('/', async (c) => {
   })
   const number = (lastSession?.number ?? 0) + 1
 
+  const rawTitle = body.title?.trim()
   const session = await prisma.gameSession.create({
     data: {
       ownerType: 'CAMPAIGN',
       ownerId: campaignId,
       number,
-      title: body.title?.trim() ?? null,
+      title: rawTitle || defaultSessionTitle(),
       playedOn: body.playedOn ? new Date(body.playedOn) : null,
       status: 'PLANNED',
     },
@@ -62,7 +64,7 @@ sessions.post('/', async (c) => {
       sessionId: session.id,
       authorId: user.id,
       field: 'created',
-      newValue: session.title ?? `Session ${session.number}`,
+      newValue: session.title,
     },
   })
 

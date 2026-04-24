@@ -12,6 +12,7 @@ import { InformationNodes } from '@/components/entities/information-nodes'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { EntityRevealPanel } from '@/components/entities/entity-reveal-panel'
 import { ChangelogList } from '@/components/entities/changelog-list'
+import { displaySessionTitle } from '@/lib/session-display'
 
 interface Props { params: Promise<{ id: string; clueId: string }> }
 
@@ -34,7 +35,7 @@ export default async function ClueDetailPage({ params }: Props) {
 
   const clue = await prisma.clue.findFirst({
     where: { id: clueId, ownerType: 'CAMPAIGN', ownerId: campaignId, deletedAt: null },
-    include: { discoveredInSession: { select: { id: true, number: true, title: true } } },
+    include: { discoveredInSession: { select: { id: true, title: true, createdAt: true } } },
   })
   if (!clue) notFound()
 
@@ -70,7 +71,7 @@ export default async function ClueDetailPage({ params }: Props) {
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Calendar className="h-4 w-4" />Discovered in</CardTitle></CardHeader>
           <CardContent>
             <Link href={`/campaigns/${campaignId}/sessions/${clue.discoveredInSession.id}`} className="text-sm hover:underline">
-              Session {clue.discoveredInSession.number}{clue.discoveredInSession.title ? `: ${clue.discoveredInSession.title}` : ''}
+              {displaySessionTitle(clue.discoveredInSession)}
             </Link>
           </CardContent>
         </Card>

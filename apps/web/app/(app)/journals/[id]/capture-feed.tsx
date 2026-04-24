@@ -20,6 +20,7 @@ import { MentionRenderer } from '@/components/mentions/mention-renderer'
 import { CaptureEditorSheet } from '@/components/captures/capture-editor-sheet'
 import { ShareToggle } from '@/components/journals/share-toggle'
 import { formatRelativeTime } from '@/lib/activity-feed'
+import { displaySessionTitle } from '@/lib/session-display'
 import { docToPlainText, type ProseMirrorDoc } from '@grimoire/db/prosemirror'
 
 export interface FeedCapture {
@@ -31,9 +32,9 @@ export interface FeedCapture {
 
 export interface FeedSession {
   id: string
-  number: number
   title: string | null
   playedOn: string | null
+  createdAt: string
   captures: FeedCapture[]
 }
 
@@ -68,7 +69,7 @@ export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinked
     <div className="space-y-6">
       {sessions.map((session) => {
         const first = session.captures[session.captures.length - 1]
-        const label = session.title ?? `Session ${session.number}`
+        const label = displaySessionTitle(session)
         const subtitle = session.playedOn
           ? new Date(session.playedOn).toLocaleDateString()
           : first
