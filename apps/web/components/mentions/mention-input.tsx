@@ -288,59 +288,82 @@ function BubbleCreateButton({
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
+  // Subscribe to editor transactions so active state reflects the
+  // current selection, not just the last content update.
+  const activeState = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      bold: editor.isActive('bold'),
+      italic: editor.isActive('italic'),
+      h2: editor.isActive('heading', { level: 2 }),
+      h3: editor.isActive('heading', { level: 3 }),
+      bulletList: editor.isActive('bulletList'),
+      orderedList: editor.isActive('orderedList'),
+      blockquote: editor.isActive('blockquote'),
+    }),
+  }) ?? {
+    bold: false,
+    italic: false,
+    h2: false,
+    h3: false,
+    bulletList: false,
+    orderedList: false,
+    blockquote: false,
+  }
+
   const buttons: Array<{
     label: string
     icon: React.ComponentType<{ className?: string }>
     action: () => void
-    isActive: () => boolean
+    active: boolean
   }> = [
     {
       label: 'Bold',
       icon: Bold,
       action: () => editor.chain().focus().toggleBold().run(),
-      isActive: () => editor.isActive('bold'),
+      active: activeState.bold,
     },
     {
       label: 'Italic',
       icon: Italic,
       action: () => editor.chain().focus().toggleItalic().run(),
-      isActive: () => editor.isActive('italic'),
+      active: activeState.italic,
     },
     {
       label: 'Heading 2',
       icon: Heading2,
       action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-      isActive: () => editor.isActive('heading', { level: 2 }),
+      active: activeState.h2,
     },
     {
       label: 'Heading 3',
       icon: Heading3,
       action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
-      isActive: () => editor.isActive('heading', { level: 3 }),
+      active: activeState.h3,
     },
     {
       label: 'Bullet list',
       icon: List,
       action: () => editor.chain().focus().toggleBulletList().run(),
-      isActive: () => editor.isActive('bulletList'),
+      active: activeState.bulletList,
     },
     {
       label: 'Numbered list',
       icon: ListOrdered,
       action: () => editor.chain().focus().toggleOrderedList().run(),
-      isActive: () => editor.isActive('orderedList'),
+      active: activeState.orderedList,
     },
     {
       label: 'Quote',
       icon: Quote,
       action: () => editor.chain().focus().toggleBlockquote().run(),
-      isActive: () => editor.isActive('blockquote'),
+      active: activeState.blockquote,
     },
     {
       label: 'Divider',
       icon: Minus,
       action: () => editor.chain().focus().setHorizontalRule().run(),
-      isActive: () => false,
+      active: false,
     },
   ]
 
@@ -348,7 +371,6 @@ function Toolbar({ editor }: { editor: Editor }) {
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-1 py-1">
       {buttons.map((b) => {
         const Icon = b.icon
-        const active = b.isActive()
         return (
           <button
             key={b.label}
@@ -358,10 +380,10 @@ function Toolbar({ editor }: { editor: Editor }) {
               b.action()
             }}
             aria-label={b.label}
-            aria-pressed={active}
+            aria-pressed={b.active}
             className={`flex h-11 w-11 md:h-8 md:w-8 items-center justify-center rounded transition-colors ${
-              active
-                ? 'bg-muted text-foreground'
+              b.active
+                ? 'bg-foreground/10 text-foreground ring-1 ring-inset ring-foreground/20 hover:bg-foreground/15'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
             title={b.label}
