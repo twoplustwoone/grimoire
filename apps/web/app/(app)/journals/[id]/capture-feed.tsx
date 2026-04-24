@@ -118,7 +118,7 @@ export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinked
                     </button>
                     {isOpen && (
                       <div className="mt-2 space-y-3">
-                        <MentionRenderer content={c.content} />
+                        <MentionRenderer content={c.content} journalId={journalId} />
                         <div className="flex gap-2 items-center">
                           <Button
                             size="sm"

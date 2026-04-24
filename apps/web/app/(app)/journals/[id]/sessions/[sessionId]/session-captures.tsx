@@ -75,7 +75,7 @@ export function SessionCaptures({
               <p className="text-xs text-muted-foreground">
                 {formatRelativeTime(new Date(c.createdAt))}
               </p>
-              <MentionRenderer content={c.content} />
+              <MentionRenderer content={c.content} journalId={journalId} />
               <div className="flex gap-2 items-center">
                 <Button size="sm" variant="outline" onClick={() => setEditing(c)}>
                   <Pencil className="h-3 w-3 mr-1" />

@@ -12,16 +12,23 @@ import type {
 interface Props {
   content: ProseMirrorDoc | null | undefined
   campaignId?: string
+  journalId?: string
 }
 
-export function MentionRenderer({ content, campaignId }: Props) {
+interface LinkCtx {
+  campaignId?: string
+  journalId?: string
+}
+
+export function MentionRenderer({ content, campaignId, journalId }: Props) {
   if (!content || !isDoc(content)) {
     return null
   }
+  const ctx: LinkCtx = { campaignId, journalId }
   return (
     <div className="space-y-2 text-sm">
       {(content.content ?? []).map((node, i) => (
-        <Fragment key={i}>{renderBlock(node, campaignId)}</Fragment>
+        <Fragment key={i}>{renderBlock(node, ctx)}</Fragment>
       ))}
     </div>
   )
@@ -35,25 +42,25 @@ function isDoc(value: unknown): value is ProseMirrorDoc {
   )
 }
 
-function renderBlock(node: ProseMirrorNode, campaignId: string | undefined): ReactNode {
+function renderBlock(node: ProseMirrorNode, ctx: LinkCtx): ReactNode {
   switch (node.type) {
     case 'paragraph':
       return (
         <p className="leading-relaxed">
-          {renderInline(node.content ?? [], campaignId)}
+          {renderInline(node.content ?? [], ctx)}
         </p>
       )
     case 'heading': {
       const level = (node.attrs?.level as number) ?? 2
       const Tag = level === 3 ? 'h3' : 'h2'
       const cls = level === 3 ? 'text-base font-semibold' : 'text-lg font-semibold'
-      return <Tag className={cls}>{renderInline(node.content ?? [], campaignId)}</Tag>
+      return <Tag className={cls}>{renderInline(node.content ?? [], ctx)}</Tag>
     }
     case 'bulletList':
       return (
         <ul className="list-disc pl-5 space-y-1">
           {(node.content ?? []).map((item, i) => (
-            <Fragment key={i}>{renderBlock(item, campaignId)}</Fragment>
+            <Fragment key={i}>{renderBlock(item, ctx)}</Fragment>
           ))}
         </ul>
       )
@@ -61,7 +68,7 @@ function renderBlock(node: ProseMirrorNode, campaignId: string | undefined): Rea
       return (
         <ol className="list-decimal pl-5 space-y-1">
           {(node.content ?? []).map((item, i) => (
-            <Fragment key={i}>{renderBlock(item, campaignId)}</Fragment>
+            <Fragment key={i}>{renderBlock(item, ctx)}</Fragment>
           ))}
         </ol>
       )
@@ -69,7 +76,7 @@ function renderBlock(node: ProseMirrorNode, campaignId: string | undefined): Rea
       return (
         <li>
           {(node.content ?? []).map((child, i) => (
-            <Fragment key={i}>{renderBlock(child, campaignId)}</Fragment>
+            <Fragment key={i}>{renderBlock(child, ctx)}</Fragment>
           ))}
         </li>
       )
@@ -77,7 +84,7 @@ function renderBlock(node: ProseMirrorNode, campaignId: string | undefined): Rea
       return (
         <blockquote className="border-l-2 border-muted pl-3 italic text-muted-foreground">
           {(node.content ?? []).map((child, i) => (
-            <Fragment key={i}>{renderBlock(child, campaignId)}</Fragment>
+            <Fragment key={i}>{renderBlock(child, ctx)}</Fragment>
           ))}
         </blockquote>
       )
@@ -88,10 +95,7 @@ function renderBlock(node: ProseMirrorNode, campaignId: string | undefined): Rea
   }
 }
 
-function renderInline(
-  nodes: ProseMirrorNode[],
-  campaignId: string | undefined
-): ReactNode {
+function renderInline(nodes: ProseMirrorNode[], ctx: LinkCtx): ReactNode {
   return nodes.map((node, i) => {
     if (node.type === 'hardBreak') {
       return <br key={i} />
@@ -100,7 +104,7 @@ function renderInline(
       return <Fragment key={i}>{applyMarks(node.text ?? '', node.marks)}</Fragment>
     }
     if (node.type === 'mention') {
-      return <MentionChip key={i} node={node} campaignId={campaignId} />
+      return <MentionChip key={i} node={node} ctx={ctx} />
     }
     return null
   })
@@ -120,10 +124,10 @@ function applyMarks(text: string, marks: ProseMirrorMark[] | undefined): ReactNo
 
 function MentionChip({
   node,
-  campaignId,
+  ctx,
 }: {
   node: ProseMirrorNode
-  campaignId: string | undefined
+  ctx: LinkCtx
 }) {
   const attrs = (node.attrs ?? {}) as {
     id?: string
@@ -136,10 +140,19 @@ function MentionChip({
   const path = getEntityRoutePath(entityType)
   const colorClass = getEntityChipClasses(entityType)
 
-  if (campaignId && path && attrs.id) {
+  const href =
+    path && attrs.id
+      ? ctx.journalId
+        ? `/journals/${ctx.journalId}/${path}/${attrs.id}`
+        : ctx.campaignId
+          ? `/campaigns/${ctx.campaignId}/${path}/${attrs.id}`
+          : null
+      : null
+
+  if (href) {
     return (
       <Link
-        href={`/campaigns/${campaignId}/${path}/${attrs.id}`}
+        href={href}
         className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium mx-0.5 hover:opacity-80 transition-opacity ${colorClass}`}
         onClick={(e) => e.stopPropagation()}
       >
