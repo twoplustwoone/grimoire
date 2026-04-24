@@ -51,13 +51,16 @@ export function EditableField({
         : value
     return (
       <div
-        className={cn('group flex items-start gap-2 cursor-pointer', className)}
+        className={cn(
+          'group flex items-start gap-2 cursor-pointer rounded-md -mx-1.5 px-1.5 hover:bg-foreground/5 transition-colors',
+          className
+        )}
         onClick={() => setEditing(true)}
       >
         <span className={cn('flex-1', !value && 'text-muted-foreground italic text-sm')}>
           {display || emptyText}
         </span>
-        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 shrink-0" />
+        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1.5 shrink-0" />
       </div>
     )
   }
@@ -88,13 +91,13 @@ export function EditableField({
           }}
         />
       )}
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Button size="sm" onClick={handleSave} disabled={saving}>
-          <Check className="h-3 w-3 mr-1" />
+          <Check />
           {saving ? 'Saving...' : 'Save'}
         </Button>
         <Button size="sm" variant="outline" onClick={handleCancel} disabled={saving}>
-          <X className="h-3 w-3 mr-1" />
+          <X />
           Cancel
         </Button>
       </div>
