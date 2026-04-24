@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
-import { prisma, type EntityType, type OwnerType } from '@grimoire/db'
+import { prisma, type OwnerType } from '@grimoire/db'
 import { authMiddleware } from '../lib/auth-middleware.js'
 import { guardJournal } from '../lib/journal-guard.js'
+import { hydrateEntityNames } from '../lib/hydrate-entity-names.js'
 
 const journalLinks = new Hono()
 
@@ -52,42 +53,6 @@ async function findEntity(
   }
 }
 
-/** Batched hydration: fetch `{ id -> name }` for every (type, id) pair
- *  in `refs`. One query per distinct type. */
-async function hydrateNames(
-  refs: Array<{ type: EntityType; id: string }>
-): Promise<Map<string, string>> {
-  const byType = new Map<EntityType, Set<string>>()
-  for (const { type, id } of refs) {
-    if (!byType.has(type)) byType.set(type, new Set())
-    byType.get(type)!.add(id)
-  }
-  const out = new Map<string, string>()
-  await Promise.all(
-    Array.from(byType.entries()).map(async ([type, ids]) => {
-      const where = { id: { in: Array.from(ids) } }
-      const key = (t: EntityType, id: string) => `${t}:${id}`
-      if (type === 'NPC') {
-        const rows = await prisma.nPC.findMany({ where, select: { id: true, name: true } })
-        for (const r of rows) out.set(key(type, r.id), r.name)
-      } else if (type === 'LOCATION') {
-        const rows = await prisma.location.findMany({ where, select: { id: true, name: true } })
-        for (const r of rows) out.set(key(type, r.id), r.name)
-      } else if (type === 'FACTION') {
-        const rows = await prisma.faction.findMany({ where, select: { id: true, name: true } })
-        for (const r of rows) out.set(key(type, r.id), r.name)
-      } else if (type === 'THREAD') {
-        const rows = await prisma.thread.findMany({ where, select: { id: true, title: true } })
-        for (const r of rows) out.set(key(type, r.id), r.title)
-      } else if (type === 'CLUE') {
-        const rows = await prisma.clue.findMany({ where, select: { id: true, title: true } })
-        for (const r of rows) out.set(key(type, r.id), r.title)
-      }
-    })
-  )
-  return out
-}
-
 journalLinks.get('/', async (c) => {
   const user = c.get('user')
   const journalId = c.req.param('id')!
@@ -99,7 +64,7 @@ journalLinks.get('/', async (c) => {
     orderBy: { createdAt: 'desc' },
   })
 
-  const names = await hydrateNames([
+  const names = await hydrateEntityNames([
     ...links.map((l) => ({ type: l.journalEntityType, id: l.journalEntityId })),
     ...links.map((l) => ({ type: l.campaignEntityType, id: l.campaignEntityId })),
   ])
