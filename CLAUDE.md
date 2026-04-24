@@ -109,6 +109,31 @@ The game-session Prisma model is named `GameSession` but maps to the `Session` t
 - **Server Components read Prisma directly** — don't proxy page-load data through `/api/v1`. Reserve the API for client-initiated mutations and cross-app endpoints.
 - **Every new entity route checks campaign membership** — follow the `getGMMembership` pattern in `apps/api/src/routes/reveals.ts` or `npcs.ts`.
 
+## AI feature caps
+
+Every AI-backed feature burns credits, so every AI-backed feature ships with a
+per-user monthly cap. The cap lives in `packages/db/src/ai-limits.ts` and is
+backed by the `AIUsage` Prisma model (`userId + feature + monthKey → count`).
+
+When adding a new AI feature (recap-v2, import structure proposal, image
+generation, etc.):
+
+1. Add a new constant (e.g. `IMPORT_MONTHLY_LIMIT = 3`) and a new `feature`
+   string in `ai-limits.ts`. Don't reuse `'RECAP'` for anything else.
+2. Mirror the helper pair: `getXUsage(userId)` and `incrementXUsage(userId)`.
+   The existing recap helpers are the template — upsert + `{ increment: 1 }`,
+   UTC month buckets via `currentMonthKey()`.
+3. In the API handler: `getXUsage` → 429 with `{ error, code, usage }` if at
+   cap → call the model → `incrementXUsage` on success only. Failed Anthropic
+   calls don't count.
+4. In the UI: read `getXUsage` in the Server Component that owns the trigger,
+   pass `initialXUsage` down to the client component, disable the button at
+   cap, show `N/limit ... Resets <date>` as a tooltip + helper text.
+
+No tiering, no feature flags, no admin override UI. Manual cap bumps are a DB
+edit. Raising a limit is changing a single number — keep it that way until a
+premium tier actually exists.
+
 ## Commit style
 
 Short, present-tense subject lines. Examples from recent history:

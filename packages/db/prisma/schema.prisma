@@ -31,6 +31,7 @@ model User {
   oauthRefreshTokens OAuthRefreshToken[]
   playerCharacters   PlayerCharacter[]
   journals           Journal[]
+  aiUsage            AIUsage[]
 }
 
 // ==================== CAMPAIGN ====================
@@ -687,6 +688,25 @@ model CustomFieldValue {
 
   @@unique([definitionId, entityId])
   @@index([entityType, entityId])
+}
+
+// ==================== AI USAGE ====================
+
+// Per-user, per-feature, per-month counter. A row is upserted on each
+// successful AI generation. See apps/api/src/lib/ai-limits.ts for the
+// limit constants and the current list of `feature` values.
+model AIUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  feature   String
+  monthKey  String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, feature, monthKey])
+  @@index([userId])
 }
 
 // ==================== BETTER AUTH ====================

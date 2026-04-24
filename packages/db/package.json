@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ai-limits": "./src/ai-limits.ts",
     "./demo-campaign": "./src/demo-campaign.ts",
     "./prosemirror": "./src/prosemirror.ts"
   },

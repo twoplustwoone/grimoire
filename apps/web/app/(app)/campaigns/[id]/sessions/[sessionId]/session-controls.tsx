@@ -12,6 +12,7 @@ import {
   emptyDoc,
   type ProseMirrorDoc,
 } from '@grimoire/db/prosemirror'
+import type { AIUsageSnapshot } from '@grimoire/db/ai-limits'
 
 interface Note {
   id: string
@@ -26,6 +27,7 @@ interface Props {
   initialGmSummary: string
   initialNotes: Note[]
   initialAiSummary?: string | null
+  initialRecapUsage: AIUsageSnapshot
 }
 
 export function SessionControls({
@@ -35,6 +37,7 @@ export function SessionControls({
   initialGmSummary,
   initialNotes,
   initialAiSummary,
+  initialRecapUsage,
 }: Props) {
   const router = useRouter()
   const [status, setStatus] = useState(initialStatus)
@@ -46,6 +49,7 @@ export function SessionControls({
   const [generatingRecap, setGeneratingRecap] = useState(false)
   const [recapError, setRecapError] = useState<string | null>(null)
   const [aiSummary, setAiSummary] = useState<string | null>(initialAiSummary ?? null)
+  const [recapUsage, setRecapUsage] = useState<AIUsageSnapshot>(initialRecapUsage)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editingContent, setEditingContent] = useState<ProseMirrorDoc>(emptyDoc())
 
@@ -144,11 +148,12 @@ export function SessionControls({
           credentials: 'include',
         }
       )
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
-        const data = await res.json()
         setAiSummary(data.aiSummary)
+        if (data.usage) setRecapUsage(data.usage as AIUsageSnapshot)
       } else {
-        const data = await res.json().catch(() => ({}))
+        if (data.usage) setRecapUsage(data.usage as AIUsageSnapshot)
         setRecapError(data.error ?? 'Failed to generate recap. Check that your Anthropic API key is configured.')
       }
     } catch {
@@ -157,6 +162,12 @@ export function SessionControls({
       setGeneratingRecap(false)
     }
   }
+
+  const atCap = recapUsage.count >= recapUsage.limit
+  const resetsOnLabel = new Date(recapUsage.resetsOn).toLocaleDateString()
+  const usageLabel = atCap
+    ? `You've used ${recapUsage.count}/${recapUsage.limit} recaps this month. Resets ${resetsOnLabel}.`
+    : `${recapUsage.count}/${recapUsage.limit} recaps used this month. Resets ${resetsOnLabel}.`
 
   return (
     <div className="space-y-4 mb-4">
@@ -268,9 +279,16 @@ export function SessionControls({
           {aiSummary ? (
             <div className="space-y-3">
               <p className="text-sm whitespace-pre-wrap text-muted-foreground">{aiSummary}</p>
-              <Button onClick={generateRecap} disabled={generatingRecap} variant="outline" size="sm">
+              <Button
+                onClick={generateRecap}
+                disabled={generatingRecap || atCap}
+                variant="outline"
+                size="sm"
+                title={usageLabel}
+              >
                 {generatingRecap ? 'Regenerating...' : 'Regenerate'}
               </Button>
+              <p className="text-xs text-muted-foreground">{usageLabel}</p>
               {recapError && <p className="text-sm text-destructive mt-2">{recapError}</p>}
             </div>
           ) : (
@@ -278,9 +296,15 @@ export function SessionControls({
               <p className="text-sm text-muted-foreground">
                 Generate an AI recap from your session notes and tagged entities.
               </p>
-              <Button onClick={generateRecap} disabled={generatingRecap} size="sm">
+              <Button
+                onClick={generateRecap}
+                disabled={generatingRecap || atCap}
+                size="sm"
+                title={usageLabel}
+              >
                 {generatingRecap ? 'Generating...' : 'Generate Recap'}
               </Button>
+              <p className="text-xs text-muted-foreground">{usageLabel}</p>
               {recapError && <p className="text-sm text-destructive mt-2">{recapError}</p>}
             </div>
           )}

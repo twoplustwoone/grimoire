@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
+import { getRecapUsage } from '@grimoire/db/ai-limits'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -75,6 +76,8 @@ export default async function SessionDetailPage({ params }: Props) {
     entityName: availableEntities.find((e) => e.id === tag.entityId)?.name,
   }))
 
+  const recapUsage = await getRecapUsage(session.user.id)
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
@@ -114,6 +117,7 @@ export default async function SessionDetailPage({ params }: Props) {
         initialGmSummary={gameSession.gmSummary ?? ''}
         initialNotes={notes}
         initialAiSummary={gameSession.aiSummary}
+        initialRecapUsage={recapUsage}
       />
 
       <SessionEntityTagger
