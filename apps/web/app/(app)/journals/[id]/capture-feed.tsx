@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,12 +102,16 @@ export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinked
                 const isOpen = !!expanded[c.id]
                 const preview = docToPlainText(c.content).slice(0, 200)
                 return (
-                  <div key={c.id} className="border-t pt-3 first:border-t-0 first:pt-0">
+                  <div key={c.id} className="border-t first:border-t-0">
                     <button
                       type="button"
                       onClick={() => toggle(c.id)}
-                      className="flex w-full items-start justify-between gap-3 text-left"
+                      aria-expanded={isOpen}
+                      className="flex w-full items-center gap-3 text-left px-2 -mx-2 py-2 rounded-md cursor-pointer hover:bg-foreground/5 transition-colors"
                     >
+                      <ChevronRight
+                        className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+                      />
                       <span className="text-xs text-muted-foreground shrink-0">
                         {formatRelativeTime(new Date(c.createdAt))}
                       </span>
@@ -118,7 +122,7 @@ export function CaptureFeed({ journalId, sessions, isJournalWideShare, hasLinked
                       )}
                     </button>
                     {isOpen && (
-                      <div className="mt-2 space-y-3">
+                      <div className="mt-2 space-y-3 pl-7">
                         <MentionRenderer content={c.content} journalId={journalId} />
                         <div className="flex gap-2 items-center">
                           <Button
