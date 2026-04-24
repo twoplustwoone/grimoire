@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { PendingLink } from '@/components/navigation/pending-link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface CampaignRow {
@@ -43,7 +44,7 @@ export function CampaignsList({ campaigns }: Props) {
       <div className="grid gap-4 md:grid-cols-2">
         {visible.map(({ id, name, description, status, updatedAt, role }) => (
           <div key={id} className="relative">
-            <Link href={`/campaigns/${id}`} className="block">
+            <PendingLink href={`/campaigns/${id}`} className="block">
               <Card className={`hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer h-full ${status === 'ARCHIVED' ? 'opacity-70' : ''}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -64,7 +65,7 @@ export function CampaignsList({ campaigns }: Props) {
                   </p>
                 </CardContent>
               </Card>
-            </Link>
+            </PendingLink>
             {role === 'PLAYER' && (
               <Link
                 href={`/portal/${id}`}

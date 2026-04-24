@@ -21,6 +21,7 @@ import {
   topLevelNavigation,
   type NavItem,
 } from '@/lib/navigation'
+import { NavPendingIndicator } from '@/components/navigation/nav-pending-indicator'
 import { ArrowLeft, Search, UserCircle } from 'lucide-react'
 
 interface Props {
@@ -58,6 +59,7 @@ export function AppSidebar({ user }: Props) {
                     <Link href="/campaigns">
                       <ArrowLeft />
                       <span>All campaigns</span>
+                      <NavPendingIndicator className="ml-auto" />
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -123,6 +125,7 @@ export function AppSidebar({ user }: Props) {
               <Link href="/settings">
                 <UserCircle />
                 <span>Account</span>
+                <NavPendingIndicator className="ml-auto" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -155,6 +158,7 @@ function NavMenuItem({
         <Link href={href} aria-current={isActive ? 'page' : undefined}>
           <Icon />
           <span>{item.name}</span>
+          <NavPendingIndicator className="ml-auto" />
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>

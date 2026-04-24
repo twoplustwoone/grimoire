@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { PendingLink } from '@/components/navigation/pending-link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface JournalRow {
@@ -18,7 +18,7 @@ export function JournalsList({ journals }: Props) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {journals.map(({ id, name, linkedCampaignName, updatedAt }) => (
-        <Link key={id} href={`/journals/${id}`} className="block">
+        <PendingLink key={id} href={`/journals/${id}`} className="block">
           <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer h-full">
             <CardHeader>
               <CardTitle className="text-lg">{name}</CardTitle>
@@ -32,7 +32,7 @@ export function JournalsList({ journals }: Props) {
               </p>
             </CardContent>
           </Card>
-        </Link>
+        </PendingLink>
       ))}
     </div>
   )
