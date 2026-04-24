@@ -45,8 +45,28 @@ export const campaignNavigation: NavItem[] = [
   { name: 'Settings', href: 'settings', icon: Settings },
 ]
 
+export const journalNavigation: NavItem[] = [
+  { name: 'Overview', href: '', icon: LayoutDashboard, exact: true },
+  { name: 'My character', href: 'player-characters', icon: UserCircle },
+  { name: 'NPCs', href: 'npcs', icon: Users },
+  { name: 'Locations', href: 'locations', icon: MapPin },
+  { name: 'Factions', href: 'factions', icon: Shield },
+  { name: 'Threads', href: 'threads', icon: GitBranch },
+  { name: 'Clues', href: 'clues', icon: Search },
+  { name: 'Graph', href: 'graph', icon: Network },
+  { name: 'Settings', href: 'settings', icon: Settings },
+]
+
 export function getCampaignIdFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/campaigns\/([^/]+)/)
+  if (!match) return null
+  const id = match[1]
+  if (id === 'new') return null
+  return id
+}
+
+export function getJournalIdFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/journals\/([^/]+)/)
   if (!match) return null
   const id = match[1]
   if (id === 'new') return null

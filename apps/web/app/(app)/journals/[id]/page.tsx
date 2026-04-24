@@ -1,13 +1,10 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
-import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Network } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { JournalEditableFields } from '@/components/entities/journal-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { requireJournalOwner } from '@/lib/journal-auth'
 import { CaptureCTA } from './capture-cta'
 import { CaptureFeed, type FeedSession, type FeedCapture } from './capture-feed'
 import { WelcomeBanner } from './welcome-banner'
@@ -34,16 +31,12 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
   const { id } = await params
   const sp = await searchParams
   const showWelcome = sp.welcome === '1'
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
+  await requireJournalOwner(id)
 
-  const journal = await prisma.journal.findFirst({
-    where: { id, deletedAt: null },
+  const journal = await prisma.journal.findUniqueOrThrow({
+    where: { id },
     include: { linkedCampaign: { select: { name: true } } },
   })
-
-  if (!journal) notFound()
-  if (journal.ownerId !== session.user.id) notFound()
 
   const subtitle = journal.linkedCampaign
     ? `Linked to ${journal.linkedCampaign.name}`
@@ -150,22 +143,7 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-8 border-t">
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/journals/${journal.id}/settings`}
-            className="text-sm text-muted-foreground hover:underline"
-          >
-            Settings
-          </Link>
-          <Link
-            href={`/journals/${journal.id}/graph`}
-            className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1.5"
-          >
-            <Network className="h-3.5 w-3.5" />
-            Graph
-          </Link>
-        </div>
+      <div className="flex items-center justify-end pt-8 border-t">
         <DeleteEntityButton
           entityName={journal.name}
           deleteEndpoint={`/api/v1/journals/${journal.id}`}

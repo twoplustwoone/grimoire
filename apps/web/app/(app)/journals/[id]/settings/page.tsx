@@ -1,11 +1,9 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
-import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
+import { requireJournalOwner } from '@/lib/journal-auth'
 import { SettingsClient } from './settings-client'
 
 export const metadata: Metadata = { title: 'Journal settings' }
@@ -16,15 +14,12 @@ interface Props {
 
 export default async function JournalSettingsPage({ params }: Props) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
+  await requireJournalOwner(id)
 
-  const journal = await prisma.journal.findFirst({
-    where: { id, deletedAt: null },
+  const journal = await prisma.journal.findUniqueOrThrow({
+    where: { id },
     include: { linkedCampaign: { select: { id: true, name: true } } },
   })
-  if (!journal) notFound()
-  if (journal.ownerId !== session.user.id) notFound()
 
   // Resolve the active mirror (if any) by looking up a journal-side PC
   // that has a mirror row. There's at most one in the v1 model.

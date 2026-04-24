@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { JournalSessionEditableFields } from '@/components/entities/journal-session-editable-fields'
 import { SessionCaptures, type DetailCapture } from './session-captures'
 import type { ProseMirrorDoc } from '@grimoire/db/prosemirror'
 import { displaySessionTitle } from '@/lib/session-display'
+import { requireJournalOwner } from '@/lib/journal-auth'
 
 interface Props {
   params: Promise<{ id: string; sessionId: string }>
@@ -25,15 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function JournalSessionPage({ params }: Props) {
   const { id, sessionId } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
-
-  const journal = await prisma.journal.findFirst({
-    where: { id, deletedAt: null },
-    select: { id: true, name: true, ownerId: true, linkedCampaignId: true },
-  })
-  if (!journal) notFound()
-  if (journal.ownerId !== session.user.id) notFound()
+  const { journal } = await requireJournalOwner(id)
 
   const shares = await prisma.journalShare.findMany({
     where: { journalId: journal.id },

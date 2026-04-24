@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { JournalNpcEditableFields } from '@/components/entities/journal-npc-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { ShareToggle } from '@/components/journals/share-toggle'
+import { requireJournalOwner } from '@/lib/journal-auth'
 import { CrossReferencesSection } from './cross-references-section'
 
 interface Props {
@@ -24,15 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function JournalNpcPage({ params }: Props) {
   const { id, npcId } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
-
-  const journal = await prisma.journal.findFirst({
-    where: { id, deletedAt: null },
-    select: { id: true, name: true, ownerId: true, linkedCampaignId: true },
-  })
-  if (!journal) notFound()
-  if (journal.ownerId !== session.user.id) notFound()
+  const { journal } = await requireJournalOwner(id)
 
   const npc = await prisma.nPC.findFirst({
     where: { id: npcId, ownerType: 'JOURNAL', ownerId: journal.id, deletedAt: null },
@@ -86,6 +77,8 @@ export default async function JournalNpcPage({ params }: Props) {
           <Link href="/journals" className="hover:underline">Journals</Link>
           {' / '}
           <Link href={`/journals/${journal.id}`} className="hover:underline">{journal.name}</Link>
+          {' / '}
+          <Link href={`/journals/${journal.id}/npcs`} className="hover:underline">NPCs</Link>
           {' / '}
           <span>{npc.name}</span>
         </p>

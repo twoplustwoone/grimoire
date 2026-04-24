@@ -17,7 +17,9 @@ import {
 import {
   campaignNavigation,
   getCampaignIdFromPath,
+  getJournalIdFromPath,
   isNavItemActive,
+  journalNavigation,
   topLevelNavigation,
   type NavItem,
 } from '@/lib/navigation'
@@ -31,6 +33,7 @@ interface Props {
 export function AppSidebar({ user }: Props) {
   const pathname = usePathname()
   const campaignId = getCampaignIdFromPath(pathname)
+  const journalId = campaignId ? null : getJournalIdFromPath(pathname)
 
   return (
     <Sidebar collapsible="icon">
@@ -67,6 +70,39 @@ export function AppSidebar({ user }: Props) {
                   const href = item.href
                     ? `/campaigns/${campaignId}/${item.href}`
                     : `/campaigns/${campaignId}`
+                  return (
+                    <NavMenuItem
+                      key={item.name}
+                      item={item}
+                      href={href}
+                      pathname={pathname}
+                    />
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : journalId ? (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip="All journals"
+                    className="text-muted-foreground"
+                  >
+                    <Link href="/journals">
+                      <ArrowLeft />
+                      <span>All journals</span>
+                      <NavPendingIndicator className="ml-auto" />
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {journalNavigation.map((item) => {
+                  const href = item.href
+                    ? `/journals/${journalId}/${item.href}`
+                    : `/journals/${journalId}`
                   return (
                     <NavMenuItem
                       key={item.name}

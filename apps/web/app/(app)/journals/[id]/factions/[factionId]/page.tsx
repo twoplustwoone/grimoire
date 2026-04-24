@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { JournalFactionEditableFields } from '@/components/entities/journal-faction-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
 import { ShareToggle } from '@/components/journals/share-toggle'
 import { JournalCrossReferencesSection } from '@/components/journals/cross-references-section'
+import { requireJournalOwner } from '@/lib/journal-auth'
 
 interface Props {
   params: Promise<{ id: string; factionId: string }>
@@ -24,15 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function JournalFactionPage({ params }: Props) {
   const { id, factionId } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
-
-  const journal = await prisma.journal.findFirst({
-    where: { id, deletedAt: null },
-    select: { id: true, name: true, ownerId: true, linkedCampaignId: true },
-  })
-  if (!journal) notFound()
-  if (journal.ownerId !== session.user.id) notFound()
+  const { journal } = await requireJournalOwner(id)
 
   const faction = await prisma.faction.findFirst({
     where: { id: factionId, ownerType: 'JOURNAL', ownerId: journal.id, deletedAt: null },
@@ -85,6 +76,8 @@ export default async function JournalFactionPage({ params }: Props) {
           <Link href="/journals" className="hover:underline">Journals</Link>
           {' / '}
           <Link href={`/journals/${journal.id}`} className="hover:underline">{journal.name}</Link>
+          {' / '}
+          <Link href={`/journals/${journal.id}/factions`} className="hover:underline">Factions</Link>
           {' / '}
           <span>{faction.name}</span>
         </p>

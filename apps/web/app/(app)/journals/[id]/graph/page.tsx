@@ -1,10 +1,8 @@
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
-import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Network } from 'lucide-react'
 import { JournalGraph } from '@/components/graph/journal-graph'
+import { requireJournalOwner } from '@/lib/journal-auth'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -18,15 +16,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function JournalGraphPage({ params }: Props) {
   const { id } = await params
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) redirect('/sign-in')
-
-  const journal = await prisma.journal.findFirst({
-    where: { id, deletedAt: null },
-    select: { id: true, name: true, ownerId: true, linkedCampaignId: true },
-  })
-  if (!journal) notFound()
-  if (journal.ownerId !== session.user.id) notFound()
+  const { journal } = await requireJournalOwner(id)
 
   return (
     <>
