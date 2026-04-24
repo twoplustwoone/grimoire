@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth-server'
 import { prisma } from '@grimoire/db'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { Network } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { JournalEditableFields } from '@/components/entities/journal-editable-fields'
 import { DeleteEntityButton } from '@/components/entities/delete-entity-button'
@@ -150,12 +151,21 @@ export default async function JournalHomePage({ params, searchParams }: Props) {
       )}
 
       <div className="flex items-center justify-between pt-8 border-t">
-        <Link
-          href={`/journals/${journal.id}/settings`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          Settings
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/journals/${journal.id}/settings`}
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            Settings
+          </Link>
+          <Link
+            href={`/journals/${journal.id}/graph`}
+            className="text-sm text-muted-foreground hover:underline inline-flex items-center gap-1.5"
+          >
+            <Network className="h-3.5 w-3.5" />
+            Graph
+          </Link>
+        </div>
         <DeleteEntityButton
           entityName={journal.name}
           deleteEndpoint={`/api/v1/journals/${journal.id}`}
