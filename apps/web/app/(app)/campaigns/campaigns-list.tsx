@@ -44,7 +44,7 @@ export function CampaignsList({ campaigns }: Props) {
         {visible.map(({ id, name, description, status, updatedAt, role }) => (
           <div key={id} className="relative">
             <Link href={`/campaigns/${id}`} className="block">
-              <Card className={`hover:shadow-md transition-shadow cursor-pointer h-full ${status === 'ARCHIVED' ? 'opacity-70' : ''}`}>
+              <Card className={`hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer h-full ${status === 'ARCHIVED' ? 'opacity-70' : ''}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg">{name}</CardTitle>

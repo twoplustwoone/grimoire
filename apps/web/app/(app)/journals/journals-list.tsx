@@ -19,7 +19,7 @@ export function JournalsList({ journals }: Props) {
     <div className="grid gap-4 md:grid-cols-2">
       {journals.map(({ id, name, linkedCampaignName, updatedAt }) => (
         <Link key={id} href={`/journals/${id}`} className="block">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+          <Card className="hover:bg-foreground/5 hover:shadow-md transition-all cursor-pointer h-full">
             <CardHeader>
               <CardTitle className="text-lg">{name}</CardTitle>
               <CardDescription>

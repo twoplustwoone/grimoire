@@ -110,7 +110,7 @@ export default async function CampaignJournalsPage({ params }: Props) {
                 href={`/campaigns/${campaignId}/journals/${j.id}`}
                 className="block"
               >
-                <Card className="hover:border-foreground/30 transition-colors">
+                <Card className="hover:bg-foreground/5 hover:border-foreground/30 transition-colors cursor-pointer">
                   <CardHeader className="pb-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <CardTitle className="text-lg">{displayName}&apos;s journal</CardTitle>
